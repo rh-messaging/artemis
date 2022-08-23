@@ -1697,7 +1697,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
       checkSessionLimit(validatedUser);
 
       if (AuditLogger.isBaseLoggingEnabled()) {
-         AuditLogger.createCoreSession(this, connection.getAuditSubject(), connection.getRemoteAddress(), name, username, "****", minLargeMessageSize, connection, autoCommitSends,
+         AuditLogger.createCoreSession(this, connection.getSubject(), connection.getRemoteAddress(), name, username, "****", minLargeMessageSize, connection, autoCommitSends,
                                        autoCommitAcks, preAcknowledge, xa, defaultAddress, callback, autoCreateQueues, context, prefixes);
       }
 

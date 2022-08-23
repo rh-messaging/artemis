@@ -1897,7 +1897,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
             if (consumer != null) {
                session = server.getSessionByID(consumer.getSessionID());
             }
-            AuditLogger.coreAcknowledgeMessage(session == null ? null : session.getRemotingConnection().getAuditSubject(), session == null ? null : session.getRemotingConnection().getRemoteAddress(), getName().toString(), ref.getMessage().toString());
+            AuditLogger.coreAcknowledgeMessage(session == null ? null : session.getRemotingConnection().getSubject(), session == null ? null : session.getRemotingConnection().getRemoteAddress(), getName().toString(), ref.getMessage().toString());
          }
          if (server != null && server.hasBrokerMessagePlugins()) {
             server.callBrokerMessagePlugins(plugin -> plugin.messageAcknowledged(ref, reason, consumer));

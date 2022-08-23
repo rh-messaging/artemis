@@ -85,7 +85,7 @@ public class ActiveMQPacketHandler implements ChannelHandler {
 
       if (AuditLogger.isAnyLoggingEnabled()) {
          AuditLogger.setRemoteAddress(connection.getRemoteAddress());
-         AuditLogger.setCurrentCaller(connection.getAuditSubject());
+         AuditLogger.setCurrentCaller(connection.getSubject());
       }
 
       switch (type) {
