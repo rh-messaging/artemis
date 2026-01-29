@@ -61,7 +61,10 @@
       <module>artemis-jakarta-client-all</module>
       <module>artemis-jakarta-client</module>
       <module>artemis-jakarta-client-osgi</module>
-      <module>artemis-jakarta-openwire-protocol</module>
+      <!--
+         The activemq-client-jakarta-5.11.0 artifact doesn't exist
+         <module>artemis-jakarta-openwire-protocol</module>
+      -->
       <module>artemis-jakarta-ra</module>
       <module>artemis-jakarta-server</module>
       <module>artemis-jakarta-service-extensions</module>
