@@ -85,6 +85,10 @@
       <maven.compiler.source>17</maven.compiler.source>
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
+      <keycloak.version>24.0.10.redhat-00001</keycloak.version>
+      <jboss.logging.version>3.5.3.Final</jboss.logging.version>
+      <!-- disable keycloak community profile -->
+      <product>true</product>
 
       <logging.config>log4j2-tests-config.properties</logging.config>
       <modular.jdk.surefire.arg>--add-modules java.sql,jdk.unsupported </modular.jdk.surefire.arg>
