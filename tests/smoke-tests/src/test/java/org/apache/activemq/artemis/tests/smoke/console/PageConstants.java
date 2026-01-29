@@ -73,7 +73,7 @@ public class PageConstants {
    public static final By BUTTON_LOCATOR = By.tagName(BUTTON);
 
    //Branding and Image locations
-   public static final String DEFAULT_CONSOLE_LOGIN_BRAND_IMAGE = "/img/artemis.png";
+   public static final String DEFAULT_CONSOLE_LOGIN_BRAND_IMAGE = "/img/Logo-RedHat-A-Reverse-RGB.png";
 
    public static final String DEFAULT_CONSOLE_NAME = "Artemis";
 
