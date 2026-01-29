@@ -42,7 +42,6 @@
 
             <!-- Handled later in web subdir for console bits -->
             <exclude>org.apache.artemis:artemis-console:war</exclude>
-            <exclude>com.redhat.amq-broker:artemis-prometheus-metrics-plugin-servlet:war</exclude>
          </excludes>
          <outputDirectory>lib</outputDirectory>
          <unpack>false</unpack>
@@ -82,21 +81,8 @@
                <exclude>**/commons-io*.jar</exclude>
                <exclude>**/commons-logging*.jar</exclude>
                <exclude>**/failureaccess*.jar</exclude>
-               <exclude>**/httpcore*.jar</exclude>
-               <exclude>**/httpclient*.jar</exclude>
             </excludes>
          </unpackOptions>
-         <useProjectArtifact>false</useProjectArtifact>
-         <directoryMode>0755</directoryMode>
-         <fileMode>0644</fileMode>
-      </dependencySet>
-      <dependencySet>
-         <includes>
-            <include>com.redhat.amq-broker:artemis-prometheus-metrics-plugin-servlet:war</include>
-         </includes>
-         <outputDirectory>web</outputDirectory>
-         <unpack>false</unpack>
-         <outputFileNameMapping>metrics.war</outputFileNameMapping>
          <useProjectArtifact>false</useProjectArtifact>
          <directoryMode>0755</directoryMode>
          <fileMode>0644</fileMode>
