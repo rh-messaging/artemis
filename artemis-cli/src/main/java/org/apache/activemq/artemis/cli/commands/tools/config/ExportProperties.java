@@ -28,7 +28,7 @@ import org.apache.activemq.artemis.cli.commands.Configurable;
 import org.apache.activemq.artemis.core.config.impl.FileConfiguration;
 import picocli.CommandLine;
 
-@CommandLine.Command(name = "properties", description = "Export the broker's configuration as a properties file to be used with broker properties.")
+@CommandLine.Command(name = "properties", description = "Export the broker's configuration as a properties file.")
 public class ExportProperties extends Configurable {
 
    @CommandLine.Option(names = "--output", description = "Output name for the file.", defaultValue = "broker.properties")
