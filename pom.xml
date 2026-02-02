@@ -87,6 +87,9 @@
       <maven.compiler.release>17</maven.compiler.release>
       <keycloak.version>24.0.10.redhat-00001</keycloak.version>
       <jboss.logging.version>3.5.3.Final</jboss.logging.version>
+      <netty.transport.native.epoll.aarch.version>4.1.130.Final-redhat-00001</netty.transport.native.epoll.aarch.version>
+      <netty.transport.native.epoll.ppcle.version>4.1.130.Final-redhat-00001</netty.transport.native.epoll.ppcle.version>
+      <netty.transport.native.epoll.s390x.version>4.1.130.Final-redhat-00001</netty.transport.native.epoll.s390x.version>
       <!-- disable keycloak community profile -->
       <product>true</product>
 
@@ -279,7 +282,7 @@
       <bc-java-version>1.83</bc-java-version>
 
       <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
-      <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
+      <netty-transport-native-kqueue-classifier></netty-transport-native-kqueue-classifier>
 
       <fast-tests>false</fast-tests>
 
