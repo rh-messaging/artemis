@@ -102,13 +102,13 @@
       <commons.collections.version>3.2.2</commons.collections.version>
       <commons.text.version>1.15.0</commons.text.version>
       <commons.io.version>2.21.0</commons.io.version>
-      <commons.codec.version>1.20.0</commons.codec.version>
+      <commons.codec.version>1.21.0</commons.codec.version>
       <commons.compress.version>1.28.0</commons.compress.version>
       <fuse.mqtt.client.version>1.16</fuse.mqtt.client.version>
       <caffeine.version>3.2.3</caffeine.version>
       <guava.version>33.5.0-jre</guava.version>
       <jsr305.version>3.0.2</jsr305.version>
-      <jetty.version>12.1.5</jetty.version>
+      <jetty.version>12.1.6</jetty.version>
       <jetty-servlet-api.version>5.0.2</jetty-servlet-api.version>
       <jgroups.version>5.3.13.Final</jgroups.version>
       <errorprone.version>2.42.0</errorprone.version>
@@ -170,9 +170,9 @@
       <junit4.version>4.13.2</junit4.version>
       <version.jaxb.runtime>2.3.9</version.jaxb.runtime>
       <paho.client.mqtt.version>1.2.5</paho.client.mqtt.version>
-      <postgresql.version>42.7.8</postgresql.version>
+      <postgresql.version>42.7.9</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
-      <selenium.version>4.39.0</selenium.version>
+      <selenium.version>4.40.0</selenium.version>
       <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
@@ -195,14 +195,14 @@
 
       <!-- used on tests -->
       <elementary.version>3.0.0</elementary.version>
-      <groovy.version>5.0.3</groovy.version>
+      <groovy.version>5.0.4</groovy.version>
       <hadoop.minikdc.version>3.4.2</hadoop.minikdc.version>
       <mockserver.version>5.15.0</mockserver.version>
 
       <owasp.version>12.2.0</owasp.version>
       <spring.version>5.3.39</spring.version>
 
-      <jackson.version>2.20.1</jackson.version>
+      <jackson.version>2.21.0</jackson.version>
 
       <jolokia.version>2.4.3</jolokia.version>
 
@@ -794,7 +794,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>javacc-maven-plugin</artifactId>
-               <version>3.1.1</version>
+               <version>3.2.0</version>
                <executions>
                   <execution>
                      <id>javacc</id>

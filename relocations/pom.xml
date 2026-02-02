@@ -35,8 +35,10 @@
    </properties>
 
    <modules>
-      <!-- Modules that use org.apache.artemis:artemis-project as their parent -->
+      <!-- Modules that use org.apache.artemis:artemis-bom as their parent -->
       <module>artemis-bom</module>
+
+      <!-- Modules that use org.apache.artemis:artemis-project as their parent -->
       <module>artemis-log-annotation-processor</module>
       <module>artemis-project</module>
 
