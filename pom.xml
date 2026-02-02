@@ -80,6 +80,7 @@
    <url>https://artemis.apache.org</url>
 
    <properties>
+      <amq.broker.version>8.0.0</amq.broker.version>
       <maven.compiler.source>17</maven.compiler.source>
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
@@ -297,7 +298,7 @@
          <email>dev@artemis.apache.org</email>
          <url>https://artemis.apache.org</url>
          <organization>Apache Software Foundation</organization>
-	 <organizationUrl>https://apache.org/</organizationUrl>
+         <organizationUrl>https://apache.org/</organizationUrl>
       </developer>
    </developers>
    <mailingLists>
