@@ -25,7 +25,7 @@
    <parent>
       <groupId>org.apache</groupId>
       <artifactId>apache</artifactId>
-      <version>35</version>
+      <version>37</version>
    </parent>
 
    <modules>
@@ -84,11 +84,13 @@
       <maven.compiler.target>17</maven.compiler.target>
       <maven.compiler.release>17</maven.compiler.release>
 
+      <javaVersion>17</javaVersion>
+
       <logging.config>log4j2-tests-config.properties</logging.config>
       <modular.jdk.surefire.arg>--add-modules java.sql,jdk.unsupported </modular.jdk.surefire.arg>
 
       <activemq-artemis-native-version>2.0.0</activemq-artemis-native-version>
-      <artemis-console-version>1.5.0</artemis-console-version>
+      <artemis-console-version>1.6.0</artemis-console-version>
       <karaf.version>4.4.8</karaf.version>
       <pax.exam.version>4.14.0</pax.exam.version>
       <commons.config.version>2.13.0</commons.config.version>
@@ -177,8 +179,6 @@
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
       <shrinkwrap-api.version>1.2.6</shrinkwrap-api.version>
-      <!-- Override parent property for shade plugin version -->
-      <version.maven-shade-plugin>3.6.1</version.maven-shade-plugin>
 
       <!-- for JakartaEE -->
       <version.batavia>1.0.15.Final</version.batavia>
@@ -203,8 +203,6 @@
       <spring.version>5.3.39</spring.version>
 
       <jackson.version>2.21.0</jackson.version>
-
-      <jolokia.version>2.4.3</jolokia.version>
 
       <activemq.version.versionName>${project.version}</activemq.version.versionName>
       <activemq.version.majorVersion>1</activemq.version.majorVersion>
@@ -258,9 +256,14 @@
       <!-- for tests that will need a new server created -->
       <artemis.distribution.output>${activemq.basedir}/artemis-distribution/target/apache-artemis-${project.version}-bin/apache-artemis-${project.version}</artemis.distribution.output>
 
-      <activemq-surefire-argline>-Dbrokerconfig.maxDiskUsage=100 -Dorg.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants.DEFAULT_QUIET_PERIOD=0 -Dorg.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants.DEFAULT_SHUTDOWN_TIMEOUT=0
-         -Djava.library.path="${activemq.basedir}/target/bin/lib/linux-x86_64:${activemq.basedir}/target/bin/lib/linux-i686" -Djgroups.bind_addr=localhost
-         -Djava.net.preferIPv4Stack=true -Dbasedir=${basedir}
+      <activemq-surefire-argline>
+         -Dbrokerconfig.maxDiskUsage=100
+         -Dorg.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants.DEFAULT_QUIET_PERIOD=0
+         -Dorg.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants.DEFAULT_SHUTDOWN_TIMEOUT=7200000
+         -Djava.library.path="${activemq.basedir}/target/bin/lib/linux-x86_64:${activemq.basedir}/target/bin/lib/linux-i686"
+         -Djgroups.bind_addr=localhost
+         -Djava.net.preferIPv4Stack=true
+         -Dbasedir=${basedir}
          -Djdk.attach.allowAttachSelf=true
          -Dartemis.distribution.output="${artemis.distribution.output}"
          -Dlog4j2.configurationFile="file:${activemq.basedir}/tests/config/${logging.config}"
@@ -1006,40 +1009,6 @@
       </pluginManagement>
 
       <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>enforce-java-version</id>
-                  <goals>
-                     <goal>enforce</goal>
-                  </goals>
-                  <configuration>
-                     <rules>
-                        <requireJavaVersion>
-                           <version>[17,)</version>
-                           <message>You must use JDK 17+ when building</message>
-                        </requireJavaVersion>
-                     </rules>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>enforce-maven-version</id>
-                  <goals>
-                     <goal>enforce</goal>
-                  </goals>
-                  <configuration>
-                     <rules>
-                        <requireMavenVersion>
-                           <version>3.9</version>
-                           <message>You must use Maven 3.9.0+ to build</message>
-                        </requireMavenVersion>
-                     </rules>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>

@@ -13,6 +13,16 @@ NOTE: If the upgrade spans multiple versions then the steps from *each* version 
 
 NOTE: Follow the general upgrade procedure outlined in the xref:upgrading.adoc#upgrading-the-broker[Upgrading the Broker]  chapter in addition to any version-specific upgrade instructions outlined here.
 
+== 2.51.0
+
+https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356605[Full release notes]
+
+=== Highlights
+
+* https://issues.apache.org/jira/browse/ARTEMIS-5852[Lock Coordinator for Acceptors]
+** When you combine this new functionality with Mirroring, it can now be used for High Availability as a better alternative to journal replication
+* https://issues.apache.org/jira/browse/ARTEMIS-5862[CLI command to export broker.properties]
+
 == 2.50.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356368[Full release notes]

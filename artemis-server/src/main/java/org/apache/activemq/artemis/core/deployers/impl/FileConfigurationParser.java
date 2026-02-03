@@ -1674,7 +1674,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
       List<TransportConfiguration> configurations = ConfigurationUtils.parseAcceptorURI(name, uri);
       TransportConfiguration transportConfiguration = configurations.get(0);
 
-      Map<String, Object> params = transportConfiguration.getParams();
+      Map<String, Object> params = configurations.get(0).getParams();
 
       if (lockCoordinator != null) {
          transportConfiguration.setLockCoordinator(lockCoordinator);
@@ -1688,7 +1688,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
          }
       }
 
-      return transportConfiguration;
+      return configurations.get(0);
    }
 
    private TransportConfiguration parseConnectorTransportConfiguration(final Element e,
