@@ -139,6 +139,15 @@ public class AMQPLargeMessageWriter implements MessageWriter {
    }
 
    @Override
+   public void accept(MessageReference messageReference) {
+      if (serverSender.isClosed()) {
+         logger.trace("Server sender was closed before queued write attempt was executed");
+      } else {
+         writeBytes(messageReference);
+      }
+   }
+
+   @Override
    public void writeBytes(MessageReference messageReference) {
       if (protonSender.getLocalState() == EndpointState.CLOSED) {
          logger.debug("Not delivering message {} as the sender is closed and credits were available, if you see too many of these it means clients are issuing credits and closing the connection with pending credits a lot of times", messageReference);
@@ -171,6 +180,11 @@ public class AMQPLargeMessageWriter implements MessageWriter {
    private void tryDelivering() {
       if (closed) {
          logger.trace("AMQP Large Message Writer was closed before queued write attempt was executed");
+         return;
+      }
+
+      if (serverSender.isClosed()) {
+         logger.trace("Server sender was closed before queued write attempt was executed");
          return;
       }
 

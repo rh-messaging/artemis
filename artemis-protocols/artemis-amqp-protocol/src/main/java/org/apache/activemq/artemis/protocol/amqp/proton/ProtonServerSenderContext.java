@@ -136,6 +136,10 @@ public class ProtonServerSenderContext extends ProtonInitializable implements Pr
       return sender;
    }
 
+   public boolean isClosed() {
+      return closed;
+   }
+
    @Override
    public void onFlow(int currentCredits, boolean drain) {
       if (logger.isDebugEnabled()) {
