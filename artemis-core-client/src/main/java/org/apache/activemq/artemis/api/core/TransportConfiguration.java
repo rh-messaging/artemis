@@ -420,7 +420,11 @@ public class TransportConfiguration implements Serializable {
    }
 
    public TransportConfiguration setLockCoordinator(String lockCoordinator) {
-      this.lockCoordinator = lockCoordinator;
+      if (String.valueOf(lockCoordinator).trim().equals("")) {
+         this.lockCoordinator = null;
+      } else {
+         this.lockCoordinator = lockCoordinator;
+      }
       return this;
    }
 

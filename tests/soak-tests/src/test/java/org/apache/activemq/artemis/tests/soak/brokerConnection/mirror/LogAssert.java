@@ -20,12 +20,13 @@ package org.apache.activemq.artemis.tests.soak.brokerConnection.mirror;
 import java.io.File;
 
 import org.apache.activemq.artemis.utils.FileUtil;
+import org.junit.jupiter.api.Assertions;
 
 public class LogAssert {
 
    public static void assertServerLogsForMirror(File serverLocation) throws Exception {
       File log = new File(serverLocation, "log/artemis.log");
-      FileUtil.find(log, l -> l.contains("NullPointerException") || l.contains("AMQ111010"));
+      Assertions.assertFalse(FileUtil.find(log, l -> l.contains("NullPointerException") || l.contains("AMQ111010")));
    }
 
 }
