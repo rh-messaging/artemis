@@ -609,7 +609,7 @@ You can easily perform a test run by using your personal account, e.g.:
 
 == Send Announcement Email
 
-Once the website is updated then send an email to `users@artemis.apache.org` & `dev@artemis.apache.org` with a subject like:
+Once the website is updated then send an email to `announce@apache.org`, `users@artemis.apache.org` & `dev@artemis.apache.org` with a subject like:
 
 ----
 [ANNOUNCE] Apache Artemis <version> Released
