@@ -2903,8 +2903,8 @@ public class QueueControlTest extends ManagementTestBase {
       ConnectionFactory connectionFactory = CFUtil.createConnectionFactory(protocol, "tcp://localhost:61616");
 
       try (Connection connection = connectionFactory.createConnection()) {
-         Session jmsProducerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-         Session jmsConsumerSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+         Session jmsProducerSession = connection.createSession(Session.AUTO_ACKNOWLEDGE);
+         Session jmsConsumerSession = connection.createSession(Session.AUTO_ACKNOWLEDGE);
          javax.jms.Queue queue1 = jmsProducerSession.createQueue("queue1");
          javax.jms.Queue queue2 = jmsConsumerSession.createQueue("queue2");
 
