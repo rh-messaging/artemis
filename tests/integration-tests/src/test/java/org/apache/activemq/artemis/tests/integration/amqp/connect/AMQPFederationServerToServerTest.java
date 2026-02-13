@@ -1704,7 +1704,7 @@ public class AMQPFederationServerToServerTest extends AmqpClientTestSupport {
       server.start();
 
       // check federation has reconnected
-      Wait.assertTrue(() -> server.getManagementService().getResources(AMQPFederationConsumerControlType.class).length == 1);
+      Wait.assertTrue(() -> server.getManagementService().getUntypedControls(AMQPFederationConsumerControlType.class).size() == 1);
       Wait.assertTrue(() -> server.bindingQuery(SimpleString.of(getTestName()), false).getQueueNames().size() >= 1);
       Wait.assertTrue(() -> remoteServer.bindingQuery(SimpleString.of(getTestName()), false).getQueueNames().size() >= 1);
 
@@ -1797,7 +1797,7 @@ public class AMQPFederationServerToServerTest extends AmqpClientTestSupport {
       remoteServer.start();
 
       // check federation has reconnected
-      Wait.assertTrue(() -> remoteServer.getManagementService().getResources(AMQPFederationConsumerControlType.class).length == 1);
+      Wait.assertTrue(() -> remoteServer.getManagementService().getUntypedControls(AMQPFederationConsumerControlType.class).size() == 1);
       Wait.assertTrue(() -> server.bindingQuery(SimpleString.of(getTestName()), false).getQueueNames().size() >= 1);
       Wait.assertTrue(() -> remoteServer.bindingQuery(SimpleString.of(getTestName()), false).getQueueNames().size() >= 1);
 
