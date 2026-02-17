@@ -5159,8 +5159,8 @@ public class QueueControlTest extends ManagementTestBase {
 
       queueControl.moveMessage(messageID, queueName2.toString());
 
-      assertEquals(messageCount, server.locateQueue(queueName1).getMessageCount());
-      assertEquals(1, server.locateQueue(queueName2).getMessageCount());
+      Wait.assertEquals((long)messageCount, server.locateQueue(queueName1)::getMessageCount, 5000, 100);
+      Wait.assertEquals(1L, server.locateQueue(queueName2)::getMessageCount, 5000, 100);
 
    }
 
@@ -5196,8 +5196,8 @@ public class QueueControlTest extends ManagementTestBase {
 
       queueControl.copyMessage(messageID, queueName2.toString());
 
-      assertEquals(messageCount + 1, server.locateQueue(queueName1).getMessageCount());
-      assertEquals(1, server.locateQueue(queueName2).getMessageCount());
+      Wait.assertEquals((long)messageCount + 1, server.locateQueue(queueName1)::getMessageCount, 5000, 100);
+      Wait.assertEquals(1L, server.locateQueue(queueName2)::getMessageCount, 5000, 100);
 
    }
 
