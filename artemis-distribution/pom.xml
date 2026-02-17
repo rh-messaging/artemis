@@ -132,6 +132,17 @@
          <groupId>jakarta.security.auth.message</groupId>
          <artifactId>jakarta.security.auth.message-api</artifactId>
       </dependency>
+      <dependency>
+         <groupId>com.redhat.amq-broker</groupId>
+         <artifactId>artemis-prometheus-metrics-plugin</artifactId>
+         <version>${artemis.prometheus.metrics.plugin.version}</version>
+      </dependency>
+      <dependency>
+         <groupId>com.redhat.amq-broker</groupId>
+         <artifactId>artemis-prometheus-metrics-plugin-servlet</artifactId>
+         <version>${artemis.prometheus.metrics.plugin.version}</version>
+         <type>war</type>
+      </dependency>
    </dependencies>
 
    <build>
