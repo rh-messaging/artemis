@@ -16,12 +16,9 @@
  */
 package org.apache.activemq.artemis.tests.integration.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.StringReader;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,12 +33,20 @@ import org.apache.activemq.artemis.core.postoffice.Bindings;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.impl.ActiveMQServerImpl;
 import org.apache.activemq.artemis.jms.server.config.impl.FileJMSConfiguration;
+import org.apache.activemq.artemis.json.JsonObject;
 import org.apache.activemq.artemis.spi.core.security.ActiveMQJAASSecurityManager;
 import org.apache.activemq.artemis.spi.core.security.jaas.InVMLoginModule;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
+import org.apache.activemq.artemis.utils.JsonLoader;
 import org.apache.activemq.artemis.utils.RandomUtil;
 import org.apache.activemq.artemis.tests.util.Wait;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConfigurationTest extends ActiveMQTestBase {
 
@@ -183,6 +188,9 @@ public class ConfigurationTest extends ActiveMQTestBase {
       properties.put("configurationFileRefreshPeriod", "100");
       properties.put("persistenceEnabled", "false");
       properties.put("connectionRouters.joe.localTargetFilter", "LF");
+      properties.put("acceptorConfigurations.tcp.factoryClassName", NETTY_ACCEPTOR_FACTORY);
+      properties.put("acceptorConfigurations.tcp.params.HOST", "LOCALHOST");
+      properties.put("acceptorConfigurations.tcp.params.PORT", "61616");
 
       try (FileOutputStream outStream = new FileOutputStream(propsFile)) {
          properties.store(outStream, null);
@@ -194,17 +202,20 @@ public class ConfigurationTest extends ActiveMQTestBase {
       ActiveMQServer server = addServer(new ActiveMQServerImpl(fc, sm));
       server.setProperties(propsFile.getAbsolutePath());    // no xml config
       try {
-
          server.start();
 
          assertEquals(1, server.getConfiguration().getConnectionRouters().size());
          assertEquals("LF", server.getConfiguration().getConnectionRouters().get(0).getLocalTargetFilter());
+         assertEquals(1, server.getActiveMQServerControl().getAcceptors().length);
+         assertEquals(100, server.getConfiguration().getConfigurationFileRefreshPeriod());
 
-         properties.put("persistenceEnabled", "false");
+         // verify update and remove of tcp acceptor
+         properties.clear();
          properties.put("configurationFileRefreshPeriod", "100");
-
-         // verify update
+         properties.put("persistenceEnabled", "false");
          properties.put("connectionRouters.joe.localTargetFilter", "UPDATED");
+
+         String startedStatus = server.getStatus();
          try (FileOutputStream outStream = new FileOutputStream(propsFile)) {
             properties.store(outStream, null);
          }
@@ -212,6 +223,22 @@ public class ConfigurationTest extends ActiveMQTestBase {
          Wait.assertTrue(() -> {
             return "UPDATED".equals(server.getConfiguration().getConnectionRouters().get(0).getLocalTargetFilter());
          });
+
+         // no change
+         assertEquals(100, server.getConfiguration().getConfigurationFileRefreshPeriod());
+         // verify remove
+         assertEquals(0, server.getActiveMQServerControl().getAcceptors().length);
+
+         // verify status json reflects update
+         String updatedStatus = server.getStatus();
+         assertNotEquals(startedStatus, updatedStatus);
+         assertTrue(startedStatus.contains(propsFile.getName()));
+         assertTrue(updatedStatus.contains(propsFile.getName()));
+         JsonObject jsonStarted = JsonLoader.readObject(new StringReader(startedStatus));
+         JsonObject jsonUpdated = JsonLoader.readObject(new StringReader(updatedStatus));
+         String alder32Used = jsonStarted.getJsonObject("configuration").getJsonObject("properties").getJsonObject(propsFile.getName()).getString("fileAlder32");
+         String alder32Updated = jsonUpdated.getJsonObject("configuration").getJsonObject("properties").getJsonObject(propsFile.getName()).getString("fileAlder32");
+         assertNotEquals(alder32Used, alder32Updated);
 
       } finally {
          try {
@@ -348,6 +375,35 @@ public class ConfigurationTest extends ActiveMQTestBase {
          } catch (Exception e) {
          }
       }
+   }
+
+   @Test
+   public void testPropertiesAndProgrammaticReloadableConfigArg() throws Exception {
+
+      File propsFile = new File(getTestDirfile(), "somemore.props");
+      propsFile.createNewFile();
+
+
+      Properties properties = new ConfigurationImpl.InsertionOrderedProperties();
+      properties.put("configurationFileRefreshPeriod", "100");
+      properties.put("persistenceEnabled", "false");
+      properties.put("acceptorConfigurations.reloadable.factoryClassName", NETTY_ACCEPTOR_FACTORY);
+      properties.put("acceptorConfigurations.reloadable.params.HOST", "LOCALHOST");
+      properties.put("acceptorConfigurations.reloadable.params.PORT", "61616");
+
+      try (FileOutputStream outStream = new FileOutputStream(propsFile)) {
+         properties.store(outStream, null);
+      }
+      assertTrue(propsFile.exists());
+
+      ConfigurationImpl programmatic = new ConfigurationImpl();
+      programmatic.addAcceptorConfiguration("tcp", "tcp://localhost:62618");
+      ActiveMQJAASSecurityManager sm = new ActiveMQJAASSecurityManager(InVMLoginModule.class.getName(), new SecurityConfiguration());
+      ActiveMQServer server = addServer(new ActiveMQServerImpl(programmatic, sm));
+
+      assertThrows(IllegalStateException.class, () -> {
+         server.setProperties(propsFile.getAbsolutePath());
+      });
    }
 
    protected ActiveMQServer getActiveMQServer(String brokerConfig) throws Exception {

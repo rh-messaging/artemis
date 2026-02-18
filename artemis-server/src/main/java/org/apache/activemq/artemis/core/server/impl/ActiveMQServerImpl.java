@@ -308,7 +308,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
    protected volatile ExecutorFactory ioExecutorFactory;
 
    /**
-    * This is a thread pool for page only tasks only. This is because we have to limit parallel reads on paging.
+    * This is a thread pool for page tasks only. This is because we have to limit parallel reads on paging.
     */
    protected volatile ExecutorFactory pageExecutorFactory;
 
@@ -679,8 +679,18 @@ public class ActiveMQServerImpl implements ActiveMQServer {
    }
 
    @Override
-   public void setProperties(String fileUrltoBrokerProperties) {
-      propertiesFileUrl = fileUrltoBrokerProperties;
+   public void setProperties(String fileUrlToBrokerProperties) {
+      throwIfReloadableConfigProvidedWithoutFileAndBrokerPropertiesUrlNonNullAndReload(configuration, fileUrlToBrokerProperties);
+      propertiesFileUrl = fileUrlToBrokerProperties;
+   }
+
+   private void throwIfReloadableConfigProvidedWithoutFileAndBrokerPropertiesUrlNonNullAndReload(Configuration configuration, String propertiesFileUrl) {
+      if (configuration.getConfigurationUrl() == null && configuration.getConfigurationFileRefreshPeriod() > 0 && configuration.resolvePropertiesSources(propertiesFileUrl) != null) {
+         // if any non xml (programmatic) provided config is reloadable, on the first properties source reload it will whack that config as the reload has the source of truth for reloadable attributes
+         if (hasReloadableConfig(configuration)) {
+            throw new IllegalStateException(String.format("a properties source (%s) is illegal, programmatic config contains reloadable elements and configurationFileRefreshPeriod > 0; your programmatic config will be replaced on reload of the properties source", propertiesFileUrl));
+         }
+      }
    }
 
    @Override
@@ -4682,27 +4692,49 @@ public class ActiveMQServerImpl implements ActiveMQServer {
    }
 
    private void reloadConfigurationFile(URL xmlConfigUri) throws Exception {
+      Configuration config = new ConfigurationImpl();
       if (xmlConfigUri != null) {
-         Configuration config = new FileConfigurationParser().parseMainConfig(xmlConfigUri.openStream());
+         config = new FileConfigurationParser().parseMainConfig(xmlConfigUri.openStream());
          LegacyJMSConfiguration legacyJMSConfiguration = new LegacyJMSConfiguration(config);
          legacyJMSConfiguration.parseConfiguration(xmlConfigUri.openStream());
-         configuration.setSecurityRoles(config.getSecurityRoles());
-         configuration.setAddressSettings(config.getAddressSettings());
-         configuration.setDivertConfigurations(config.getDivertConfigurations());
-         configuration.setAddressConfigurations(config.getAddressConfigurations());
-         configuration.setQueueConfigs(config.getQueueConfigs());
-         configuration.setBridgeConfigurations(config.getBridgeConfigurations());
-         configuration.setConnectorConfigurations(config.getConnectorConfigurations());
-         configuration.setAcceptorConfigurations(config.getAcceptorConfigurations());
-         configuration.setAMQPConnectionConfigurations(config.getAMQPConnection());
-         configuration.setPurgePageFolders(config.isPurgePageFolders());
       }
-      configuration.parseProperties(propertiesFileUrl);
+      config.parseProperties(propertiesFileUrl);
+      updateReloadableConfigurationFrom(config);
       updateStatus(ServerStatus.CONFIGURATION_COMPONENT, configuration.getStatus());
       configurationReloadDeployed.set(false);
       if (isActive()) {
          deployReloadableConfigFromConfiguration();
       }
+   }
+
+   private void updateReloadableConfigurationFrom(Configuration config) {
+      configuration.setStatus(config.getStatus());
+      configuration.setSecurityRoles(config.getSecurityRoles());
+      configuration.setAddressSettings(config.getAddressSettings());
+      configuration.setDivertConfigurations(config.getDivertConfigurations());
+      configuration.setAddressConfigurations(config.getAddressConfigurations());
+      configuration.setQueueConfigs(config.getQueueConfigs());
+      configuration.setBridgeConfigurations(config.getBridgeConfigurations());
+      configuration.setConnectorConfigurations(config.getConnectorConfigurations());
+      configuration.setAcceptorConfigurations(config.getAcceptorConfigurations());
+      configuration.setAMQPConnectionConfigurations(config.getAMQPConnection());
+      configuration.setPurgePageFolders(config.isPurgePageFolders());
+      configuration.setConnectionRouters(config.getConnectionRouters());
+      configuration.setJaasConfigs(config.getJaasConfigs());
+   }
+
+   private static boolean hasReloadableConfig(Configuration configuration) {
+      return !configuration.getSecurityRoles().isEmpty() ||
+            !configuration.getAddressSettings().isEmpty() ||
+            !configuration.getDivertConfigurations().isEmpty() ||
+            !configuration.getAddressConfigurations().isEmpty() ||
+            !configuration.getQueueConfigs().isEmpty() ||
+            !configuration.getBridgeConfigurations().isEmpty() ||
+            !configuration.getConnectorConfigurations().isEmpty() ||
+            !configuration.getAcceptorConfigurations().isEmpty() ||
+            !configuration.getAMQPConnection().isEmpty() ||
+            !configuration.getConnectionRouters().isEmpty() ||
+            !configuration.getJaasConfigs().isEmpty();
    }
 
    private void deployReloadableConfigFromConfiguration() throws Exception {
