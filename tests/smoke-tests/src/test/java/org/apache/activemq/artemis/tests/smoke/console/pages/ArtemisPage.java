@@ -25,7 +25,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
 
 import static org.apache.activemq.artemis.tests.smoke.console.PageConstants.ADDRESSES_TAB;
 import static org.apache.activemq.artemis.tests.smoke.console.PageConstants.ALERT_LOCATOR;
@@ -57,17 +56,14 @@ public abstract class ArtemisPage extends ConsolePage {
       WebElement userDropdownMenuWebElement = driver.findElement(USER_DROPDOWN_MENU_LOCATOR);
 
       if (!logoutWebElement.isDisplayed()) {
-         Actions actions = new Actions(driver);
-         actions.moveToElement(userDropdownMenuWebElement).click().perform();
+         userDropdownMenuWebElement.click();
       }
 
       String logoutText = logoutWebElement.getText();
       Pattern pattern = Pattern.compile("Logout \\(([^\\)]+)\\)");
       Matcher matcher = pattern.matcher(logoutText);
 
-      Actions actions = new Actions(driver);
-
-      actions.moveToElement(userDropdownMenuWebElement).click().perform();
+      userDropdownMenuWebElement.click();
 
       if (matcher.find()) {
          return matcher.group(1);
@@ -79,9 +75,7 @@ public abstract class ArtemisPage extends ConsolePage {
    public AddressesPage getAddressesPage(int timeout) {
       WebElement queuesMenuItem = driver.findElement(ADDRESSES_TAB);
 
-      Actions actions = new Actions(driver);
-
-      actions.moveToElement(queuesMenuItem).click().perform();
+      queuesMenuItem.click();
 
       return new AddressesPage(driver);
    }
@@ -89,8 +83,7 @@ public abstract class ArtemisPage extends ConsolePage {
    public SendMessagePage getAddressSendMessagePage(String address, int timeout) {
       refresh(timeout);
       WebElement element = driver.findElement(ADDRESSES_TAB);
-      Actions actions = new Actions(driver);
-      actions.moveToElement(element).click().perform();
+      element.click();
       List<WebElement> tdElements = driver.findElement(DATA_TABLE).findElement(By.xpath("//tr/td[contains(text(), '" + address + "')]")).findElement(By.xpath("./..")).findElements(TD_TAG_LOCATOR);
 
       tdElements.get(tdElements.size() - 1).findElement(BUTTON_LOCATOR).click();
@@ -106,8 +99,7 @@ public abstract class ArtemisPage extends ConsolePage {
    public SendMessagePage getQueueSendMessagePage(String queue, int timeout) {
       refresh(timeout);
       WebElement element = driver.findElement(QUEUES_TAB);
-      Actions actions = new Actions(driver);
-      actions.moveToElement(element).click().perform();
+      element.click();
       List<WebElement> tdElements = driver.findElement(DATA_TABLE).findElement(By.xpath("//tr/td/a[contains(text(), '" + queue + "')]")).findElement(By.xpath("./../..")).findElements(By.tagName("td"));
 
       tdElements.get(tdElements.size() - 1).findElement(BUTTON_LOCATOR).click();
@@ -122,9 +114,7 @@ public abstract class ArtemisPage extends ConsolePage {
    public QueuesPage getQueuesPage(int timeout) {
       WebElement queuesMenuItem = driver.findElement(QUEUES_TAB);
 
-      Actions actions = new Actions(driver);
-
-      actions.moveToElement(queuesMenuItem).click().perform();
+      queuesMenuItem.click();
 
       waitForElementToBeVisible(QUEUES_TAB_SELECTED, timeout);
 
@@ -148,9 +138,7 @@ public abstract class ArtemisPage extends ConsolePage {
    public QueuesPage getQueuesPageFromMessageView(int timeout) {
       WebElement queuesMenuItem = driver.findElement(MESSAGE_VIEW_QUEUES_BUTTON);
 
-      Actions actions = new Actions(driver);
-
-      actions.moveToElement(queuesMenuItem).click().perform();
+      queuesMenuItem.click();
 
       waitForElementToBeVisible(QUEUES_TAB_SELECTED, timeout);
 
@@ -160,9 +148,7 @@ public abstract class ArtemisPage extends ConsolePage {
    public QueuesPage getQueuesPageFromMessagesView(int timeout) {
       WebElement queuesMenuItem = driver.findElement(MESSAGE_TABLE_QUEUES_BUTTON);
 
-      Actions actions = new Actions(driver);
-
-      actions.moveToElement(queuesMenuItem).click().perform();
+      queuesMenuItem.click();
 
       waitForElementToBeVisible(QUEUES_TAB_SELECTED, timeout);
 
@@ -171,30 +157,24 @@ public abstract class ArtemisPage extends ConsolePage {
 
    public LoginPage logout(int timeout) {
       WebElement logoutWebElement = driver.findElement(LOGOUT_DROPDOWN_LOCATOR);
-      Actions actions = new Actions(driver);
 
-      actions.moveToElement(logoutWebElement).click().perform();
+      logoutWebElement.click();
       WebElement userDropdownMenuWebElement = logoutWebElement.findElement(LOGOUT_MENU_ITEM_LOCATOR);
 
-      actions = new Actions(driver);
-
-      actions.moveToElement(userDropdownMenuWebElement).click().perform();
+      userDropdownMenuWebElement.click();
 
       return new LoginPage(driver);
    }
 
    public void enableColumn(String columnId) {
       WebElement element = driver.findElement(MANAGE_COLUMNS_BUTTON);
-      Actions actions = new Actions(driver);
-      actions.moveToElement(element).click().perform();
+      element.click();
 
       element = driver.findElement(By.id("check-" + columnId));
-      actions = new Actions(driver);
 
-      actions.moveToElement(element).click().perform();
+      element.click();
       element = driver.findElement(SAVE_BUTTON);
-      actions = new Actions(driver);
-      actions.moveToElement(element).click().perform();
+      element.click();
    }
 
    public Object postJolokiaExecRequest(String mbean, String operation, String arguments) {

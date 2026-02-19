@@ -50,16 +50,14 @@ public class SendMessagePage extends ArtemisPage {
    public void selectUseCurrentLogonUser() {
       if (!isUseCurrentLogonUserSelected()) {
          WebElement element = driver.findElement(USE_LOGIN_LOCATOR);
-         Actions actions = new Actions(driver);
-         actions.moveToElement(element).click().perform();
+         element.click();
       }
    }
 
    public void unselectUseCurrentLogonUser() {
       if (isUseCurrentLogonUserSelected()) {
          WebElement element = driver.findElement(USE_LOGIN_LOCATOR);
-         Actions actions = new Actions(driver);
-         actions.moveToElement(element).click().perform();
+         element.click();
       }
    }
 
@@ -76,10 +74,8 @@ public class SendMessagePage extends ArtemisPage {
 
    public void sendMessage() {
       WebElement element = driver.findElement(By.xpath("//button[contains(text(),'Send')]"));
-      Actions actions = new Actions(driver);
-      actions.moveToElement(element).click().perform();
+      element.click();
       element = driver.findElement(By.xpath("//button[contains(text(),'Cancel')]"));
-      actions = new Actions(driver);
-      actions.moveToElement(element).click().perform();
+      element.click();
    }
 }
