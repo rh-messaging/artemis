@@ -1640,27 +1640,27 @@ public interface ActiveMQServerLogger extends BasicLogger {
    void unableToExtractGroupSequence(@Cause Throwable e);
 
    @LogMessage(level = Logger.Level.WARN)
-   @Message(id = 222279, value = "Federation upstream {0} policy ref {1} could not be resolved in federation configuration", format = Message.Format.MESSAGE_FORMAT)
+   @Message(id = 222279, value = "Core federation upstream {0} policy ref {1} could not be resolved in federation configuration", format = Message.Format.MESSAGE_FORMAT)
    void federationCantFindPolicyRef(String upstreamName, String policyRef);
 
    @LogMessage(level = Logger.Level.WARN)
-   @Message(id = 222280, value = "Federation upstream {0} policy ref {1} is of unknown type in federation configuration", format = Message.Format.MESSAGE_FORMAT)
+   @Message(id = 222280, value = "Core federation upstream {0} policy ref {1} is of unknown type in federation configuration", format = Message.Format.MESSAGE_FORMAT)
    void federationUnknownPolicyType(String upstreamName, String policyRef);
 
    @LogMessage(level = Logger.Level.WARN)
-   @Message(id = 222281, value = "Federation upstream {0} policy ref {1} are too self referential, avoiding stack overflow , ", format = Message.Format.MESSAGE_FORMAT)
+   @Message(id = 222281, value = "Core federation upstream {0} policy ref {1} are too self referential, avoiding stack overflow , ", format = Message.Format.MESSAGE_FORMAT)
    void federationAvoidStackOverflowPolicyRef(String upstreamName, String policyRef);
 
    @LogMessage(level = Logger.Level.WARN)
-   @Message(id = 222282, value = "Federation downstream {0} upstream transport configuration ref {1} could not be resolved in federation configuration", format = Message.Format.MESSAGE_FORMAT)
+   @Message(id = 222282, value = "Core federation downstream {0} upstream transport configuration ref {1} could not be resolved in federation configuration", format = Message.Format.MESSAGE_FORMAT)
    void federationCantFindUpstreamConnector(String downstreamName, String upstreamRef);
 
    @LogMessage(level = Logger.Level.INFO)
-   @Message(id = 222283, value = "Federation downstream {0} has been deployed", format = Message.Format.MESSAGE_FORMAT)
+   @Message(id = 222283, value = "Core federation downstream {0} has been deployed", format = Message.Format.MESSAGE_FORMAT)
    void federationDownstreamDeployed(String downstreamName);
 
    @LogMessage(level = Logger.Level.INFO)
-   @Message(id = 222284, value = "Federation downstream {0} has been undeployed", format = Message.Format.MESSAGE_FORMAT)
+   @Message(id = 222284, value = "Core federation downstream {0} has been undeployed", format = Message.Format.MESSAGE_FORMAT)
    void federationDownstreamUnDeployed(String downstreamName);
 
    @LogMessage(level = Logger.Level.WARN)
@@ -1669,7 +1669,7 @@ public interface ActiveMQServerLogger extends BasicLogger {
    void emptyAddressFile(String addressFile, String directory);
 
    @LogMessage(level = Logger.Level.WARN)
-   @Message(id = 222286, value = "Error executing {0} federation plugin method.",
+   @Message(id = 222286, value = "Error executing {0} Core federation plugin method.",
       format = Message.Format.MESSAGE_FORMAT)
    void federationPluginExecutionError(@Cause Throwable e, String pluginMethod);
 
@@ -1751,7 +1751,7 @@ public interface ActiveMQServerLogger extends BasicLogger {
    void failedToLoadPreparedTX(@Cause Throwable e, String message);
 
    @LogMessage(level = Logger.Level.WARN)
-   @Message(id = 222305, value = "Error federating message {0}.",
+   @Message(id = 222305, value = "Error during Core federation of message {0}.",
       format = Message.Format.MESSAGE_FORMAT)
    void federationDispatchError(@Cause Throwable e, String message);
 
@@ -2187,4 +2187,20 @@ public interface ActiveMQServerLogger extends BasicLogger {
    @Message(id = 224144, value = "The topology of the cluster connection {0} doesn't include all th expected members. "
        + "Check the discovery group or the static connectors of the cluster connection if the topology is correct: {1} / {2}", format = Message.Format.MESSAGE_FORMAT)
    void incompleteClusterTopology(String clusterConnection, Topology topology, String topologyMembers);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(id = 224158, value = "Unable to process Core federation downstream request from {0}. User is not authenticated. Closing connection.", format = Message.Format.MESSAGE_FORMAT)
+   void federationDownstreamUnauthenticated(String remoteAddress);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(id = 224159, value = "Unable to process Core federation downstream request from {0}. User {1} is not authorized. Closing connection.", format = Message.Format.MESSAGE_FORMAT)
+   void federationDownstreamUnauthorized(String remoteAddress, String user);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(id = 224160, value = "Core federation downstream {0} has been deployed. Request sent by user {1} from {2}.", format = Message.Format.MESSAGE_FORMAT)
+   void federationDownstreamDeployedFromRemoteUser(String name, String userFromSubject, String remoteAddress);
+
+   @LogMessage(level = Logger.Level.INFO)
+   @Message(id = 224161, value = "Connection from {0} closed. Undeployed Core federation {1}.", format = Message.Format.MESSAGE_FORMAT)
+   void federationDownstreamConnectionClosed(String remoteAddress, String name);
 }

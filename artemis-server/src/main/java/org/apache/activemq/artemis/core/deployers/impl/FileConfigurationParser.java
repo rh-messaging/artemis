@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.activemq.artemis.ArtemisConstants;
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
@@ -556,6 +557,13 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
          Element mfNode = (Element) brNodes.item(i);
 
          parseBridgeConfiguration(mfNode, config);
+      }
+
+      NodeList federations = e.getElementsByTagName("federations");
+
+      for (int i = 0; i < federations.getLength(); i++) {
+         Element fedNode = (Element) federations.item(i);
+         parseFederationsConfiguration(fedNode, config);
       }
 
       NodeList fedNodes = e.getElementsByTagName("federation");
@@ -2162,6 +2170,16 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
       }
 
       mainConfig.getBridgeConfigurations().add(config);
+   }
+
+   private void parseFederationsConfiguration(final Element fedNode, final Configuration mainConfig) throws Exception {
+      String roles = fedNode.getAttribute("downstream-authorization");
+      if (!roles.isEmpty()) {
+         Stream.of(roles.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .forEach(mainConfig::addFederationDownstreamAuthorization);
+      }
    }
 
    private void parseFederationConfiguration(final Element fedNode, final Configuration mainConfig) throws Exception {

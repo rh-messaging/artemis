@@ -29,6 +29,7 @@ import org.apache.activemq.artemis.protocol.amqp.sasl.SASLResult;
 import org.apache.activemq.artemis.spi.core.protocol.AbstractRemotingConnection;
 import org.apache.activemq.artemis.spi.core.remoting.Connection;
 import org.apache.qpid.proton.amqp.transport.ErrorCondition;
+import org.jboss.logging.Logger;
 
 import javax.security.auth.Subject;
 
@@ -36,6 +37,8 @@ import javax.security.auth.Subject;
  * This is a Server's Connection representation used by ActiveMQ Artemis.
  */
 public class ActiveMQProtonRemotingConnection extends AbstractRemotingConnection {
+
+   private static final Logger logger = Logger.getLogger(ActiveMQProtonRemotingConnection.class);
 
    private final AMQPConnectionContext amqpConnection;
 
@@ -89,6 +92,28 @@ public class ActiveMQProtonRemotingConnection extends AbstractRemotingConnection
       callClosingListeners();
 
       internalClose();
+   }
+
+   @Override
+   public void close() {
+      if (destroyed) {
+         return;
+      }
+
+      destroyed = true;
+
+      if (logger.isDebugEnabled()) {
+         try {
+            logger.debug("Connection regular close. amqpConnection.getHandler().getConnection().getRemoteState() = " + amqpConnection.getHandler().getConnection().getRemoteState() + ", remoteIP=" + amqpConnection.getConnectionCallback().getTransportConnection().getRemoteAddress());
+         } catch (Throwable e) { // just to avoid a possible NPE from the debug statement itself
+            logger.debug(e.getMessage(), e);
+         }
+      }
+
+      amqpConnection.runNow(() -> {
+         callClosingListeners();
+         internalClose();
+      });
    }
 
    @Override

@@ -254,8 +254,7 @@ to the `downstream` broker to have it create an `upstream` connection back to th
 this is being able to configure everything for federation on one broker in some cases to make it easier, such
 as a hub and spoke topology
 
-All of the same configuration options apply to to `downstream` as does `upstream` with the exception of one
-extra configuration flag that needs to be set:
+All of the same configuration options apply to to `downstream` as does `upstream` with two exceptions:
 
   The `transport-connector-ref` is an element pointing to a
   `connector` elements defined elsewhere. This ref is used to tell the downstream broker
@@ -265,8 +264,14 @@ extra configuration flag that needs to be set:
   the server connection parameters (host, port etc). For more information about what connectors are and
   how to configure them, please see [Configuring the
   Transport](configuring-transports.md).
+  
+  The `downstream-authorization` is an attribute on the `federations` element that is set on the _downstream_ broker so that it can properly authorize incoming federation requests.
+  It is a comma-delimited list of roles which are authorized to deploy federation on this broker.
+  The broker sending the federation command must use credentials for a user that is in one of the roles listed here.
+  
+  If this is not defined then the broker will not process incoming federation commands.
 
-Sample Downstream Address Federation setup:
+Sample Downstream Address Federation setup on the upstream broker:
 
 ```xml
 
@@ -317,4 +322,11 @@ Sample Downstream Address Federation setup:
    </federation>
 </federations>
 
+```
+
+Sample Downstream Federation setup on the downstream broker:
+
+```xml
+<!-- the "federation_username" configured on the upstream broker must be in this role -->
+<federations downstream-authorization="federation_role" />
 ```

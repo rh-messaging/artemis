@@ -385,6 +385,11 @@ public final class StompConnection implements RemotingConnection {
    }
 
    @Override
+   public void close() {
+      fail(new ActiveMQException());
+   }
+
+   @Override
    public Future asyncFail(ActiveMQException me) {
 
       FutureTask<Void> task = new FutureTask(() -> {

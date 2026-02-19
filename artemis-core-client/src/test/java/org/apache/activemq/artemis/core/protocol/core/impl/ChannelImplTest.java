@@ -327,6 +327,11 @@ public class ChannelImplTest {
       }
 
       @Override
+      public void close() {
+
+      }
+
+      @Override
       public void destroy() {
 
       }

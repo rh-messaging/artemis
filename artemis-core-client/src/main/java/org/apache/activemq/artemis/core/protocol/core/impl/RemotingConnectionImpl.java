@@ -229,6 +229,19 @@ public class RemotingConnectionImpl extends AbstractRemotingConnection implement
    }
 
    @Override
+   public void close() {
+      try {
+         transportConnection.forceClose();
+      } catch (Throwable e) {
+         ActiveMQClientLogger.LOGGER.failedForceClose(e);
+      }
+
+      callClosingListeners();
+
+      internalClose();
+   }
+
+   @Override
    public void destroy() {
       synchronized (failLock) {
          if (destroyed) {
