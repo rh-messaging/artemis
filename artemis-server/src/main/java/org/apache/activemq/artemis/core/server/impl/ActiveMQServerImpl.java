@@ -3398,9 +3398,9 @@ public class ActiveMQServerImpl implements ActiveMQServer {
 
       federationManager.deploy();
 
-      connectionRouterManager = new ConnectionRouterManager(configuration, this, scheduledPool);
+      connectionRouterManager = new ConnectionRouterManager(this, scheduledPool);
 
-      connectionRouterManager.deploy();
+      connectionRouterManager.deploy(configuration);
 
       remotingService = new RemotingServiceImpl(clusterManager, configuration, this, managementService, scheduledPool, protocolManagerFactories, executorFactory.getExecutor(), serviceRegistry);
 
@@ -4836,6 +4836,9 @@ public class ActiveMQServerImpl implements ActiveMQServer {
          }
 
          recoverStoredConnectors();
+
+         ActiveMQServerLogger.LOGGER.reloadingConfiguration("connection routers");
+         connectionRouterManager.update(configuration);
 
          ActiveMQServerLogger.LOGGER.reloadingConfiguration("protocol services");
          updateProtocolServices();

@@ -539,6 +539,9 @@ Below lists the effects of adding, deleting and updating of an element/attribute
 ==== `<acceptors>`
 Adding, updating and removing an `<acceptor>` is supported, updating or removing an `<acceptor>` results in the closure of all connections that were accepted previously. Added or updated acceptors are automatically started during the configuration reload process unless the `auto-start` option is set to false.
 
+==== `<connection-routers>`
+Adding, updating and removing an `<connection-router>` is supported, updating or removing an `<connection-router>` results in the stop of the existing connection router and re-adding a new instance if updated.
+
 === `<jms>` _(Deprecated)_
 
 === `<queues>` _(Deprecated)_

@@ -52,6 +52,7 @@ import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.api.core.management.AcceptorControl;
+import org.apache.activemq.artemis.api.core.management.ConnectionRouterControl;
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
 import org.apache.activemq.artemis.core.postoffice.Binding;
@@ -67,6 +68,7 @@ import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.core.server.management.ManagementService;
 import org.apache.activemq.artemis.core.server.reload.ReloadManager;
+import org.apache.activemq.artemis.core.server.routing.ConnectionRouter;
 import org.apache.activemq.artemis.core.settings.impl.AddressFullMessagePolicy;
 import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
@@ -1589,7 +1591,7 @@ public class RedeployTest extends ActiveMQTestBase {
          assertEquals("61616", acceptor.getParams().get(TransportConstants.PORT_PROP_NAME));
          assertNull(acceptor.getParams().get(TransportConstants.AUTO_START));
 
-         final AcceptorControl acceptorControl = (AcceptorControl) managementService.getAcceptorControl("artemis");
+         final AcceptorControl acceptorControl = managementService.getAcceptorControl("artemis");
 
          assertNotNull(acceptorControl);
          assertTrue(acceptorControl.isStarted());
@@ -1860,6 +1862,305 @@ public class RedeployTest extends ActiveMQTestBase {
             }
             return false;
          }, 5000, 100);
+      } finally {
+         embeddedActiveMQ.stop();
+      }
+   }
+
+   @Test
+   public void testRedeployNewConnectionRouterAndRemovePreviousRouter() throws Exception {
+      Path brokerXML = getTestDirfile().toPath().resolve("broker.xml");
+      URL url1 = RedeployTest.class.getClassLoader().getResource("reload-connection-router.xml");
+      URL url2 = RedeployTest.class.getClassLoader().getResource("reload-connection-router-updated.xml");
+      Files.copy(url1.openStream(), brokerXML);
+
+      final String expectedRouter = "simple-local";
+      final String expectedRouterAfterUpdate = "simple-local-with-transformer";
+
+      final MBeanServer mBeanServer = MBeanServerFactory.createMBeanServer();
+      runAfter(() -> MBeanServerFactory.releaseMBeanServer(mBeanServer));
+
+      EmbeddedActiveMQ embeddedActiveMQ = new EmbeddedActiveMQ();
+      embeddedActiveMQ.setConfigResourcePath(brokerXML.toUri().toString());
+      embeddedActiveMQ.setMbeanServer(mBeanServer);
+      embeddedActiveMQ.start();
+
+      final ReusableLatch latch = new ReusableLatch(1);
+      final Runnable tick = latch::countDown;
+      final ManagementService managementService = embeddedActiveMQ.getActiveMQServer().getManagementService();
+
+      embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+
+      try {
+         latch.await(10, TimeUnit.SECONDS);
+
+         final ConnectionRouterControl routerControl = managementService.getConnectionRouterControl(expectedRouter);
+
+         assertNotNull(routerControl);
+         assertNull(managementService.getConnectionRouterControl(expectedRouterAfterUpdate));
+
+         Files.copy(url2.openStream(), brokerXML, StandardCopyOption.REPLACE_EXISTING);
+         brokerXML.toFile().setLastModified(System.currentTimeMillis() + 1000);
+         latch.setCount(1);
+         embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+         latch.await(10, TimeUnit.SECONDS);
+
+         final ConnectionRouterControl routerControlUpdated = managementService.getConnectionRouterControl(expectedRouterAfterUpdate);
+
+         assertNotNull(routerControlUpdated);
+         assertNull(managementService.getConnectionRouterControl(expectedRouter));
+
+         final ConnectionRouter router = embeddedActiveMQ.getActiveMQServer().getConnectionRouterManager().getRouter(expectedRouterAfterUpdate);
+
+         assertNotNull(router);
+         assertEquals("CLIENT_ID", router.getKey().toString());
+         assertEquals("CONSISTENT_HASH_MODULO", router.getPolicy().getName());
+         assertTrue(router.isStarted());
+      } finally {
+         embeddedActiveMQ.stop();
+      }
+   }
+
+   @Test
+   public void testDeployNewConnectionRouterFromBrokerProperties() throws Exception {
+      Path brokerXML = getTestDirfile().toPath().resolve("broker.xml");
+      URL url1 = RedeployTest.class.getClassLoader().getResource("reload-acceptor.xml");
+      Path brokerProperties = getTestDirfile().toPath().resolve("broker.properties");
+      Files.copy(url1.openStream(), brokerXML);
+
+      final MBeanServer mBeanServer = MBeanServerFactory.createMBeanServer();
+      runAfter(() -> MBeanServerFactory.releaseMBeanServer(mBeanServer));
+
+      final String expectedRouter = "simple-local";
+      final Properties properties = new ConfigurationImpl.InsertionOrderedProperties();
+
+      Writer propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                          StandardOpenOption.CREATE,
+                                                                          StandardOpenOption.TRUNCATE_EXISTING);
+      try {
+         properties.store(propertiesWriter, null);
+      } finally {
+         propertiesWriter.flush();
+         propertiesWriter.close();
+      }
+
+      EmbeddedActiveMQ embeddedActiveMQ = new EmbeddedActiveMQ();
+      embeddedActiveMQ.setPropertiesResourcePath(brokerProperties.toString());
+      embeddedActiveMQ.setConfigResourcePath(brokerXML.toUri().toString());
+      embeddedActiveMQ.setMbeanServer(mBeanServer);
+      embeddedActiveMQ.start();
+
+      final ReusableLatch latch = new ReusableLatch(1);
+      final Runnable tick = latch::countDown;
+      final ManagementService managementService = embeddedActiveMQ.getActiveMQServer().getManagementService();
+
+      embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+
+      try {
+         latch.await(10, TimeUnit.SECONDS);
+
+         assertTrue(managementService.getConnectionRouterControls().isEmpty());
+
+         // Update the broker properties file with a new connection router, it should appear in the
+         // management service after the reload of properties.
+         properties.clear();
+         properties.put("connectionRouters.simple-local.keyFilter", "^[^.]+");
+         properties.put("connectionRouters.simple-local.keyType", "CLIENT_ID");
+         properties.put("connectionRouters.simple-local.localTargetFilter", "DEFAULT");
+         properties.put("connectionRouters.simple-local.name=simple-local", "local");
+
+         propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                      StandardOpenOption.TRUNCATE_EXISTING);
+         try {
+            properties.store(propertiesWriter, null);
+         } finally {
+            propertiesWriter.flush();
+            propertiesWriter.close();
+         }
+
+         latch.setCount(1);
+         embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+         latch.await(10, TimeUnit.SECONDS);
+
+         assertFalse(managementService.getConnectionRouterControls().isEmpty());
+         assertNotNull(managementService.getConnectionRouterControl(expectedRouter));
+
+         final ConnectionRouterControl control = managementService.getConnectionRouterControl(expectedRouter);
+
+         assertEquals("DEFAULT", control.getLocalTargetFilter());
+         assertEquals("^[^.]+", control.getTargetKeyFilter());
+
+         final ConnectionRouter router = embeddedActiveMQ.getActiveMQServer().getConnectionRouterManager().getRouter(expectedRouter);
+
+         assertEquals("CLIENT_ID", router.getKey().toString());
+         assertTrue(router.isStarted());
+      } finally {
+         embeddedActiveMQ.stop();
+      }
+   }
+
+   @Test
+   public void testUpdateExistingConnectionRouterFromBrokerProperties() throws Exception {
+      Path brokerXML = getTestDirfile().toPath().resolve("broker.xml");
+      URL url1 = RedeployTest.class.getClassLoader().getResource("reload-acceptor.xml");
+      Path brokerProperties = getTestDirfile().toPath().resolve("broker.properties");
+      Files.copy(url1.openStream(), brokerXML);
+
+      final MBeanServer mBeanServer = MBeanServerFactory.createMBeanServer();
+      runAfter(() -> MBeanServerFactory.releaseMBeanServer(mBeanServer));
+
+      final String expectedRouter = "simple-local";
+      final Properties properties = new ConfigurationImpl.InsertionOrderedProperties();
+
+      Writer propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                          StandardOpenOption.CREATE,
+                                                                          StandardOpenOption.TRUNCATE_EXISTING);
+
+      properties.put("connectionRouters.simple-local.keyFilter", "^[^.]+");
+      properties.put("connectionRouters.simple-local.keyType", "CLIENT_ID");
+      properties.put("connectionRouters.simple-local.localTargetFilter", "DEFAULT");
+      properties.put("connectionRouters.simple-local.name=simple-local", "local");
+
+      try {
+         properties.store(propertiesWriter, null);
+      } finally {
+         propertiesWriter.flush();
+         propertiesWriter.close();
+      }
+
+      EmbeddedActiveMQ embeddedActiveMQ = new EmbeddedActiveMQ();
+      embeddedActiveMQ.setPropertiesResourcePath(brokerProperties.toString());
+      embeddedActiveMQ.setConfigResourcePath(brokerXML.toUri().toString());
+      embeddedActiveMQ.setMbeanServer(mBeanServer);
+      embeddedActiveMQ.start();
+
+      final ReusableLatch latch = new ReusableLatch(1);
+      final Runnable tick = latch::countDown;
+      final ManagementService managementService = embeddedActiveMQ.getActiveMQServer().getManagementService();
+
+      embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+
+      try {
+         latch.await(10, TimeUnit.SECONDS);
+
+         assertFalse(managementService.getConnectionRouterControls().isEmpty());
+         assertNotNull(managementService.getConnectionRouterControl(expectedRouter));
+
+         final ConnectionRouterControl control = managementService.getConnectionRouterControl(expectedRouter);
+
+         assertEquals("DEFAULT", control.getLocalTargetFilter());
+         assertEquals("^[^.]+", control.getTargetKeyFilter());
+
+         final ConnectionRouter router = embeddedActiveMQ.getActiveMQServer().getConnectionRouterManager().getRouter(expectedRouter);
+
+         assertEquals("CLIENT_ID", router.getKey().toString());
+         assertTrue(router.isStarted());
+
+         // Update the broker properties file with a new connection router, it should appear in the
+         // management service after the reload of properties.
+         properties.clear();
+         properties.put("connectionRouters.simple-local.keyFilter", "^[^.]+");
+         properties.put("connectionRouters.simple-local.keyType", "SNI_HOST");
+         properties.put("connectionRouters.simple-local.localTargetFilter", "DEFAULT");
+         properties.put("connectionRouters.simple-local.name=simple-local", "local");
+
+         propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                      StandardOpenOption.TRUNCATE_EXISTING);
+         try {
+            properties.store(propertiesWriter, null);
+         } finally {
+            propertiesWriter.flush();
+            propertiesWriter.close();
+         }
+
+         latch.setCount(1);
+         embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+         latch.await(10, TimeUnit.SECONDS);
+
+         assertFalse(managementService.getConnectionRouterControls().isEmpty());
+         assertNotNull(managementService.getConnectionRouterControl(expectedRouter));
+
+         final ConnectionRouterControl updatedControl = managementService.getConnectionRouterControl(expectedRouter);
+
+         assertEquals("DEFAULT", updatedControl.getLocalTargetFilter());
+         assertEquals("^[^.]+", updatedControl.getTargetKeyFilter());
+
+         final ConnectionRouter updatedRouter = embeddedActiveMQ.getActiveMQServer().getConnectionRouterManager().getRouter(expectedRouter);
+
+         assertEquals("SNI_HOST", updatedRouter.getKey().toString());
+         assertTrue(updatedRouter.isStarted());
+      } finally {
+         embeddedActiveMQ.stop();
+      }
+   }
+
+   @Test
+   public void testRemoveConnectionRouterFromBrokerPropertiesUpdate() throws Exception {
+      Path brokerXML = getTestDirfile().toPath().resolve("broker.xml");
+      URL url1 = RedeployTest.class.getClassLoader().getResource("reload-acceptor.xml");
+      Path brokerProperties = getTestDirfile().toPath().resolve("broker.properties");
+      Files.copy(url1.openStream(), brokerXML);
+
+      final MBeanServer mBeanServer = MBeanServerFactory.createMBeanServer();
+      runAfter(() -> MBeanServerFactory.releaseMBeanServer(mBeanServer));
+
+      final String expectedRouter = "simple-local";
+      final Properties properties = new ConfigurationImpl.InsertionOrderedProperties();
+
+      Writer propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                          StandardOpenOption.CREATE,
+                                                                          StandardOpenOption.TRUNCATE_EXISTING);
+
+      properties.put("connectionRouters.simple-local.keyFilter", "^[^.]+");
+      properties.put("connectionRouters.simple-local.keyType", "CLIENT_ID");
+      properties.put("connectionRouters.simple-local.localTargetFilter", "DEFAULT");
+      properties.put("connectionRouters.simple-local.name=simple-local", "local");
+
+      try {
+         properties.store(propertiesWriter, null);
+      } finally {
+         propertiesWriter.flush();
+         propertiesWriter.close();
+      }
+
+      EmbeddedActiveMQ embeddedActiveMQ = new EmbeddedActiveMQ();
+      embeddedActiveMQ.setPropertiesResourcePath(brokerProperties.toString());
+      embeddedActiveMQ.setConfigResourcePath(brokerXML.toUri().toString());
+      embeddedActiveMQ.setMbeanServer(mBeanServer);
+      embeddedActiveMQ.start();
+
+      final ReusableLatch latch = new ReusableLatch(1);
+      final Runnable tick = latch::countDown;
+      final ManagementService managementService = embeddedActiveMQ.getActiveMQServer().getManagementService();
+
+      embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+
+      try {
+         latch.await(10, TimeUnit.SECONDS);
+
+         assertFalse(managementService.getConnectionRouterControls().isEmpty());
+         assertNotNull(managementService.getConnectionRouterControl(expectedRouter));
+
+         // Update the broker properties file with and remove the connection router.
+         properties.clear();
+
+         propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                      StandardOpenOption.TRUNCATE_EXISTING);
+         try {
+            properties.store(propertiesWriter, null);
+         } finally {
+            propertiesWriter.flush();
+            propertiesWriter.close();
+         }
+
+         latch.setCount(1);
+         embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+         latch.await(10, TimeUnit.SECONDS);
+
+         assertNull(managementService.getConnectionRouterControl(expectedRouter));
+         assertTrue(managementService.getConnectionRouterControls().isEmpty());
+
+         assertNull(embeddedActiveMQ.getActiveMQServer().getConnectionRouterManager().getRouter(expectedRouter));
       } finally {
          embeddedActiveMQ.stop();
       }
