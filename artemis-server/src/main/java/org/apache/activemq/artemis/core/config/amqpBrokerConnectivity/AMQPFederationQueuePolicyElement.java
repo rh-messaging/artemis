@@ -156,12 +156,14 @@ public final class AMQPFederationQueuePolicyElement implements Serializable {
              Objects.equals(name, other.name) &&
              Objects.equals(includes, other.includes) &&
              Objects.equals(excludes, other.excludes) &&
+             Objects.equals(properties, other.properties) &&
+             Objects.equals(transformerConfig, other.transformerConfig) &&
              Objects.equals(priorityAdjustment, other.priorityAdjustment);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(name, includeFederated, includes, excludes, priorityAdjustment);
+      return Objects.hash(name, includeFederated, includes, excludes, properties, priorityAdjustment, transformerConfig);
    }
 
    // We are required to implement a named match type so that we can perform this configuration

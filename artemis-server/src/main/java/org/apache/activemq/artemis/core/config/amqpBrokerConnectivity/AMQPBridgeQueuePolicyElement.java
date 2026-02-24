@@ -210,18 +210,22 @@ public final class AMQPBridgeQueuePolicyElement implements Serializable {
       return Objects.equals(name, other.name) &&
              Objects.equals(includes, other.includes) &&
              Objects.equals(excludes, other.excludes) &&
+             Objects.equals(properties, other.properties) &&
+             Objects.equals(transformerConfig, other.transformerConfig) &&
              Objects.equals(priority, other.priority) &&
              Objects.equals(priorityAdjustment, other.priorityAdjustment) &&
              Objects.equals(filter, other.filter) &&
              Objects.equals(remoteAddress, other.remoteAddress) &&
              Objects.equals(remoteAddressPrefix, other.remoteAddressPrefix) &&
+             Objects.equals(remoteAddressSuffix, other.remoteAddressSuffix) &&
              Arrays.equals(remoteTerminusCapabilities, other.remoteTerminusCapabilities);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(name, includes, excludes, priority, priorityAdjustment, filter, remoteAddress,
-                          remoteAddressPrefix, Arrays.hashCode(remoteTerminusCapabilities));
+      return Objects.hash(name, includes, excludes, properties, priority, priorityAdjustment, filter, remoteAddress,
+                          remoteAddressPrefix, remoteAddressSuffix, Arrays.hashCode(remoteTerminusCapabilities),
+                          transformerConfig);
    }
 
    // We are required to implement a named match type so that we can perform this configuration

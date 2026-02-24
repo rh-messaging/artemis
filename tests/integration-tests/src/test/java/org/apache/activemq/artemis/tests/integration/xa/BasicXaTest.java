@@ -304,6 +304,7 @@ public class BasicXaTest extends ActiveMQTestBase {
 
       clientSession.end(xid2, XAResource.TMSUCCESS);
       Wait.assertEquals(1L, () -> testQueue.getAcknowledgeAttempts(), 2000, 20);
+      consumer.close();
       clientSession.rollback(xid2);
       Wait.assertEquals(0L, () -> testQueue.getMessagesAcknowledged(), 2000, 20);
       Wait.assertEquals(0L, () -> testQueue.getDeliveringCount(), 5000, 20);

@@ -127,12 +127,16 @@ class AMQPBridgeConfigurationReloadTest extends AmqpClientTestSupport {
             final AMQPBridgeBrokerConnectionElement updatedElement = new AMQPBridgeBrokerConnectionElement();
             updatedElement.setName(getTestName());
             updatedElement.addBridgeFromAddressPolicy(updatedReceiveFromAddress);
+            updatedElement.addProperty(ADDRESS_RECEIVER_IDLE_TIMEOUT, 0);
 
-            amqpConnection.getConnectionElements().clear();
-            amqpConnection.addElement(updatedElement); // This should be equivalent to replacing the previous instance.
+            final AMQPBrokerConnectConfiguration amqpConnectionUpdated =
+               new AMQPBrokerConnectConfiguration(getTestName(), "tcp://" + remoteURI.getHost() + ":" + remoteURI.getPort());
+            amqpConnectionUpdated.setReconnectAttempts(0);// No reconnects
+            amqpConnectionUpdated.addElement(updatedElement);
+            amqpConnectionUpdated.parseURI();
 
             server.getConfiguration().getAMQPConnection().clear();
-            server.getConfiguration().addAMQPConnection(amqpConnection);
+            server.getConfiguration().addAMQPConnection(amqpConnectionUpdated);
 
             protocolFactory.updateProtocolServices(server, Collections.emptyList());
 

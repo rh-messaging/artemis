@@ -220,10 +220,12 @@ public final class AMQPBridgeAddressPolicyElement implements Serializable {
       return Objects.equals(name, other.name) &&
              Objects.equals(includes, other.includes) &&
              Objects.equals(excludes, other.excludes) &&
+             Objects.equals(properties, other.properties) &&
              Objects.equals(priority, other.priority) &&
              Objects.equals(includeDivertBindings, other.includeDivertBindings) &&
              Objects.equals(useDurableSubscriptions, other.useDurableSubscriptions) &&
              Objects.equals(filter, other.filter) &&
+             Objects.equals(transformerConfig, other.transformerConfig) &&
              Objects.equals(remoteAddress, other.remoteAddress) &&
              Objects.equals(remoteAddressPrefix, other.remoteAddressPrefix) &&
              Objects.equals(remoteAddressSuffix, other.remoteAddressSuffix) &&
@@ -232,8 +234,8 @@ public final class AMQPBridgeAddressPolicyElement implements Serializable {
 
    @Override
    public int hashCode() {
-      return Objects.hash(name, includes, excludes, filter, priority, remoteAddress, remoteAddressPrefix,
-                          remoteAddressSuffix, includeDivertBindings, useDurableSubscriptions,
+      return Objects.hash(name, includes, excludes, properties, filter, priority, remoteAddress, remoteAddressPrefix,
+                          remoteAddressSuffix, includeDivertBindings, useDurableSubscriptions, transformerConfig,
                           Arrays.hashCode(remoteTerminusCapabilities));
    }
 

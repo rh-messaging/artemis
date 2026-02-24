@@ -169,16 +169,23 @@ public class AMQPFederationConfigurationReloadTest extends AmqpClientTestSupport
             updatedReceiveFromAddress.setAutoDelete(true);
             updatedReceiveFromAddress.setAutoDeleteDelay(10_000L);
             updatedReceiveFromAddress.setAutoDeleteMessageCount(-1L);
+            updatedReceiveFromAddress.addProperty(ADDRESS_RECEIVER_IDLE_TIMEOUT, 2);
 
             final AMQPFederatedBrokerConnectionElement updatedElement = new AMQPFederatedBrokerConnectionElement();
             updatedElement.setName(getTestName());
             updatedElement.addLocalAddressPolicy(updatedReceiveFromAddress);
 
-            amqpConnection.getConnectionElements().clear();
-            amqpConnection.addElement(updatedElement); // This should be equivalent to replacing the previous instance.
+            final AMQPBrokerConnectConfiguration amqpUpdatedConnection =
+               new AMQPBrokerConnectConfiguration(getTestName(), "tcp://" + remoteURI.getHost() + ":" + remoteURI.getPort());
+            amqpUpdatedConnection.setReconnectAttempts(0);// No reconnects
+            amqpUpdatedConnection.addElement(element);
+            amqpUpdatedConnection.parseURI();
+
+            amqpUpdatedConnection.getConnectionElements().clear();
+            amqpUpdatedConnection.addElement(updatedElement); // This should be equivalent to replacing the previous instance.
 
             server.getConfiguration().getAMQPConnection().clear();
-            server.getConfiguration().addAMQPConnection(amqpConnection);
+            server.getConfiguration().addAMQPConnection(amqpUpdatedConnection);
 
             protocolFactory.updateProtocolServices(server, Collections.emptyList());
 

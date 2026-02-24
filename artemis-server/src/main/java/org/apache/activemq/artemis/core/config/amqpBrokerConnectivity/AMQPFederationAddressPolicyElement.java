@@ -185,15 +185,19 @@ public final class AMQPFederationAddressPolicyElement implements Serializable {
       return Objects.equals(name, other.name) &&
              Objects.equals(includes, other.includes) &&
              Objects.equals(excludes, other.excludes) &&
+             Objects.equals(properties, other.properties) &&
              Objects.equals(autoDelete, other.autoDelete) &&
              Objects.equals(autoDeleteDelay, other.autoDeleteDelay) &&
              Objects.equals(autoDeleteMessageCount, other.autoDeleteMessageCount) &&
+             Objects.equals(enableDivertBindings, other.enableDivertBindings) &&
+             Objects.equals(transformerConfig, other.transformerConfig) &&
              maxHops == other.maxHops;
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(name, includes, excludes, autoDelete, autoDeleteDelay, autoDeleteMessageCount, maxHops);
+      return Objects.hash(name, includes, excludes, properties, autoDelete, autoDeleteDelay,
+                          autoDeleteMessageCount, maxHops, enableDivertBindings, transformerConfig);
    }
 
    // We are required to implement a named match type so that we can perform this configuration

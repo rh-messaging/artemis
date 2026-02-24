@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,10 @@ import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.api.core.management.AcceptorControl;
 import org.apache.activemq.artemis.api.core.management.ConnectionRouterControl;
 import org.apache.activemq.artemis.core.config.Configuration;
+import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectConfiguration;
+import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectionElement;
+import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPFederatedBrokerConnectionElement;
+import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPFederationQueuePolicyElement;
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
 import org.apache.activemq.artemis.core.postoffice.Binding;
 import org.apache.activemq.artemis.core.postoffice.QueueBinding;
@@ -62,6 +67,7 @@ import org.apache.activemq.artemis.core.postoffice.impl.LocalQueueBinding;
 import org.apache.activemq.artemis.core.remoting.impl.netty.TransportConstants;
 import org.apache.activemq.artemis.core.security.CheckType;
 import org.apache.activemq.artemis.core.security.Role;
+import org.apache.activemq.artemis.core.server.BrokerConnection;
 import org.apache.activemq.artemis.core.server.cluster.impl.MessageLoadBalancingType;
 import org.apache.activemq.artemis.core.server.cluster.impl.RemoteQueueBindingImpl;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
@@ -73,6 +79,7 @@ import org.apache.activemq.artemis.core.settings.impl.AddressFullMessagePolicy;
 import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.jms.client.ActiveMQDestination;
+import org.apache.activemq.artemis.protocol.amqp.connect.AMQPBrokerConnection;
 import org.apache.activemq.artemis.tests.unit.core.postoffice.impl.fakes.FakeQueue;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
 import org.apache.activemq.artemis.tests.util.Wait;
@@ -2161,6 +2168,148 @@ public class RedeployTest extends ActiveMQTestBase {
          assertTrue(managementService.getConnectionRouterControls().isEmpty());
 
          assertNull(embeddedActiveMQ.getActiveMQServer().getConnectionRouterManager().getRouter(expectedRouter));
+      } finally {
+         embeddedActiveMQ.stop();
+      }
+   }
+
+   @Test
+   public void testUpdateFederationPolicyInBrokerPropertiesRedeploysNewBrokerConnection() throws Exception {
+      Path brokerXML = getTestDirfile().toPath().resolve("broker.xml");
+      URL url1 = RedeployTest.class.getClassLoader().getResource("reload-acceptor.xml");
+      Path brokerProperties = getTestDirfile().toPath().resolve("broker.properties");
+      Files.copy(url1.openStream(), brokerXML);
+
+      final Properties properties = new ConfigurationImpl.InsertionOrderedProperties();
+
+      properties.put("AMQPConnections.federation-example-server.uri", "tcp://localhost:5770");
+      properties.put("AMQPConnections.federation-example-server.autostart", "true");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.type", "FEDERATION");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.includeFederated", "false");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.includes.tracking.addressMatch", "#");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.includes.tracking.queueMatch", "tracking");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.name", "queue-federation-from-server-2");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.properties.amqpCredits", "0");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.properties.amqpPullConsumerCredits", "1");
+      properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.name", "federation-example-server");
+      properties.put("AMQPConnections.federation-example-server.name", "federation-example-server");
+      properties.put("AMQPConnections.federation-example-server.reconnectAttempts", "-1");
+      properties.put("AMQPConnections.federation-example-server.retryInterval", "1000");
+      properties.put("AMQPConnections.federation-example-server.transportConfigurations.federation-example-server.name", "federation-example-server");
+      properties.put("AMQPConnections.federation-example-server.transportConfigurations.federation-example-server.params.port", "5770");
+      properties.put("AMQPConnections.federation-example-server.transportConfigurations.federation-example-server.params.host", "localhost");
+
+      Writer propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                          StandardOpenOption.CREATE,
+                                                                          StandardOpenOption.TRUNCATE_EXISTING);
+      try {
+         properties.store(propertiesWriter, null);
+      } finally {
+         propertiesWriter.flush();
+         propertiesWriter.close();
+      }
+
+      final MBeanServer mBeanServer = MBeanServerFactory.createMBeanServer();
+      runAfter(() -> MBeanServerFactory.releaseMBeanServer(mBeanServer));
+
+      EmbeddedActiveMQ embeddedActiveMQ = new EmbeddedActiveMQ();
+      embeddedActiveMQ.setPropertiesResourcePath(brokerProperties.toString());
+      embeddedActiveMQ.setConfigResourcePath(brokerXML.toUri().toString());
+      embeddedActiveMQ.setMbeanServer(mBeanServer);
+      embeddedActiveMQ.start();
+
+      final ReusableLatch latch = new ReusableLatch(1);
+      final Runnable tick = latch::countDown;
+
+      embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+
+      try {
+         latch.await(10, TimeUnit.SECONDS);
+
+         final TransportConfiguration acceptor = findInConfiguration("artemis", embeddedActiveMQ.getActiveMQServer().getConfiguration());
+
+         assertNotNull(acceptor);
+         assertEquals("127.0.0.1", acceptor.getParams().get(TransportConstants.HOST_PROP_NAME));
+         assertEquals("61616", acceptor.getParams().get(TransportConstants.PORT_PROP_NAME));
+         assertNull(acceptor.getParams().get(TransportConstants.AUTO_START));
+
+         final Collection<BrokerConnection> connections = embeddedActiveMQ.getActiveMQServer().getBrokerConnections();
+
+         assertFalse(connections.isEmpty());
+         assertEquals(1, connections.size());
+
+         final AMQPBrokerConnection amqpConnection = (AMQPBrokerConnection) connections.iterator().next();
+
+         assertEquals("federation-example-server", amqpConnection.getName());
+
+         final AMQPBrokerConnectConfiguration configuration = amqpConnection.getConfiguration();
+         final List<AMQPBrokerConnectionElement> federations = configuration.getFederations();
+
+         assertEquals(1, federations.size());
+
+         final AMQPFederatedBrokerConnectionElement federation = (AMQPFederatedBrokerConnectionElement) federations.get(0);
+         final Set<AMQPFederationQueuePolicyElement> policies = federation.getLocalQueuePolicies();
+
+         assertEquals(1, policies.size());
+
+         final AMQPFederationQueuePolicyElement element = policies.iterator().next();
+
+         assertEquals("1", element.getProperties().get("amqpPullConsumerCredits"));
+
+         properties.clear();
+         properties.put("AMQPConnections.federation-example-server.uri", "tcp://localhost:5770");
+         properties.put("AMQPConnections.federation-example-server.autostart", "true");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.type", "FEDERATION");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.includeFederated", "false");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.includes.tracking.addressMatch", "#");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.includes.tracking.queueMatch", "tracking");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.name", "queue-federation-from-server-2");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.properties.amqpCredits", "0");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.localQueuePolicies.queue-federation-from-server-2.properties.amqpPullConsumerCredits", "10");
+         properties.put("AMQPConnections.federation-example-server.federations.federation-example-server.name", "federation-example-server");
+         properties.put("AMQPConnections.federation-example-server.name", "federation-example-server");
+         properties.put("AMQPConnections.federation-example-server.reconnectAttempts", "-1");
+         properties.put("AMQPConnections.federation-example-server.retryInterval", "1000");
+         properties.put("AMQPConnections.federation-example-server.transportConfigurations.federation-example-server.name", "federation-example-server");
+         properties.put("AMQPConnections.federation-example-server.transportConfigurations.federation-example-server.params.port", "5770");
+         properties.put("AMQPConnections.federation-example-server.transportConfigurations.federation-example-server.params.host", "localhost");
+
+         propertiesWriter = Files.newBufferedWriter(brokerProperties, StandardOpenOption.WRITE,
+                                                                      StandardOpenOption.TRUNCATE_EXISTING);
+
+         try {
+            properties.store(propertiesWriter, null);
+         } finally {
+            propertiesWriter.flush();
+            propertiesWriter.close();
+         }
+
+         latch.setCount(1);
+         embeddedActiveMQ.getActiveMQServer().getReloadManager().setTick(tick);
+         latch.await(10, TimeUnit.SECONDS);
+
+         final Collection<BrokerConnection> updatedConnections = embeddedActiveMQ.getActiveMQServer().getBrokerConnections();
+
+         assertFalse(updatedConnections.isEmpty());
+         assertEquals(1, updatedConnections.size());
+
+         final AMQPBrokerConnection amqpConnectionUpdated = (AMQPBrokerConnection) updatedConnections.iterator().next();
+
+         assertEquals("federation-example-server", amqpConnectionUpdated.getName());
+
+         final AMQPBrokerConnectConfiguration updatedConfiguration = amqpConnectionUpdated.getConfiguration();
+         final List<AMQPBrokerConnectionElement> updatedFederations = updatedConfiguration.getFederations();
+
+         assertEquals(1, updatedFederations.size());
+
+         final AMQPFederatedBrokerConnectionElement updatedFederation = (AMQPFederatedBrokerConnectionElement) updatedFederations.get(0);
+         final Set<AMQPFederationQueuePolicyElement> updatedPolicies = updatedFederation.getLocalQueuePolicies();
+
+         assertEquals(1, updatedPolicies.size());
+
+         final AMQPFederationQueuePolicyElement updatedElement = updatedPolicies.iterator().next();
+
+         assertEquals("10", updatedElement.getProperties().get("amqpPullConsumerCredits"));
       } finally {
          embeddedActiveMQ.stop();
       }
