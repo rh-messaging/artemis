@@ -38,7 +38,6 @@ import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.util.ServerUtil;
 import org.apache.activemq.artemis.utils.Wait;
 import org.apache.activemq.artemis.utils.collections.ConcurrentHashSet;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,12 +111,6 @@ public class OpenWireSharedStoreFailoverSmokeTest extends SmokeTestBase {
       assertTrue(ServerUtil.waitForServerToStartOnPort(61616, null, null, 30000));
 
       backupServer = startServer(SERVER_NAME_BACKUP, 0, 0);
-   }
-
-   @AfterEach
-   @Override
-   public void after() throws Exception {
-      super.after();
    }
 
    @Test
