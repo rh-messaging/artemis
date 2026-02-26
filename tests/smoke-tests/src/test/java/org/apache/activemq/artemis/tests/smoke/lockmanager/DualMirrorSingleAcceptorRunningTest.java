@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class DualMirrorSingleAcceptorRunningTest extends SmokeTestBase {
 
@@ -181,7 +182,6 @@ public class DualMirrorSingleAcceptorRunningTest extends SmokeTestBase {
 
    public void testAlternating(String nameServerA, String nameServerB, File brokerPropertiesA, File brokerPropertiesB) throws Throwable {
       processA = startServer(nameServerA, 0, -1, brokerPropertiesA);
-      waitForXToStart();
       processB = startServer(nameServerB, 0, -1, brokerPropertiesB);
       ConnectionFactory cfX = CFUtil.createConnectionFactory("amqp", "tcp://localhost:61616");
 
@@ -191,11 +191,9 @@ public class DualMirrorSingleAcceptorRunningTest extends SmokeTestBase {
          if (i % 2 == 0) {
             // Even iteration: Server A active, kill Server B
             killServer(processB);
-            waitForXToStart();
          } else {
             // Odd iteration: Server B active, kill Server A
             killServer(processA);
-            waitForXToStart();
          }
 
          // Send messages through the shared acceptor
@@ -219,7 +217,7 @@ public class DualMirrorSingleAcceptorRunningTest extends SmokeTestBase {
    }
 
    private static void sendMessages(ConnectionFactory cfX, int nmessages) throws JMSException {
-      try (Connection connectionX = cfX.createConnection("A", "A")) {
+      try (Connection connectionX = retryUntilIsLive(cfX)) {
          Session sessionX = connectionX.createSession(true, Session.SESSION_TRANSACTED);
          Queue queue = sessionX.createQueue("myQueue");
          MessageProducer producerX = sessionX.createProducer(queue);
@@ -230,8 +228,25 @@ public class DualMirrorSingleAcceptorRunningTest extends SmokeTestBase {
       }
    }
 
+   private static Connection retryUntilIsLive(ConnectionFactory cfX) {
+      final int maxRetry = 1000;
+      for (int i = 0; i < maxRetry; i++) {
+         try {
+            return cfX.createConnection();
+         } catch (Exception ex) {
+            logger.info("Exception during connection, retrying the connection... {} out of {} retries, message = {}", i, maxRetry, ex.getMessage());
+            try {
+               Thread.sleep(500);
+            } catch (Throwable e) {
+            }
+         }
+      }
+      fail("Could not connect after " + maxRetry + " retries");
+      return null; // never happening, fail will throw an exception
+   }
+
    private static void receiveMessages(ConnectionFactory cfX, int nmessages) throws JMSException {
-      try (Connection connectionX = cfX.createConnection("A", "A")) {
+      try (Connection connectionX = retryUntilIsLive(cfX)) {
          connectionX.start();
          Session sessionX = connectionX.createSession(true, Session.SESSION_TRANSACTED);
          Queue queue = sessionX.createQueue("myQueue");
@@ -241,23 +256,6 @@ public class DualMirrorSingleAcceptorRunningTest extends SmokeTestBase {
             assertNotNull(message, "Expected message " + i + " but got null");
          }
          sessionX.commit();
-      }
-   }
-
-   private void waitForXToStart() {
-      for (int i = 0; i < 20; i++) {
-         try {
-            ConnectionFactory factory = CFUtil.createConnectionFactory("AMQP", "tcp://localhost:61616");
-            Connection connection = factory.createConnection();
-            connection.close();
-            return;
-         } catch (Throwable e) {
-            logger.debug(e.getMessage(), e);
-            try {
-               Thread.sleep(500);
-            } catch (Throwable ignored) {
-            }
-         }
       }
    }
 
