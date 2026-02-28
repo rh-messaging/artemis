@@ -32,18 +32,21 @@ import java.util.regex.Pattern;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.ActiveMQSecurityException;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.filter.Filter;
 import org.apache.activemq.artemis.core.postoffice.Binding;
 import org.apache.activemq.artemis.core.postoffice.QueueBinding;
 import org.apache.activemq.artemis.core.postoffice.impl.DivertBinding;
+import org.apache.activemq.artemis.core.security.CheckType;
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.core.server.plugin.ActiveMQServerAddressPlugin;
 import org.apache.activemq.artemis.core.transaction.Transaction;
 import org.apache.activemq.artemis.protocol.amqp.federation.FederationConsumerInfo;
 import org.apache.activemq.artemis.protocol.amqp.federation.FederationReceiveFromAddressPolicy;
+import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolLogger;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
 import org.apache.activemq.artemis.utils.CompositeAddress;
 import org.slf4j.Logger;
@@ -251,6 +254,23 @@ public final class AMQPFederationAddressPolicyManager extends AMQPFederationLoca
                return;
             }
 
+            // Target brokers which have been sent remote federation policies might not have write
+            // access via the logged in user to the address with demand which we are attempting to
+            // federate messages to so instead of creating a receiver that will fail when the remote
+            // routes a message to it we can just omit creating the link in the first place.
+            if (federation.isFederationTarget()) {
+               try {
+                  session.getSessionSPI().check(addressInfo.getName(), CheckType.SEND, federation.getConnectionContext().getSecurityAuth());
+               } catch (ActiveMQSecurityException e) {
+                  ActiveMQAMQPProtocolLogger.LOGGER.federationTargetSkippedAddressFederation(
+                     addressInfo.getName().toString(), "User does not have send permission to configured address.");
+                  return;
+               } catch (Exception ex) {
+                  logger.warn("Caught unknown exception from security check on address:{} send permissions: cannot federate:", addressInfo.getName(), ex);
+                  return;
+               }
+            }
+
             createOrUpdateFederatedAddressConsumerForBinding(addressInfo, queueBinding);
          } else {
             reactIfQueueBindingMatchesAnyDivertTarget(queueBinding);
@@ -287,6 +307,23 @@ public final class AMQPFederationAddressPolicyManager extends AMQPFederationLoca
 
       if (!testIfAddressMatchesPolicy(addressInfo)) {
          return;
+      }
+
+      // Target brokers which have been sent remote federation policies might not have write access
+      // via the logged in user to the address this divert is attached to which means we don't need
+      // to track this divert. Since we don't add the divert to the tracking map future demand on
+      // divert that would otherwise match the address includes won't trigger federation attempts.
+      if (federation.isFederationTarget()) {
+         try {
+            session.getSessionSPI().check(addressInfo.getName(), CheckType.SEND, federation.getConnectionContext().getSecurityAuth());
+         } catch (ActiveMQSecurityException e) {
+            ActiveMQAMQPProtocolLogger.LOGGER.federationTargetSkippedAddressFederation(
+               addressInfo.getName().toString(), "User does not have send permission to configured address.");
+            return;
+         } catch (Exception ex) {
+            logger.warn("Caught unknown exception from security check on address:{} send permissions: cannot federate:", addressInfo.getName(), ex);
+            return;
+         }
       }
 
       // We only need to check if we've never seen the divert before, afterwards we will
@@ -337,15 +374,15 @@ public final class AMQPFederationAddressPolicyManager extends AMQPFederationLoca
 
       final SimpleString queueAddress = queueBinding.getAddress();
 
-      divertsTracking.entrySet().forEach((e) -> {
-         final SimpleString forwardAddress = e.getKey().getDivert().getForwardAddress();
-         final DivertBinding divertBinding = e.getKey();
+      divertsTracking.entrySet().forEach((divert) -> {
+         final SimpleString forwardAddress = divert.getKey().getDivert().getForwardAddress();
+         final DivertBinding divertBinding = divert.getKey();
 
          // Check matched diverts to see if the QueueBinding address matches the address or
          // addresses (composite diverts) of the Divert and if so then we can check if we need
          // to create demand on the source address on the remote if we haven't done so already.
 
-         if (!e.getValue().contains(queueBinding) && isAddressInDivertForwards(queueAddress, forwardAddress)) {
+         if (!divert.getValue().contains(queueBinding) && isAddressInDivertForwards(queueAddress, forwardAddress)) {
             // The plugin can block the demand totally here either based on the divert itself
             // or the queue that's attached to the divert.
             if (isPluginBlockingFederationConsumerCreate(divertBinding.getDivert(), queueBinding.getQueue())) {
@@ -360,7 +397,7 @@ public final class AMQPFederationAddressPolicyManager extends AMQPFederationLoca
 
             // Each divert that forwards to the address the queue is bound to we add demand
             // in the diverts tracker.
-            e.getValue().add(queueBinding);
+            divert.getValue().add(queueBinding);
 
             final AddressInfo addressInfo = server.getPostOffice().getAddressInfo(divertBinding.getAddress());
 

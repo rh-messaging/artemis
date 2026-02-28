@@ -82,4 +82,10 @@ public interface ActiveMQAMQPProtocolLogger {
 
    @LogMessage(id = 111012, value = "Acknowledgement retry failed for {} on address {}, queueID={}", level = LogMessage.Level.WARN)
    void ackRetryFailed(Object ackRetryInformation, Object address, long queueID);
+
+   @LogMessage(id = 111013, value = "AMQP Federation target skipped federation of address {}, reason={}", level = LogMessage.Level.WARN)
+   void federationTargetSkippedAddressFederation(String address, String reason);
+
+   @LogMessage(id = 111014, value = "AMQP Federation target skipped federation of queue {}, reason={}", level = LogMessage.Level.WARN)
+   void federationTargetSkippedQueueFederation(String address, String reason);
 }

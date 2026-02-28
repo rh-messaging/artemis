@@ -28,9 +28,12 @@ import java.util.UUID;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
+import org.apache.activemq.artemis.api.core.ActiveMQSecurityException;
+import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.filter.Filter;
 import org.apache.activemq.artemis.core.postoffice.Binding;
 import org.apache.activemq.artemis.core.postoffice.QueueBinding;
+import org.apache.activemq.artemis.core.security.CheckType;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.ServerConsumer;
 import org.apache.activemq.artemis.core.server.ServerSession;
@@ -41,6 +44,7 @@ import org.apache.activemq.artemis.protocol.amqp.federation.FederationConsumerIn
 import org.apache.activemq.artemis.protocol.amqp.federation.FederationReceiveFromQueuePolicy;
 import org.apache.activemq.artemis.protocol.amqp.proton.AMQPSessionContext;
 import org.apache.activemq.artemis.protocol.amqp.federation.FederationConsumerInfo.Role;
+import org.apache.activemq.artemis.protocol.amqp.logger.ActiveMQAMQPProtocolLogger;
 import org.apache.activemq.artemis.utils.CompositeAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -164,8 +168,9 @@ public final class AMQPFederationQueuePolicyManager extends AMQPFederationLocalP
 
    private void reactIfConsumerMatchesPolicy(ServerConsumer consumer) {
       final String queueName = consumer.getQueue().getName().toString();
+      final SimpleString addressName = consumer.getQueueAddress();
 
-      if (testIfQueueMatchesPolicy(consumer.getQueueAddress().toString(), queueName)) {
+      if (testIfQueueMatchesPolicy(addressName.toString(), queueName)) {
          final boolean federationConsumer = isFederationConsumer(consumer);
 
          // We should ignore federation consumers from remote peers but configuration does allow
@@ -173,6 +178,23 @@ public final class AMQPFederationQueuePolicyManager extends AMQPFederationLocalP
          // moving onto any server plugin checks kick in.
          if (federationConsumer && !policy.isIncludeFederated()) {
             return;
+         }
+
+         // Target brokers which have been sent remote federation policies might not have write
+         // access via the logged in user to the queue with demand which we are attempting to
+         // federate messages to so instead of creating a receiver that will fail when the remote
+         // routes a message to it we can just omit creating the link in the first place.
+         if (federation.isFederationTarget()) {
+            try {
+               session.getSessionSPI().check(addressName, consumer.getQueue().getName(), CheckType.SEND, federation.getConnectionContext().getSecurityAuth());
+            } catch (ActiveMQSecurityException e) {
+               ActiveMQAMQPProtocolLogger.LOGGER.federationTargetSkippedQueueFederation(
+                  queueName, "User does not have send permission to configured queue.");
+               return;
+            } catch (Exception ex) {
+               logger.warn("Caught unknown exception from security check on queue:{} send permissions: cannot federate:", queueName, ex);
+               return;
+            }
          }
 
          logger.trace("Federation Policy matched on consumer for binding: {}", consumer.getBinding());

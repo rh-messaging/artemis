@@ -33,9 +33,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,10 +56,12 @@ import org.apache.activemq.artemis.core.config.TransformerConfiguration;
 import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectConfiguration;
 import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPFederatedBrokerConnectionElement;
 import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPFederationQueuePolicyElement;
+import org.apache.activemq.artemis.core.security.Role;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Divert;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.core.server.transformer.Transformer;
+import org.apache.activemq.artemis.core.settings.HierarchicalRepository;
 import org.apache.activemq.artemis.core.settings.impl.AddressFullMessagePolicy;
 import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 import org.apache.activemq.artemis.protocol.amqp.broker.AMQPMessage;
@@ -67,6 +71,7 @@ import org.apache.activemq.artemis.protocol.amqp.federation.FederationConsumer;
 import org.apache.activemq.artemis.protocol.amqp.federation.FederationConsumerInfo;
 import org.apache.activemq.artemis.protocol.amqp.federation.FederationReceiveFromQueuePolicy;
 import org.apache.activemq.artemis.protocol.amqp.proton.AmqpSupport;
+import org.apache.activemq.artemis.spi.core.security.ActiveMQJAASSecurityManager;
 import org.apache.activemq.artemis.tests.integration.amqp.AmqpClientTestSupport;
 import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.utils.Wait;
@@ -92,6 +97,7 @@ import static org.apache.activemq.artemis.core.config.WildcardConfiguration.DEFA
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConfiguration.DEFAULT_PULL_CREDIT_BATCH_SIZE;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.ADD_QUEUE_POLICY;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.EVENT_TYPE;
+import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_BASE_VALIDATION_ADDRESS;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_CONFIGURATION;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_CONTROL_LINK;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_EVENT_LINK;
@@ -99,6 +105,7 @@ import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPF
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_QUEUE_RECEIVER;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_RECEIVER_PRIORITY;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_V2;
+import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_NAME;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.FEDERATION_VERSION;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.IGNORE_QUEUE_CONSUMER_FILTERS;
 import static org.apache.activemq.artemis.protocol.amqp.connect.federation.AMQPFederationConstants.IGNORE_QUEUE_CONSUMER_PRIORITIES;
@@ -134,6 +141,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Tests for AMQP Broker federation handling of the receive from and send to queue policy configuration handling.
@@ -141,6 +149,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class AMQPFederationQueuePolicyTest extends AmqpClientTestSupport {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+   protected String federationUser = "fed_user";
+   protected String federationPass = "fed_pass";
+
+   protected String demandUser = "demand_user";
+   protected String demandPass = "demand_pass";
 
    @Override
    protected String getConfiguredProtocols() {
@@ -201,8 +215,8 @@ public class AMQPFederationQueuePolicyTest extends AmqpClientTestSupport {
          server.getConfiguration().addAMQPConnection(amqpConnection);
          server.start();
          server.createQueue(QueueConfiguration.of("test").setRoutingType(routingType)
-                                                          .setAddress("test")
-                                                          .setAutoCreated(false));
+                                                         .setAddress("test")
+                                                         .setAutoCreated(false));
 
          peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
          peer.expectAttach().ofReceiver()
@@ -5547,6 +5561,169 @@ public class AMQPFederationQueuePolicyTest extends AmqpClientTestSupport {
       }
    }
 
+   @Test
+   @Timeout(20)
+   public void testRemoteFederationDoesNotCreateLinksForQueuesItCannotWriteTo() throws Exception {
+      final String allowedQueue = getTestName();
+      final String restrictedQueue = getTestName() + "restricted"; // Federation user cannot send here.
+
+      configureSecurity(server, allowedQueue, restrictedQueue);
+      server.start();
+
+      final Collection<Map.Entry<String, String>> includes = new ArrayList<>();
+      includes.add(new AbstractMap.SimpleEntry<>("#", allowedQueue));
+      includes.add(new AbstractMap.SimpleEntry<>("#", restrictedQueue));
+
+      final Map<String, Object> properties = new HashMap<>();
+      properties.put(QUEUE_RECEIVER_IDLE_TIMEOUT, 1);
+
+      final FederationReceiveFromQueuePolicy policy =
+         new FederationReceiveFromQueuePolicy("test-queue-policy",
+                                              true, -2, includes, null, properties, null,
+                                              DEFAULT_WILDCARD_CONFIGURATION);
+
+      try (ProtonTestClient peer = new ProtonTestClient()) {
+         scriptFederationConnectToRemote(peer, federationUser, federationPass, "test");
+         peer.connect("localhost", AMQP_PORT);
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.expectDisposition().withSettled(true).withState().accepted();
+
+         sendQueuePolicyToRemote(peer, policy);
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.expectAttach().ofReceiver()
+                            .withDesiredCapability(FEDERATION_QUEUE_RECEIVER.toString())
+                            .withSource().withAddress(allowedQueue + "::" + allowedQueue)
+                            .and()
+                            .respondInKind(); // Server detected demand based on policy we sent it
+         peer.expectFlow().withLinkCredit(1000);
+         peer.remoteTransfer().withBody().withString("test-message")
+                              .also()
+                              .withDeliveryId(1)
+                              .queue();
+         peer.expectDisposition().withSettled(true).withState().accepted();
+
+         final ConnectionFactory factory = CFUtil.createConnectionFactory("AMQP", "tcp://localhost:" + AMQP_PORT);
+
+         // Demand on the unrestricted queue should generate federation links and move the message
+         try (Connection connection = factory.createConnection(demandUser, demandPass)) {
+            final Session session = connection.createSession(Session.AUTO_ACKNOWLEDGE);
+            final MessageConsumer consumer = session.createConsumer(session.createQueue(allowedQueue));
+
+            connection.start();
+
+            final Message message = consumer.receive(5_000);
+            assertNotNull(message);
+            assertInstanceOf(TextMessage.class, message);
+            assertEquals("test-message", ((TextMessage) message).getText());
+
+            peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+            peer.expectFlow().withLinkCredit(999).withDrain(true)
+                             .respond()
+                             .withLinkCredit(0).withDeliveryCount(1000).withDrain(true);
+            peer.expectDetach(); // demand will be gone and receiver link should close.
+         }
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+         // Demand on the restricted queue should result in no federation links being attempted.
+         try (Connection connection = factory.createConnection(demandUser, demandPass)) {
+            final Session session = connection.createSession(Session.AUTO_ACKNOWLEDGE);
+            final MessageConsumer consumer = session.createConsumer(session.createQueue(restrictedQueue));
+
+            connection.start();
+
+            final Message message = consumer.receiveNoWait();
+            assertNull(message);
+         }
+
+         // This would fail if the server tries creating a federation link since we would
+         // receive unexpected attach frames for the remote federation receiver.
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.expectClose();
+         peer.remoteClose().now();
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.close();
+
+         server.stop();
+      }
+   }
+
+   @Test
+   @Timeout(20)
+   public void testRemoteBrokerFederationReceiverRejectedWhenSecurityRestricted() throws Exception {
+      final String allowedQueue = getTestName();
+      final String restrictedQueue = getTestName() + "restricted"; // Federation user cannot receive here.
+
+      configureSecurity(server, allowedQueue, restrictedQueue);
+      server.start();
+      server.createQueue(QueueConfiguration.of(allowedQueue).setRoutingType(RoutingType.ANYCAST)
+                                                             .setAddress(allowedQueue)
+                                                             .setAutoCreated(false));
+      server.createQueue(QueueConfiguration.of(restrictedQueue).setRoutingType(RoutingType.ANYCAST)
+                                                             .setAddress(restrictedQueue)
+                                                             .setAutoCreated(false));
+
+      final String allowedFQQN = allowedQueue + "::" + allowedQueue;
+      final String restrictedFQQN = restrictedQueue + "::" + restrictedQueue;
+
+      try (ProtonTestClient peer = new ProtonTestClient()) {
+         scriptFederationConnectToRemote(peer, federationUser, federationPass, "test");
+         peer.connect("localhost", AMQP_PORT);
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.expectAttach().ofSender().withName(allowedFQQN)
+                                       .withOfferedCapabilities(FEDERATION_QUEUE_RECEIVER.toString())
+                                       .withSource().withAddress(allowedFQQN);
+
+         // Connect to remote as if an queue had demand and matched our federation policy
+         // This uses the allowed queue so it should attach without issue.
+         peer.remoteAttach().ofReceiver()
+                            .withDesiredCapabilities(FEDERATION_QUEUE_RECEIVER.toString())
+                            .withName(allowedFQQN)
+                            .withSenderSettleModeUnsettled()
+                            .withReceivervSettlesFirst()
+                            .withSource().withDurabilityOfNone()
+                                         .withExpiryPolicyOnLinkDetach()
+                                         .withAddress(allowedFQQN)
+                                         .withCapabilities("queue")
+                                         .and()
+                            .withTarget().and()
+                            .now();
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.expectAttach().ofSender().withName(restrictedFQQN)
+                                       .withOfferedCapabilities(FEDERATION_QUEUE_RECEIVER.toString())
+                                       .withNullSource();
+         peer.expectDetach().withError(AmqpError.UNAUTHORIZED_ACCESS.toString()).respond();
+
+         // Connect to remote as if an queue had demand and matched our federation policy
+         // This uses the restricted queue so it should fail to attach.
+         peer.remoteAttach().ofReceiver()
+                            .withDesiredCapabilities(FEDERATION_QUEUE_RECEIVER.toString())
+                            .withName(restrictedFQQN)
+                            .withSenderSettleModeUnsettled()
+                            .withReceivervSettlesFirst()
+                            .withSource().withDurabilityOfNone()
+                                         .withExpiryPolicyOnLinkDetach()
+                                         .withAddress(restrictedFQQN)
+                                         .withCapabilities("queue")
+                                         .and()
+                            .withTarget().and()
+                            .now();
+
+         peer.expectClose();
+         peer.remoteClose().now();
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+         peer.close();
+
+         server.stop();
+      }
+   }
+
    private static void sendQueueAddedEvent(ProtonTestPeer peer, String address, String queue, int handle, int deliveryId) {
       final Map<String, Object> eventMap = new LinkedHashMap<>();
       eventMap.put(REQUESTED_ADDRESS_NAME, address);
@@ -5652,6 +5829,15 @@ public class AMQPFederationQueuePolicyTest extends AmqpClientTestSupport {
    }
 
    private void scriptFederationConnectToRemote(ProtonTestClient peer, String federationName, int amqpCredits, int amqpLowCredits, boolean eventsSender, boolean eventsReceiver) {
+      scriptFederationConnectToRemote(peer, null, null, federationName, amqpCredits, amqpLowCredits, eventsSender, eventsReceiver);
+   }
+
+   private void scriptFederationConnectToRemote(ProtonTestClient peer, String username, String password, String federationName) {
+      scriptFederationConnectToRemote(peer, username, password, federationName, AmqpSupport.AMQP_CREDITS_DEFAULT, AmqpSupport.AMQP_LOW_CREDITS_DEFAULT, false, false);
+   }
+
+   private void scriptFederationConnectToRemote(ProtonTestClient peer, String user, String password, String federationName, int amqpCredits, int amqpLowCredits, boolean eventsSender, boolean eventsReceiver) {
+
       final String federationControlLinkName = "Federation:control:" + UUID.randomUUID().toString();
 
       final Map<String, Object> federationConfiguration = new HashMap<>();
@@ -5660,8 +5846,14 @@ public class AMQPFederationQueuePolicyTest extends AmqpClientTestSupport {
 
       final Map<String, Object> senderProperties = new HashMap<>();
       senderProperties.put(FEDERATION_CONFIGURATION.toString(), federationConfiguration);
+      senderProperties.put(FEDERATION_NAME.toString(), federationName);
 
-      peer.queueClientSaslAnonymousConnect();
+      if (user == null && password == null) {
+         peer.queueClientSaslAnonymousConnect();
+      } else {
+         peer.queueClientSaslPlainConnect(user, password);
+      }
+
       peer.remoteOpen().queue();
       peer.expectOpen();
       peer.remoteBegin().queue();
@@ -5739,6 +5931,42 @@ public class AMQPFederationQueuePolicyTest extends AmqpClientTestSupport {
                             .also()
                             .withOfferedCapability(FEDERATION_EVENT_LINK.toString());
       }
+   }
+
+   @Override
+   protected void configureBrokerSecurity(ActiveMQServer server) {
+      if (isSecurityEnabled()) {
+         enableSecurity(server);
+      } else {
+         server.getConfiguration().setSecurityEnabled(false);
+      }
+   }
+
+   private void configureSecurity(ActiveMQServer server, String allowedQueue, String restrictedQueue) {
+      ActiveMQJAASSecurityManager securityManager = (ActiveMQJAASSecurityManager) server.getSecurityManager();
+
+      // User additions
+      securityManager.getConfiguration().addUser(federationUser, federationPass);
+      securityManager.getConfiguration().addRole(federationUser, "federate");
+
+      securityManager.getConfiguration().addUser(demandUser, demandPass);
+      securityManager.getConfiguration().addRole(demandUser, "user");
+
+      // Configure roles
+      HierarchicalRepository<Set<Role>> securityRepository = server.getSecurityRepository();
+      Set<Role> value = new HashSet<>();
+      value.add(new Role("federate", true, true, false, false, false, false, true, true, false, false, false, false));
+      value.add(new Role("user", true, true, true, false, false, false, true, true, true, false, false, false));
+
+      Set<Role> restricted = new HashSet<>();
+      restricted.add(new Role("federate", false, false, false, false, false, false, true, true, false, false, false, false));
+      restricted.add(new Role("user", true, true, true, false, false, false, true, true, true, false, false, false));
+
+      securityRepository.addMatch(restrictedQueue, restricted);
+      securityRepository.addMatch(allowedQueue, value);
+      securityRepository.addMatch(FEDERATION_BASE_VALIDATION_ADDRESS, value);
+
+      server.getConfiguration().setSecurityEnabled(true);
    }
 
    private class AMQPTestFederationBrokerPlugin implements ActiveMQServerAMQPFederationPlugin {

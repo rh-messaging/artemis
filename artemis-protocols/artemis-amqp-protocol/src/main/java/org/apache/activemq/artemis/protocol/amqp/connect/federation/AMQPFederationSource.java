@@ -295,6 +295,11 @@ public class AMQPFederationSource extends AMQPFederation {
    }
 
    @Override
+   boolean isFederationSource() {
+      return true;
+   }
+
+   @Override
    void registerFederationManagement() throws Exception {
       AMQPFederationManagementSupport.registerFederationSource(this);
    }

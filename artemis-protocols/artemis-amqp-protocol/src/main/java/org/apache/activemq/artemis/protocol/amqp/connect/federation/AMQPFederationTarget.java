@@ -143,6 +143,11 @@ public class AMQPFederationTarget extends AMQPFederation {
    }
 
    @Override
+   boolean isFederationSource() {
+      return false;
+   }
+
+   @Override
    void registerFederationManagement() throws Exception {
       if (brokerConnection.isManagable()) {
          AMQPFederationManagementSupport.registerFederationTarget(brokerConnection.getNodeId(), brokerConnection.getName(), this);

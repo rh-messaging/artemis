@@ -538,6 +538,18 @@ public abstract class AMQPFederation implements Federation {
    }
 
    /**
+    * {@return true if this is the federation source instance, false if it is the target}
+    */
+   abstract boolean isFederationSource();
+
+   /**
+    * {@return true if this is the federation target instance, false if it is the source}
+    */
+   final boolean isFederationTarget() {
+      return !isFederationSource();
+   }
+
+   /**
     * Error signaling API that must be implemented by the specific federation implementation to handle error when
     * creating a federation resource such as an outgoing receiver link.
     *
