@@ -90,7 +90,7 @@ public class QueueMemoryFloodValidationTest extends SoakTestBase {
       simpleManagement.simpleManagementInt(ResourceNames.QUEUE + QUEUE_NAME, "changeMessagesPriority", "", (int)3);
 
       File logLocation = new File(serverLocation, "log/artemis.log");
-      assertTrue(FileUtil.find(logLocation, l -> l.contains("AMQ224158")), "Expected AMQ224158 warning log message from ActiveMQServerLogger.preventQueueManagementToFloodMemory");
+      assertTrue(FileUtil.find(logLocation, l -> l.contains("AMQ224162")), "Expected AMQ224158 warning log message from ActiveMQServerLogger.preventQueueManagementToFloodMemory");
 
       Wait.assertEquals(MESSAGE_COUNT, () -> simpleManagement.getMessageCountOnQueue(QUEUE_NAME), 5000, 100);
 

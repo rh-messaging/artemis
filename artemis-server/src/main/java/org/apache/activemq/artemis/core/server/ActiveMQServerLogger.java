@@ -999,28 +999,28 @@ public interface ActiveMQServerLogger {
    @LogMessage(id = 222278, value = "Unable to extract GroupSequence from message", level = LogMessage.Level.WARN)
    void unableToExtractGroupSequence(Throwable e);
 
-   @LogMessage(id = 222279, value = "Federation upstream {} policy ref {} could not be resolved in federation configuration", level = LogMessage.Level.WARN)
+   @LogMessage(id = 222279, value = "Core federation upstream {} policy ref {} could not be resolved in configuration", level = LogMessage.Level.WARN)
    void federationCantFindPolicyRef(String upstreamName, String policyRef);
 
-   @LogMessage(id = 222280, value = "Federation upstream {} policy ref {} is of unknown type in federation configuration", level = LogMessage.Level.WARN)
+   @LogMessage(id = 222280, value = "Core federation upstream {} policy ref {} is of unknown type in configuration", level = LogMessage.Level.WARN)
    void federationUnknownPolicyType(String upstreamName, String policyRef);
 
-   @LogMessage(id = 222281, value = "Federation upstream {} policy ref {} are too self referential, avoiding stack overflow , ", level = LogMessage.Level.WARN)
+   @LogMessage(id = 222281, value = "Core federation upstream {} policy ref {} are too self referential, avoiding stack overflow", level = LogMessage.Level.WARN)
    void federationAvoidStackOverflowPolicyRef(String upstreamName, String policyRef);
 
-   @LogMessage(id = 222282, value = "Federation downstream {} upstream transport configuration ref {} could not be resolved in federation configuration", level = LogMessage.Level.WARN)
+   @LogMessage(id = 222282, value = "Core federation downstream {} upstream transport configuration ref {} could not be resolved in configuration", level = LogMessage.Level.WARN)
    void federationCantFindUpstreamConnector(String downstreamName, String upstreamRef);
 
-   @LogMessage(id = 222283, value = "Federation downstream {} has been deployed", level = LogMessage.Level.INFO)
+   @LogMessage(id = 222283, value = "Core federation downstream {} has been deployed", level = LogMessage.Level.INFO)
    void federationDownstreamDeployed(String downstreamName);
 
-   @LogMessage(id = 222284, value = "Federation downstream {} has been undeployed", level = LogMessage.Level.INFO)
+   @LogMessage(id = 222284, value = "Core federation downstream {} has been undeployed", level = LogMessage.Level.INFO)
    void federationDownstreamUnDeployed(String downstreamName);
 
    @LogMessage(id = 222285, value = "File {} at {} is empty. Delete the empty file to stop this message.", level = LogMessage.Level.WARN)
    void emptyAddressFile(String addressFile, String directory);
 
-   @LogMessage(id = 222286, value = "Error executing {} federation plugin method.", level = LogMessage.Level.WARN)
+   @LogMessage(id = 222286, value = "Error executing {} Core federation plugin method.", level = LogMessage.Level.WARN)
    void federationPluginExecutionError(String pluginMethod, Throwable e);
 
    @LogMessage(id = 222287, value = "Error looking up bindings for address {}.", level = LogMessage.Level.WARN)
@@ -1073,7 +1073,7 @@ public interface ActiveMQServerLogger {
    @LogMessage(id = 222304, value = "Unable to load message from journal", level = LogMessage.Level.WARN)
    void unableToLoadMessageFromJournal(Throwable t);
 
-   @LogMessage(id = 222305, value = "Error federating message {}.", level = LogMessage.Level.WARN)
+   @LogMessage(id = 222305, value = "Error during Core federation of message: {}.", level = LogMessage.Level.WARN)
    void federationDispatchError(String message, Throwable e);
 
    @LogMessage(id = 222306, value = "Failed to load prepared TX and it will be rolled back: {}", level = LogMessage.Level.WARN)
@@ -1527,6 +1527,21 @@ public interface ActiveMQServerLogger {
    @LogMessage(id = 224157, value = "At least one of the components failed to start under the lockCoordinator {}. A retry will be executed", level = LogMessage.Level.INFO)
    void retryLockCoordinator(String name);
 
-   @LogMessage(id = 224158, value = "The operation {} on queue {} cannot read more data from paging into memory and will be interrupted.", level = LogMessage.Level.INFO)
+   @LogMessage(id = 224158, value = "Unable to process Core federation downstream request from {}. User is not authenticated. Closing connection.", level = LogMessage.Level.WARN)
+   void federationDownstreamUnauthenticated(String remoteAddress);
+
+   @LogMessage(id = 224159, value = "Unable to process Core federation downstream request from {}. User {} is not authorized. Closing connection.", level = LogMessage.Level.WARN)
+   void federationDownstreamUnauthorized(String remoteAddress, String user);
+
+   @LogMessage(id = 224160, value = "Core federation downstream {} has been deployed. Request sent by user {} from {}.", level = LogMessage.Level.INFO)
+   void federationDownstreamDeployedFromRemoteUser(String name, String userFromSubject, String remoteAddress);
+
+   @LogMessage(id = 224161, value = "Connection from {} closed. Undeployed Core federation {}.", level = LogMessage.Level.INFO)
+   void federationDownstreamConnectionClosed(String remoteAddress, String name);
+
+   @LogMessage(id = 224162, value = "The operation {} on queue {} cannot read more data from paging into memory and will be interrupted.", level = LogMessage.Level.INFO)
    void preventQueueManagementToFloodMemory(String operation, String queue);
+
+   @LogMessage(id = 224163, value = "Failed to clone SHA256 MessageDigest, falling back to getInstance", level = LogMessage.Level.INFO)
+   void sha256CloneNotSupported(CloneNotSupportedException cns);
 }

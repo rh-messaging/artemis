@@ -1303,6 +1303,43 @@ public class ConfigurationImplTest extends AbstractConfigurationTestBase {
    }
 
    @Test
+   public void testParseDownstreamAuthorization() throws Exception {
+      Properties properties = new Properties();
+      properties.put("federationDownstreamAuthorization", "a,b,c,d,e");
+      ConfigurationImpl configuration = new ConfigurationImpl();
+      configuration.parsePrefixedProperties(properties, null);
+      assertEquals(5, configuration.getFederationDownstreamAuthorization().size());
+      assertEquals(List.of("a", "b", "c", "d", "e"), configuration.getFederationDownstreamAuthorization());
+   }
+
+   @Test
+   public void testDownstreamExportImport() throws Exception {
+      ConfigurationImpl configuration = new ConfigurationImpl();
+      configuration.getFederationDownstreamAuthorization().add("a");
+      configuration.getFederationDownstreamAuthorization().add("b");
+      configuration.getFederationDownstreamAuthorization().add("c");
+      configuration.getFederationDownstreamAuthorization().add("d");
+      configuration.getFederationDownstreamAuthorization().add("e");
+      assertEquals(List.of("a", "b", "c", "d", "e"), configuration.getFederationDownstreamAuthorization());
+
+      File outputProperty = new File(getTestDirfile(), "broker.properties");
+      configuration.exportAsProperties(outputProperty);
+
+      ConfigurationImpl outputConfig = new ConfigurationImpl();
+
+      Properties brokerProperties = new Properties();
+      try (FileInputStream is = new FileInputStream(outputProperty)) {
+         BufferedInputStream bis = new BufferedInputStream(is);
+         brokerProperties.load(bis);
+      }
+
+      assertEquals("a,b,c,d,e", brokerProperties.get("federationDownstreamAuthorization"));
+
+      outputConfig.parsePrefixedProperties(brokerProperties, null);
+      assertEquals(List.of("a", "b", "c", "d", "e"), outputConfig.getFederationDownstreamAuthorization());
+   }
+
+   @Test
    public void testExportWithNonPasswordEnc() throws Exception {
       ConfigurationImpl configuration = new ConfigurationImpl();
 

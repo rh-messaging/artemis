@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.apache.activemq.artemis.ArtemisConstants;
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
@@ -670,12 +671,24 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
          }
       }
 
-      NodeList fedNodes = e.getElementsByTagName("federation");
+      // Ensure AMQP federation configuration isn't picked up here by core federation
+      // configuration parsing, any AMQP federation configuration would generate empty
+      // Core federation configurations that would not create active federations.
+      NodeList federations = e.getElementsByTagName("federations");
 
-      for (int i = 0; i < fedNodes.getLength(); i++) {
-         Element fedNode = (Element) fedNodes.item(i);
+      for (int i = 0; i < federations.getLength(); i++) {
+         Element federationElement = (Element) federations.item(i);
 
-         parseFederationConfiguration(fedNode, config);
+         // Handle attributes at the federations level and then add each nested federation.
+         parseFederationsConfiguration(federationElement, config);
+
+         for (int j = 0; j < federationElement.getChildNodes().getLength(); ++j) {
+            Node node = federationElement.getChildNodes().item(j);
+
+            if (node.getNodeName().equalsIgnoreCase("federation")) {
+               parseFederationConfiguration((Element) node, config);
+            }
+         }
       }
 
       NodeList gaNodes = e.getElementsByTagName("grouping-handler");
@@ -2206,6 +2219,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
 
       String uri = e.getAttribute("uri");
 
+      String lockCoordinator = getAttributeValue(e, "lock-coordinator");
       int retryInterval = getAttributeInteger(e, "retry-interval", 5000, GT_ZERO);
       int reconnectAttempts = getAttributeInteger(e, "reconnect-attempts", -1, MINUS_ONE_OR_GT_ZERO);
       String user = getAttributeValue(e, "user");
@@ -2222,7 +2236,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
 
       AMQPBrokerConnectConfiguration config = new AMQPBrokerConnectConfiguration(name, uri);
       config.parseURI();
-      config.setRetryInterval(retryInterval).setReconnectAttempts(reconnectAttempts).setUser(user).setPassword(password).setAutostart(autoStart);
+      config.setRetryInterval(retryInterval).setReconnectAttempts(reconnectAttempts).setUser(user).setPassword(password).setAutostart(autoStart).setLockCoordinator(lockCoordinator);
 
       mainConfig.addAMQPConnection(config);
 
@@ -2758,6 +2772,16 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
       }
 
       mainConfig.getBridgeConfigurations().add(config);
+   }
+
+   private void parseFederationsConfiguration(final Element fedNode, final Configuration mainConfig) throws Exception {
+      String roles = fedNode.getAttribute("downstream-authorization");
+      if (!roles.isEmpty()) {
+         Stream.of(roles.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .forEach(mainConfig::addFederationDownstreamAuthorization);
+      }
    }
 
    private void parseFederationConfiguration(final Element fedNode, final Configuration mainConfig) throws Exception {

@@ -1545,5 +1545,12 @@ public interface Configuration {
    }
 
    Map<String, JaasAppConfiguration> getJaasConfigs();
+
    Configuration setJaasConfigs(Map<String, JaasAppConfiguration> configs);
+
+   List<String> getFederationDownstreamAuthorization();
+
+   void setFederationDownstreamAuthorization(List<String> roles);
+
+   Configuration addFederationDownstreamAuthorization(String role);
 }

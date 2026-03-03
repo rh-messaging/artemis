@@ -250,6 +250,8 @@ public class ConfigurationImpl extends javax.security.auth.login.Configuration i
 
    protected List<FederationConfiguration> federationConfigurations = new ArrayList<>();
 
+   protected List<String> downstreamAuthorization = new ArrayList<>();
+
    @Deprecated
    // this can eventually be replaced with List<QueueConfiguration>, but to keep existing semantics it must stay as is for now
    private List<CoreQueueConfiguration> coreQueueConfigurations = new ArrayList<>();
@@ -3543,6 +3545,22 @@ public class ConfigurationImpl extends javax.security.auth.login.Configuration i
    @Override
    public void addLockCoordinatorConfiguration(LockCoordinatorConfiguration configuration) {
       lockCoordinatorConfigurations.add(configuration);
+   }
+
+   @Override
+   public List<String> getFederationDownstreamAuthorization() {
+      return downstreamAuthorization;
+   }
+
+   @Override
+   public void setFederationDownstreamAuthorization(List<String> roles) {
+      this.downstreamAuthorization = roles;
+   }
+
+   @Override
+   public Configuration addFederationDownstreamAuthorization(String role) {
+      downstreamAuthorization.add(role);
+      return this;
    }
 
    // extend property utils with ability to auto-fill and locate from collections

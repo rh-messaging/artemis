@@ -13,6 +13,20 @@ NOTE: If the upgrade spans multiple versions then the steps from *each* version 
 
 NOTE: Follow the general upgrade procedure outlined in the xref:upgrading.adoc#upgrading-the-broker[Upgrading the Broker]  chapter in addition to any version-specific upgrade instructions outlined here.
 
+== 2.52.0
+
+https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356678[Full release notes]
+
+=== Highlights
+
+* Fix for https://issues.apache.org/jira/browse/ARTEMIS-5928[ARTEMIS-5928].
+
+=== Upgrading from 2.51.0
+
+* Due to https://issues.apache.org/jira/browse/ARTEMIS-5928[ARTEMIS-5928], any broker receiving Core downstream federation requests from another broker (e.g. for xref:federation-address.adoc#configuring-downstream-federation[addresses] or xref:federation-queue.adoc#configuring-downstream-federation[queues]) will reject those requests until the appropriate authorization is configured.
+Authorization is configured in `broker.xml` via the `federations` element using the `downstream-authorization` attribute.
+See the xref:federation-address.adoc#configuring-downstream-federation[downstream address federation] or xref:federation-queue.adoc#configuring-downstream-federation[downstream queue federation] documentation for more details.
+
 == 2.51.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356605[Full release notes]
