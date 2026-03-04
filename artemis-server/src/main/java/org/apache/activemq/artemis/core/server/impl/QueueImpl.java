@@ -2187,7 +2187,6 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
             } finally {
                if (separatePageIterator) {
-                  // close the iterator if not allowed to depage
                   theIterator.close();
                }
             }

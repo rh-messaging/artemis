@@ -64,6 +64,7 @@ image::images/artemis_text_black_small.png[align="center"]
 
 * xref:core-bridges.adoc#core-bridges[Core Bridges]
 * xref:clusters.adoc#clusters[Clustering]
+* xref:lock-coordination.adoc#lock-coordination[High Availability with Mirroring]
 * xref:ha.adoc#high-availability-and-failover[High Availability & Failover]
 ** xref:network-isolation.adoc#network-isolation-split-brain[Network Isolation]
 ** xref:restart-sequence.adoc#restart-sequence[Restart Sequence]

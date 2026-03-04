@@ -587,24 +587,48 @@ git push origin main development <release-version>
 NOTE: The `main` branch CI build does not build Artemis so the release must be available on Maven Central _before_ pushing main or the build will fail.
 The `development` branch will check out the Artemis' `main` branch and build against that or it can be manually triggered and pointed to e.g a release tag.
 
-== Upload Docker Images
+== Upload Container Images
+
+Container images can be built and uploaded using either Docker or Podman.
+
+=== Prerequisites
 
 . If you don't have an account on https://hub.docker.com/ then create one.
+. Ensure you have access to push images to `apache/artemis`. If you don't have access you can request it by creating an INFRA Jira ticket (e.g. https://issues.apache.org/jira/browse/INFRA-27638[INFRA-27638]).
+
+=== Using Docker
+
 . https://docs.docker.com/engine/install/[Install `docker`] in your environment.
 . If you don't already have it, then install the https://github.com/docker/buildx#installing[`buildx` Docker plugin] to support multi-platform builds because `release-docker.sh` will create images for both `linux/amd64` and `linux/arm64`. This, of course, requires the base images from Eclipse Temurin to support these platforms as well (which they do).
-. Ensure you have access to push images to `apache/artemis`. If you don't have access you can request it by creating an INFRA Jira ticket (e.g. https://issues.apache.org/jira/browse/INFRA-24831[INFRA-24831]).
 . Go to the `scripts` directory and run `release-docker.sh` with the proper parameters, e.g.:
 +
 [,console]
 ----
-./release-docker.sh 2.31.0 apache
+./release-docker.sh 2.50.0 apache
 ----
 +
 You can easily perform a test run by using your personal account, e.g.:
 +
 [,console]
 ----
-./release-docker.sh 2.31.0 myUsername
+./release-docker.sh 2.50.0 myUsername
+----
+
+=== Using Podman
+
+. https://podman.io/getting-started/installation[Install `podman`] in your environment.
+. Go to the `scripts` directory and run `release-podman.sh` with the proper parameters, e.g.:
++
+[,console]
+----
+./release-podman.sh 2.50.0 apache
+----
++
+You can easily perform a test run by using your personal account, e.g.:
++
+[,console]
+----
+./release-podman.sh 2.50.0 myUsername
 ----
 
 == Send Announcement Email

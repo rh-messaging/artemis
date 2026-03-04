@@ -20,7 +20,7 @@ set -e
 
 if [ $# -ne 2 ]
   then
-    echo "Please supply version and repository name as parameters, e.g. ./release-docker 2.50.0 apache"
+    echo "Please supply version and repository name as parameters, e.g. ./release-podman 2.50.0 apache"
     exit
 fi
 
@@ -31,8 +31,12 @@ cd ../artemis-docker
 rm -Rf target/
 ./prepare-docker.sh --from-release --artemis-version ${VERSION}
 cd target/artemis/${VERSION}
-docker pull eclipse-temurin:25-jre-alpine
-docker pull eclipse-temurin:25-jre
-docker login
-docker buildx build --platform linux/amd64,linux/arm64 -f ./docker/Dockerfile-alpine-25-jre -t ${REPO}/artemis:${VERSION}-alpine -t ${REPO}/artemis:latest-alpine --push .
-docker buildx build --platform linux/amd64,linux/arm64 -f ./docker/Dockerfile-ubuntu-25-jre -t ${REPO}/artemis:${VERSION} -t ${REPO}/artemis:latest --push .
+podman pull eclipse-temurin:25-jre-alpine
+podman pull eclipse-temurin:25-jre
+podman login
+podman build --platform linux/amd64,linux/arm64 --manifest localhost/artemis:${VERSION}-alpine -f ./docker/Dockerfile-alpine-25-jre .
+podman build --platform linux/amd64,linux/arm64 --manifest localhost/artemis:${VERSION} -f ./docker/Dockerfile-ubuntu-25-jre .
+podman manifest push --all localhost/artemis:${VERSION}-alpine docker://${REPO}/artemis:${VERSION}-alpine
+podman manifest push --all localhost/artemis:${VERSION}-alpine docker://${REPO}/artemis:latest-alpine
+podman manifest push --all localhost/artemis:${VERSION} docker://${REPO}/artemis:${VERSION}
+podman manifest push --all localhost/artemis:${VERSION} docker://${REPO}/artemis:latest
