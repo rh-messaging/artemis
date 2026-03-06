@@ -13,7 +13,7 @@ NOTE: If the upgrade spans multiple versions then the steps from *each* version 
 
 NOTE: Follow the general upgrade procedure outlined in the xref:upgrading.adoc#upgrading-the-broker[Upgrading the Broker]  chapter in addition to any version-specific upgrade instructions outlined here.
 
-== 2.52.0
+== Version 2.52.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356678[Full release notes]
 
@@ -27,7 +27,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 Authorization is configured in `broker.xml` via the `federations` element using the `downstream-authorization` attribute.
 See the xref:federation-address.adoc#configuring-downstream-federation[downstream address federation] or xref:federation-queue.adoc#configuring-downstream-federation[downstream queue federation] documentation for more details.
 
-== 2.51.0
+== Version 2.51.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356605[Full release notes]
 
@@ -37,7 +37,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 ** When you combine this new functionality with Mirroring, it can now be used for High Availability as a better alternative to journal replication
 * https://issues.apache.org/jira/browse/ARTEMIS-5862[CLI command to export broker.properties]
 
-== 2.50.0
+== Version 2.50.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356368[Full release notes]
 
@@ -87,7 +87,7 @@ Idle connection management should be done through xref:connection-ttl.adoc#detec
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-5092[ARTEMIS-5092] all the existing `addSecuritySettings` management methods have been deprecated in favor of the new JSON-based implementation.
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-5843[ARTEMIS-5843] all Docker images use the directory `/opt/artemis` instead of `/opt/activemq-artemis`.
 
-== 2.44.0
+== Version 2.44.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356324[Full release notes]
 
@@ -96,7 +96,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Support for building and running on Java 25. https://issues.apache.org/jira/browse/ARTEMIS-5711[Click here] for more details.
 * Support xref:web-server.adoc#binding[toggling off HTTP/2 support] for the management web server. https://issues.apache.org/jira/browse/ARTEMIS-5723[Click here] for more details.
 
-== 2.43.0
+== Version 2.43.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356053[Full release notes]
 
@@ -154,7 +154,7 @@ Here's examples of old names vs. the new ones.
 +
 See the xref:thread-pooling.adoc[Thread Pooling] documentation for more details.
 
-== 2.42.0
+== Version 2.42.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12355900[Full release notes]
 
@@ -208,7 +208,7 @@ The relevant changes include:
 ** Removing the `ARTEMIS_OOME_DUMP` from the "utility" profiles
 ** Update the order of Windows' profile `JAVA_ARGS` to match those from Linux
 
-== 2.41.0
+== Version 2.41.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12355793[Full release notes]
 
@@ -221,7 +221,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * A handful of paging improvements including additional tests
 * Several dependency upgrades
 
-== 2.40.0
+== Version 2.40.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12355489[Full release notes]
 
@@ -276,7 +276,7 @@ The only app needed for the new web console is `console.war`.
 .. If using Linux or similar this change will be in the `bin/artemis` script.
 .. If using Windows this change will be in `etc/artemis.profile.cmd`.
 
-== 2.39.0
+== Version 2.39.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12355167[Full release notes]
 
@@ -301,7 +301,7 @@ Jetty 12 requires Java 17 so we must also move to Java 17 and drop support for J
 Please note that after upgrading the broker to Java 17 it will be backwards compatible with all previous clients.
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-5153[ARTEMIS-5153] the queues related to AMQP federation events and and controls are now marked as _internal_.
 
-== 2.38.0
+== Version 2.38.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12355013[Full release notes]
 
@@ -335,7 +335,7 @@ Other use-cases will be pushed toward certificate-based security (i.e. mutual TL
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-5085[ARTEMIS-5085] the parameters `retryIntervalMultiplier` and `maxRetryInterval` will now be applied to "initial" connection attempts (i.e. controlled via `initialConnectAttempts`).
 This is to fix a bug where these parameters were incorrectly ignored.
 
-== 2.37.0
+== Version 2.37.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12354977[Full release notes]
 
@@ -351,7 +351,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 The CLI commands other than run will now need to define the environment variables via the `artemis-utility.profile` file and the logging configuration via the `log4j2-utility.properties` file.
 See xref:logging.adoc#logging[logging] for more information.
 
-== 2.36.0
+== Version 2.36.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12354818[Full release notes]
 
@@ -363,7 +363,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Stability improvement for use-cases involving STOMP clients connecting over WebSockets via https://issues.apache.org/jira/browse/[ARTEMIS-3509].
 * Lots of internal "code gardening" improvements for developers to make the code-base simpler and more consistent.
 
-== 2.35.0
+== Version 2.35.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12354784[Full release notes]
 
@@ -373,7 +373,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * https://issues.apache.org/jira/browse/ARTEMIS-4815[json output as an option on ./artemis queue stat --json]
 * https://issues.apache.org/jira/browse/ARTEMIS-4790[The codebase has migrated to JUNIT 5]
 
-== 2.34.0
+== Version 2.34.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12354426[Full release notes]
 
@@ -398,7 +398,7 @@ However, connections will no longer be pooled regardless of the configuration.
 * The CLI operation `./artemis queue stat` has its output improved and updated. If you parsed the previous output in scripts you will see differences in the output.
   ** It is not recommended to parse the output of a CLI Operation. You may use jolokia calls over management instead with proper JSON output.
 
-== 2.33.0
+== Version 2.33.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12354184[Full release notes]
 
@@ -436,7 +436,7 @@ It is a bug for an application to use to use `#` as a wildcard with the OpenWire
 
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-4559[ARTEMIS-4559] folks embedding the broker and also depending on the `artemis-quorum-ri` and/or `artemis-quorum-api` modules and/or using `org.apache.activemq.artemis.core.config.ha.DistributedPrimitiveManagerConfiguration` will need to use `artemis-lockmanager-ri`, `artemis-lockmanager-api`, and `org.apache.activemq.artemis.core.config.ha.DistributedLockManagerConfiguration` respectively. Previously these were marked as "experimental" in the documentation and were changed strictly in name to clarify their use conceptually. Furthermore, the documentation around high availability and network isolation (i.e. split brain) was refactored significantly to be more clear and comprehensive.
 
-== 2.32.0
+== Version 2.32.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12353769[Full release notes]
 
@@ -468,7 +468,7 @@ Configure `defaultMqttSessionExpiryInterval` instead.
 Additionally, references to these elements have also changed in the documentation and in management interfaces.
 Cluster topology information (e.g. returned from the `listNetworkTopology`) will contain both `primary` *and* `live` entries for nodes functioning as primary servers.
 
-== 2.31.2
+== Version 2.31.2
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12353776[Full release notes]
 
@@ -477,7 +477,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug Fix
 
 
-== 2.31.1
+== Version 2.31.1
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12353642[Full release notes]
 
@@ -486,7 +486,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug Fixes and component upgrades
 
 
-== 2.31.0
+== Version 2.31.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12353446[Full release notes]
 
@@ -507,7 +507,7 @@ See https://issues.apache.org/jira/browse/ARTEMIS-4383[ARTEMIS-4383] for more de
 
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-4372[ARTEMIS-4372] and the introduction of the new shell feature when you invoke `./artemis` it will now start the new shell to navigate through the CLI commands rather than just spitting out the `help` text.
 
-== 2.30.0
+== Version 2.30.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12353357[Full release notes]
 
@@ -516,7 +516,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * This is mainly a bug-fix release with a few small improvements and a handful of dependency upgrades.
 See the https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12353357[release notes] for all  the details.
 
-== 2.29.0
+== Version 2.29.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352880&projectId=12315920[Full release notes]
 
@@ -583,7 +583,7 @@ java.lang.IllegalArgumentException: AMQ229247: Invalid address configuration for
 However, this rendered the `transactionTimeout` activation configuration property useless.
 Some existing users rely on this behavior so it has been restored and properly deprecated for future removal.
 
-== 2.28.0
+== Version 2.28.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352523&projectId=12315920[Full release notes]
 
@@ -606,7 +606,7 @@ Before upgrading please ensure all MQTT shared subscriptions are empty.
 When the subscribers reconnect they will get a new subscription queue.
 If they are not empty you can move the messages to the new subscription queue administratively.
 
-== 2.27.1
+== Version 2.27.1
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352610&projectId=12315920[Full release notes]
 
@@ -617,7 +617,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352610&projectI
 * Rollback of massive transactions would take a long time to process
 * Improvements to auto-create and auto-delete queues.
 
-== 2.27.0
+== Version 2.27.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352246&projectId=12315920[Full release notes]
 
@@ -664,7 +664,7 @@ The file used by the "artemis create" CLI command can be downloaded from: https:
 . The old `<instance>/etc/logging.properties` JBoss Logging configuration file should be deleted.
 . Related startup script or profile cleanups are needed: a diff file demonstrating the changes needed since 2.26.0 is available link:02-27-00-scripts-profiles.diff[here] for *nix or link:02-27-00-scripts-profiles-windows.diff[here] for Windows.
 
-== 2.26.0
+== Version 2.26.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352297&projectId=12315920[Full release notes]
 
@@ -700,7 +700,7 @@ to:
 +
 If you used to customize the index page or to add custom content in the `web` folder please refer to the xref:web-server.adoc#embedded-web-server[web-server documentation] for more information on disabling the redirect and enabling the web content.
 
-== 2.25.0
+== Version 2.25.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352143&projectId=12315920[Full release notes]
 
@@ -709,7 +709,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12352143&projectI
 * Improvement on Paging Flow Control
 * Many other bug fixes and improvements
 
-== 2.24.0
+== Version 2.24.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12351822&projectId=12315920[Full release notes]
 
@@ -732,7 +732,7 @@ This will impact use-cases like the following:
 In these kinds of situations the broker will use this assigned (i.e. validated) username for any queues created with the connection.
 In the past the queue's username would have been left blank.
 
-== 2.23.1
+== Version 2.23.1
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12351846&projectId=12315920[Full release notes]
 
@@ -740,7 +740,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12351846&projectI
 
 * https://issues.apache.org/jira/browse/ARTEMIS-3856[ARTEMIS-3856] - Failed to change channel state to ReadyForWriting : java.util.ConcurrentModificationException
 
-== 2.23.0
+== Version 2.23.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12351677[Full release notes].
 
@@ -750,7 +750,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * https://issues.apache.org/jira/browse/ARTEMIS-3700[JakartaEE 10 Support]
 * https://issues.apache.org/jira/browse/ARTEMIS-3848[BugFix: High cpu usage on ReadWrite locks]
 
-== 2.22.0
+== Version 2.22.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12351488[Full release notes].
 
@@ -758,7 +758,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 
 * The default `producer-window-size` on `cluster-connection` was changed to 1MB to mitigate potential OutOfMemoryErrors in environments with with high latency networking.
 
-== 2.21.0
+== Version 2.21.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12351083&projectId=12315920[Full release notes].
 
@@ -797,7 +797,7 @@ If you drop the table then it will be automatically recreated when broker restar
 Many of the protocols have changed, and there's no automated tool to bring legacy configurations up to date so please refer to the  http://jgroups.org/manual5/index.html#protlist[JGroups documentation] for more details on the new configuration.
 You can find example configurations in the https://github.com/belaban/JGroups/tree/master/conf[JGroups repository] (e.g. `tcp.xml` and `udp.xml`).
 
-== 2.20.0
+== Version 2.20.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12350581&projectId=12315920[Full release notes].
 
@@ -805,7 +805,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12350581&projectI
 
 * *Java 11 is now required.*
 
-== 2.19.0
+== Version 2.19.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12350519[Full release notes].
 
@@ -817,7 +817,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * MQTT session state can now be cleaned up automatically to avoid excessive accumulation in situations where client's don't clean up their own sessions.
 * Distribute full Jakarta Messaging 3.0 client in the `lib/client` directory along with a new example of how to use it in `examples/features/standard/queue-jakarta`.
 
-== 2.18.0
+== Version 2.18.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12349689[Full release notes].
 
@@ -868,7 +868,7 @@ curl --user admin:admin --header "Content-Type: application/json" --request POST
 Of course you'll want to adjust the username & password as well as the broker and acceptor names for your environment.
 
 . The "rate" metric for queues was removed from the web console via https://issues.apache.org/jira/browse/ARTEMIS-3397[ARTEMIS-3397].
-This was a follow-up from https://issues.apache.org/jira/browse/ARTEMIS-2909[ARTEMIS-2909] in 2.16.0 (referenced in the <<2-16-0,upgrade instructions below>>).
+This was a follow-up from https://issues.apache.org/jira/browse/ARTEMIS-2909[ARTEMIS-2909] in 2.16.0 (referenced in the <<version-2-16-0,upgrade instructions below>>).
 The "rate" metric mistakenly left visible on the web console after it was removed from the management API.
 . Due to https://issues.apache.org/jira/browse/ARTEMIS-3141[ARTEMIS-3141], https://issues.apache.org/jira/browse/ARTEMIS-3128[ARTEMIS-3128], & https://issues.apache.org/jira/browse/ARTEMIS-3175[ARTEMIS-3175] the data returned for any "list" or "browse" management method which return message data, including those exposed via the web console, will have their return data truncated by default.
 This is done to avoid adverse conditions with large volumes of message data which could potentially negatively impact broker stability.
@@ -876,7 +876,7 @@ The `management-message-attribute-size-limit` address-setting controls this beha
 If you wish to restore the previous (and potentially dangerous behavior) then you can specify `-1` for this.
 It is `256` by default.
 
-== 2.17.0
+== Version 2.17.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12349326[Full release notes].
 
@@ -893,7 +893,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * New management method to create a core bridge using JSON-based configuration input.
 * https://blogs.apache.org/activemq/entry/activemq-artemis-embraces-jakarta-ee[Jakarta Messaging 2.0 & 3.0 artifacts for Jakarta EE 8 & 9 respectively].
 
-== 2.16.0
+== Version 2.16.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12348718[Full release notes].
 
@@ -956,7 +956,7 @@ Of course, one can skip all the tools and just do some simple math to calculate 
 Message counters are the broker's simple way of providing historical information about the queue.
 They provide similar results to the previous solutions, but with less flexibility since they only track data while the broker is up and there's not really any good options for graphing.
 
-== 2.15.0
+== Version 2.15.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12348568[Full release notes].
 
@@ -966,7 +966,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Support pausing dispatch during group rebalance (to avoid potential out-of-order consumption)
 * Socks5h support
 
-== 2.14.0
+== Version 2.14.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12348290[Full release notes].
 
@@ -987,7 +987,7 @@ This has changed in 2.14.0 via ARTEMIS-2797.
 Any value that is not explicitly set in `broker.xml` will be set back to either the static default or the dynamic default configured in the address-settings (e.g. via `default-max-consumers` in this example).
 Therefore, ensure any existing queues have all the needed parameters set in `broker.xml` values before upgrading.
 
-== 2.13.0
+== Version 2.13.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12348088[Full release notes].
 
@@ -1039,7 +1039,7 @@ formatter.AUDIT_PATTERN.properties=pattern
 formatter.AUDIT_PATTERN.pattern=%d [AUDIT](%t) %s%E%n
 ----
 
-== 2.12.0
+== Version 2.12.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12346675[Full release notes].
 
@@ -1058,7 +1058,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Improved logging for errors when starting an `acceptor` to more easily identify the `acceptor` which has the problem.
 * The CLI will now read the `broker.xml` to find the default `connector` URL for commands which require it (e.g. `consumer`, `producer`, etc.)
 
-== 2.11.0
+== Version 2.11.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12346258[Full release notes].
 
@@ -1071,7 +1071,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Add plugin support for federated queues/addresses.
 * Support `com.sun.jndi.ldap.read.timeout` in xref:security.adoc#ldaploginmodule[LDAPLoginModule].
 
-== 2.10.0
+== Version 2.10.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12345602[Full release notes].
 
@@ -1109,7 +1109,7 @@ This needs to be replaced with this:
 %ARTEMIS_HOME%\lib\wildfly-common-1.5.2.Final.jar
 ----
 
-== 2.9.0
+== Version 2.9.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12345527[Full release notes].
 
@@ -1120,7 +1120,7 @@ It included a handful of bug fixes, a few improvements, and one major new featur
 
 * Support xref:metrics.adoc#metrics[exporting metrics].
 
-== 2.8.1
+== Version 2.8.1
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12345432[Full release notes].
 
@@ -1185,7 +1185,7 @@ This needs to be replaced with this:
 ----
 
 
-== 2.8.0
+== Version 2.8.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12345169[Full release notes].
 
@@ -1196,7 +1196,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Support xref:duplicate-detection.adoc#duplicate-message-detection[duplicate detection] for AMQP messages the same as core.
 
 
-== 2.7.0
+== Version 2.7.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12342977[Full release notes].
 
@@ -1222,7 +1222,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Support xref:federation.adoc#federation[federated queues and addresses].
 
 
-== 2.6.4
+== Version 2.6.4
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12344010[Full release notes].
 
@@ -1234,28 +1234,28 @@ This was mainly a bug-fix release with a few improvements a couple notable new f
 * Support reload logging configuration at runtime.
 
 
-== 2.6.3
+== Version 2.6.3
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12343472[Full release notes].
 
 This was mainly a bug-fix release with a few improvements but no substantial new features.
 
 
-== 2.6.2
+== Version 2.6.2
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12343404[Full release notes].
 
 This was a bug-fix release with no substantial new features or improvements.
 
 
-== 2.6.1
+== Version 2.6.1
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12343356[Full release notes].
 
 This was a bug-fix release with no substantial new features or improvements.
 
 
-== 2.6.0
+== Version 2.6.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12342903[Full release notes].
 
@@ -1266,7 +1266,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * New examples showing xref:examples.adoc#openwire[virtual topic mapping] and xref:examples.adoc#exclusive-queue[exclusive queue] features.
 
 
-== 2.5.0
+== Version 2.5.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12342127[Full release notes].
 
@@ -1289,7 +1289,7 @@ This prefix used to be configured automatically behind the scenes when the broke
 See  https://issues.apache.org/jira/browse/ARTEMIS-1644[ARTEMIS-1644] for more details.
 
 
-== 2.4.0
+== Version 2.4.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12341540[Full release notes].
 
@@ -1332,7 +1332,7 @@ If the following is absent and you desire to deploy the web console then add:
 NOTE: the Jolokia REST interface URL will now be at `http://<host>:<port>/console/jolokia`
 
 
-== 2.3.0
+== Version 2.3.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12341247[Full release notes].
 
@@ -1353,7 +1353,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 ----
 
 
-== 2.2.0
+== Version 2.2.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12340541[Full release notes].
 
@@ -1365,8 +1365,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * xref:security.adoc#kerberos-authentication[Client authentication via Kerberos TLS Cipher Suites (RFC 2712)].
 
 
-[discrete]
-== 2.1.0
+== Version 2.1.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12339963[Full release notes].
 
@@ -1378,7 +1377,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * AMQP performance improvements.
 
 
-== 2.0.0
+== Version 2.0.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12338813[Full release notes].
 
@@ -1392,7 +1391,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * xref:persistence.adoc#memory-mapped["MAPPED" journal type] for increased performance in certain use-cases.
 
 
-== 1.5.6
+== Version 1.5.6
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12340547[Full release notes].
 
@@ -1401,7 +1400,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug fixes.
 
 
-== 1.5.5
+== Version 1.5.5
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12339947[Full release notes].
 
@@ -1410,7 +1409,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug fixes.
 
 
-== 1.5.4
+== Version 1.5.4
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12339158[Full release notes].
 
@@ -1420,7 +1419,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug fixes.
 
 
-== 1.5.3
+== Version 1.5.3
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12339575[Full release notes].
 
@@ -1431,7 +1430,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug fixes.
 
 
-== 1.5.2
+== Version 1.5.2
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12338833[Full release notes].
 
@@ -1441,7 +1440,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug fixes.
 
 
-== 1.5.1
+== Version 1.5.1
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12338661[Full release notes].
 
@@ -1451,7 +1450,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Bug fixes.
 
 
-== 1.5.0
+== Version 1.5.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12338118[Full release notes].
 
@@ -1463,7 +1462,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Store user's password in hash form by default.
 
 
-== 1.4.0
+== Version 1.4.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12336052[Full release notes].
 
@@ -1478,7 +1477,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * "Dual authentication" support to authenticate SSL-based and non-SSL-based clients differently.
 
 
-== 1.3.0
+== Version 1.3.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12328978[Full release notes].
 
@@ -1490,7 +1489,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * Support scheduled messages on last-value queue.
 
 
-== 1.2.0
+== Version 1.2.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12333274[Full release notes].
 
@@ -1505,7 +1504,7 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
  ** "Guest"
 
 
-== 1.1.0
+== Version 1.1.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?version=12332642&projectId=12315920[Full release notes].
 
@@ -1520,7 +1519,7 @@ There are new tools to compact the journal and additional improvements to the us
 * Ability to disable server-side message load-balancing.
 
 
-== 1.0.0
+== Version 1.0.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12328953[Full release notes].
 
