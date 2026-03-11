@@ -90,7 +90,7 @@
       <modular.jdk.surefire.arg>--add-modules java.sql,jdk.unsupported </modular.jdk.surefire.arg>
 
       <activemq-artemis-native-version>2.0.0</activemq-artemis-native-version>
-      <artemis-console-version>1.6.0</artemis-console-version>
+      <artemis-console-version>1.7.0</artemis-console-version>
       <karaf.version>4.4.10</karaf.version>
       <pax.exam.version>4.14.0</pax.exam.version>
       <commons.config.version>2.13.0</commons.config.version>
@@ -125,7 +125,7 @@
       <netty.version>4.1.131.Final</netty.version>
       <hdrhistogram.version>2.2.2</hdrhistogram.version>
       <curator.version>5.9.0</curator.version>
-      <zookeeper.version>3.9.4</zookeeper.version>
+      <zookeeper.version>3.9.5</zookeeper.version>
       <woodstox.version>4.4.1</woodstox.version>
       <pem-keystore.version>3.0.0</pem-keystore.version>
 

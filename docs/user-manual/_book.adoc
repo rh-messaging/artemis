@@ -5,6 +5,9 @@ It *aggregates* all chapters into a single document following the same pattern a
 = User Manual
 :doctype: book
 :title-logo-image: images/artemis_text_black_small.png
+:toclevels: 2
+:outlinelevels: 1
+:outline-title: Cover
 {project-version}
 
 //== Overview
