@@ -9,7 +9,10 @@ It *links* to all chapters following the same basic pattern as _book.adoc. These
 image::images/artemis_text_black_small.png[align="center"]
 
 [.text-center]
-*An in-depth manual on all aspects of {project-name-full} {project-version}*
+*User manual*
+
+[.text-center]
+*{project-version}*
 
 == Overview
 * xref:project-info.adoc#general-project-information[General Project Information]
