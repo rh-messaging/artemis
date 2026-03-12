@@ -17,13 +17,71 @@
 
 package org.apache.activemq.artemis.cli.commands;
 
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Scanner;
 
+import org.apache.activemq.artemis.cli.Terminal;
+import org.jline.reader.LineReader;
 import picocli.CommandLine.Option;
 
 public class InputAbstract extends ActionAbstract {
 
-   private Scanner scanner;
+   public interface InputReader {
+      String readLine(String prompt);
+      String readPassword(String prompt);
+   }
+
+   private class ScanReader implements InputReader {
+      ScanReader(InputStream inputStream, PrintStream promptStream) {
+         this.scanner = new Scanner(inputStream);
+         this.promptStream = promptStream;
+      }
+
+      Scanner scanner;
+      PrintStream promptStream;
+
+
+      @Override
+      public String readLine(String prompt) {
+         promptStream.println(prompt);
+         return scanner.nextLine();
+      }
+
+      @Override
+      public String readPassword(String prompt) {
+         promptStream.println(prompt);
+         char[] typedPassword = System.console().readPassword();
+         if (typedPassword == null) {
+            return null;
+         } else {
+            return new String(typedPassword);
+         }
+      }
+   }
+
+
+   private class JLineReader implements InputReader {
+      JLineReader(LineReader reader) {
+         this.reader = reader;
+      }
+
+      public LineReader reader;
+
+      @Override
+      public String readLine(String prompt) {
+         return reader.readLine(Terminal.YELLOW_UNICODE + prompt + ":" + Terminal.CLEAR_UNICODE);
+      }
+
+      @Override
+      public String readPassword(String prompt) {
+         return reader.readLine(Terminal.YELLOW_UNICODE + prompt + ":" + Terminal.CLEAR_UNICODE, '*');
+      }
+   }
+
+
+   InputReader lineReader;
+
 
    private static boolean inputEnabled = false;
 
@@ -101,8 +159,8 @@ public class InputAbstract extends ActionAbstract {
       getActionContext().out.println();
       do {
          getActionContext().out.println(propertyName + ":");
-         getActionContext().out.println(prompt);
-         inputStr = scanner.nextLine();
+         inputStr = lineReader.readLine(prompt);
+
          if (!acceptNull && inputStr.trim().isEmpty()) {
             getActionContext().out.println("Invalid Entry!");
          } else {
@@ -124,16 +182,13 @@ public class InputAbstract extends ActionAbstract {
       getActionContext().out.println();
       do {
          getActionContext().out.println(propertyName + ": is mandatory with this configuration:");
-         getActionContext().out.println(prompt);
-         char[] chars = System.console().readPassword();
+         inputStr = lineReader.readPassword(prompt);
 
          // could be null if the user input something weird like Ctrl-d
-         if (chars == null) {
+         if (inputStr == null) {
             getActionContext().out.println("Invalid Entry!");
             continue;
          }
-
-         inputStr = new String(chars);
 
          if (inputStr.trim().isEmpty()) {
             getActionContext().out.println("Invalid Entry!");
@@ -150,7 +205,11 @@ public class InputAbstract extends ActionAbstract {
    public Object execute(ActionContext context) throws Exception {
       super.execute(context);
 
-      this.scanner = new Scanner(context.in);
+      if (context.lineReader != null) {
+         this.lineReader = new JLineReader(context.lineReader);
+      } else {
+         this.lineReader = new ScanReader(context.in, context.out);
+      }
 
       return null;
    }
