@@ -34,14 +34,14 @@ jobs:
         java: [ 17, 21, 25 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: artemis
 
       # Cache is prepared by the 'checks' jobs below
       - name: Restore Maven Local Repo Cache
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.m2/repository/
@@ -50,7 +50,7 @@ jobs:
             ${{ runner.os }}-mvn-
 
       - name: Install JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: 'temurin'
@@ -64,7 +64,7 @@ jobs:
 
       - name: Archive Test Logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-reports-jdk-${{ matrix.java }}
           path: artemis/**/target/surefire-reports/*
@@ -79,13 +79,13 @@ jobs:
         java: [ 17, 21, 25 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: artemis
 
       - name: Cache Maven Local Repo
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.m2/repository/
@@ -94,13 +94,13 @@ jobs:
             ${{ runner.os }}-mvn-
 
       - name: Install JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: 'temurin'
 
       - name: Checkout Artemis Examples Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ env.EXAMPLES_REPO }}
           ref: ${{ env.EXAMPLES_BRANCH }}
@@ -167,7 +167,7 @@ jobs:
       - name: Additional Cache Priming
         run: |
           cd artemis
-          mvn -s .github/maven-settings.xml clean verify -Prelease -Denforcer.skip -pl "artemis-unit-test-support,org.apache.activemq:artemis-junit-5"
+          mvn -s .github/maven-settings.xml clean verify -Prelease -Denforcer.skip -pl "artemis-unit-test-support,org.apache.artemis:artemis-junit-5"
 
       - name: Clean Up Before Caching
         run: |
