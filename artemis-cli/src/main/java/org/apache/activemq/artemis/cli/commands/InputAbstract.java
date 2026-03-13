@@ -70,12 +70,12 @@ public class InputAbstract extends ActionAbstract {
 
       @Override
       public String readLine(String prompt) {
-         return reader.readLine(Terminal.YELLOW_UNICODE + prompt + ":" + Terminal.CLEAR_UNICODE);
+         return reader.readLine(Terminal.INPUT_COLOR_UNICODE + prompt + ":" + Terminal.CLEAR_UNICODE);
       }
 
       @Override
       public String readPassword(String prompt) {
-         return reader.readLine(Terminal.YELLOW_UNICODE + prompt + ":" + Terminal.CLEAR_UNICODE, '*');
+         return reader.readLine(Terminal.INPUT_COLOR_UNICODE + prompt + ":" + Terminal.CLEAR_UNICODE, '*');
       }
    }
 

@@ -259,7 +259,7 @@ public class StatQueue extends ConnectionAbstract {
          JsonArray topology = simpleManagement.listNetworkTopology();
 
          if (clustered && topology.size() > 1) {
-            context.out.println(Terminal.YELLOW_UNICODE + "*******************************************************************************************************************************");
+            context.out.println(Terminal.INFO_COLOR_UNICODE + "*******************************************************************************************************************************");
             context.out.println(">>> Queue stats on node " + nodeID + ", url=" + brokerURL + Terminal.CLEAR_UNICODE);
             printStats(brokerURL, filter);
 
@@ -271,7 +271,7 @@ public class StatQueue extends ConnectionAbstract {
 
                String url = "tcp://" + node.getString("live");
 
-               context.out.println(Terminal.YELLOW_UNICODE + "*******************************************************************************************************************************");
+               context.out.println(Terminal.INFO_COLOR_UNICODE + "*******************************************************************************************************************************");
                context.out.println(">>> Queue stats on node " + node.getString("nodeID") + ", url=" + url + Terminal.CLEAR_UNICODE);
 
                printStats(url, filter);
@@ -280,7 +280,7 @@ public class StatQueue extends ConnectionAbstract {
             printStats(brokerURL, filter);
             if (topology.size() > 1) {
                context.out.println();
-               context.out.println("Note: Use " + Terminal.RED_UNICODE + "--clustered" + Terminal.CLEAR_UNICODE + " to expand the report to other nodes in the topology.");
+               context.out.println("Note: Use " + Terminal.WARNING_COLOR_UNICODE + "--clustered" + Terminal.CLEAR_UNICODE + " to expand the report to other nodes in the topology.");
                context.out.println();
             }
          }

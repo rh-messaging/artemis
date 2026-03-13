@@ -134,8 +134,8 @@ public class Shell implements Runnable {
                printBanner();
             }
 
-            System.out.println("For a list of commands, type " + org.apache.activemq.artemis.cli.Terminal.RED_UNICODE + "help" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + " or press " + org.apache.activemq.artemis.cli.Terminal.RED_UNICODE + "<TAB>" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + ":");
-            System.out.println("Type " + org.apache.activemq.artemis.cli.Terminal.RED_UNICODE + "exit" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + " or press " + org.apache.activemq.artemis.cli.Terminal.RED_UNICODE + "<CTRL-D>" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + " to leave the session:");
+            System.out.println("For a list of commands, type " + org.apache.activemq.artemis.cli.Terminal.WARNING_COLOR_UNICODE + "help" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + " or press " + org.apache.activemq.artemis.cli.Terminal.WARNING_COLOR_UNICODE + "<TAB>" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + ":");
+            System.out.println("Type " + org.apache.activemq.artemis.cli.Terminal.WARNING_COLOR_UNICODE + "exit" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + " or press " + org.apache.activemq.artemis.cli.Terminal.WARNING_COLOR_UNICODE + "<CTRL-D>" + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE + " to leave the session:");
 
             // start the shell and process input until the user quits with Ctrl-D
             String line;
@@ -172,7 +172,7 @@ public class Shell implements Runnable {
    }
 
    private static void printBanner() {
-      System.out.print(org.apache.activemq.artemis.cli.Terminal.YELLOW_UNICODE);
+      System.out.print(org.apache.activemq.artemis.cli.Terminal.INFO_COLOR_UNICODE);
       try {
          Artemis.printBanner(System.out);
       } catch (Exception e) {
@@ -202,7 +202,7 @@ public class Shell implements Runnable {
    }
 
    public static void setPrompt(String prompt) {
-      PROMPT.set(org.apache.activemq.artemis.cli.Terminal.YELLOW_UNICODE + prompt + " > " + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE);
+      PROMPT.set(org.apache.activemq.artemis.cli.Terminal.INPUT_COLOR_UNICODE + prompt + " > " + org.apache.activemq.artemis.cli.Terminal.CLEAR_UNICODE);
    }
 
 }
