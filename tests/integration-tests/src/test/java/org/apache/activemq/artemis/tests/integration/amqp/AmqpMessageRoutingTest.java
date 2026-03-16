@@ -181,7 +181,7 @@ public class AmqpMessageRoutingTest extends JMSClientTestSupport {
    @Test
    @Timeout(60)
    public void testAMQPRouteMessageToJMSOpenWire() throws Throwable {
-      testAMQPRouteMessageToJMS(createOpenWireConnection());
+      testAMQPRouteMessageToJMS(createOpenWireConnection(getBrokerOpenWireJMSConnectionString(), null, null, null, true, false));
    }
 
    @Test

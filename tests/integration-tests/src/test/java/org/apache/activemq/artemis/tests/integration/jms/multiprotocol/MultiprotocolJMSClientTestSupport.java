@@ -477,8 +477,19 @@ public abstract class MultiprotocolJMSClientTestSupport extends ActiveMQTestBase
                                                  String password,
                                                  String clientId,
                                                  boolean start) throws JMSException {
-      ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(connectionString);
+      return createOpenWireConnection(connectionString, username, password, clientId, start, true);
+   }
 
+   protected Connection createOpenWireConnection(String connectionString,
+                                                 String username,
+                                                 String password,
+                                                 String clientId,
+                                                 boolean start,
+                                                 boolean watchAdvisories) throws JMSException {
+      ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(connectionString);
+      if (!watchAdvisories) {
+         factory.setWatchTopicAdvisories(false);
+      }
       Connection connection = trackJMSConnection(factory.createConnection(username, password));
 
       connection.setExceptionListener(exception -> exception.printStackTrace());

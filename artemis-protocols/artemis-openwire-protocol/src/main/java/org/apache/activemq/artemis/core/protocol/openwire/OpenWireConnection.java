@@ -1756,7 +1756,7 @@ public class OpenWireConnection extends AbstractRemotingConnection implements Se
          } catch (Exception e) {
             if (tx != null) {
                tx.markAsRollbackOnly(new ActiveMQException(e.getMessage()));
-            } else if (e instanceof ActiveMQNonExistentQueueException && producerInfo.getDestination() == null) {
+            } else if (e instanceof InvalidDestinationException && producerInfo.getDestination() == null) {
                //Send exception for non transacted anonymous producers using an incorrect destination
                sendException(e);
             }

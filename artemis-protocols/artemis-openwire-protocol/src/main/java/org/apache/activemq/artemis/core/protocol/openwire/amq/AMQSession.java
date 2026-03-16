@@ -38,7 +38,6 @@ import org.apache.activemq.artemis.core.protocol.openwire.OpenWireMessageConvert
 import org.apache.activemq.artemis.core.protocol.openwire.OpenWireProtocolManager;
 import org.apache.activemq.artemis.core.protocol.openwire.util.OpenWireUtil;
 import org.apache.activemq.artemis.core.security.CheckType;
-import org.apache.activemq.artemis.core.server.ActiveMQMessageBundle;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.ServerConsumer;
@@ -180,14 +179,17 @@ public class AMQSession implements SessionCallback {
             }
             isInternalAddress = connection.isSuppressInternalManagementObjects();
          }
+
          if (openWireDest.isQueue()) {
             openWireDest = protocolManager.virtualTopicConsumerToFQQN(openWireDest);
-            SimpleString queueName = SimpleString.of(convertWildcard(openWireDest));
-
-            if (!checkAutoCreateQueue(queueName, openWireDest.isTemporary(), OpenWireUtil.extractFilterStringOrNull(info, openWireDest))) {
-               throw new InvalidDestinationException("Destination doesn't exist: " + queueName);
-            }
          }
+
+         SimpleString queueName = SimpleString.of(convertWildcard(openWireDest));
+
+         boolean temporary = openWireDest.isTemporary() || AdvisorySupport.isAdvisoryTopic(openWireDest);
+
+         checkAutoCreate(queueName, temporary, OpenWireUtil.extractFilterStringOrNull(info, openWireDest), openWireDest.isQueue());
+
          AMQConsumer consumer = new AMQConsumer(this, openWireDest, info, scheduledPool, isInternalAddress);
 
          long nativeID = consumerIDGenerator.generateID();
@@ -198,7 +200,7 @@ public class AMQSession implements SessionCallback {
       return consumersList;
    }
 
-   private boolean checkCachedExistingQueues(final SimpleString address,
+   private void checkCachedExistingQueues(final SimpleString address,
                                              final String physicalName,
                                              final boolean isTemporary) throws Exception {
       String[] existingQueuesCache = this.existingQueuesCache;
@@ -216,26 +218,19 @@ public class AMQSession implements SessionCallback {
       final String existingQueue = existingQueuesCache[index];
       if (existingQueue != null && existingQueue.equals(physicalName)) {
          //if the information is stale (ie no longer valid) it will fail later
-         return true;
+         return;
       }
-      final boolean hasQueue = checkAutoCreateQueue(address, isTemporary);
-      if (hasQueue) {
-         existingQueuesCache[index] = physicalName;
-      }
-      return hasQueue;
+      checkAutoCreate(address, isTemporary, null, true);
+      existingQueuesCache[index] = physicalName;
    }
 
-   private boolean checkAutoCreateQueue(SimpleString queueName, boolean isTemporary) throws Exception {
-      return checkAutoCreateQueue(queueName, isTemporary, null);
-   }
-
-   private boolean checkAutoCreateQueue(SimpleString queueName, boolean isTemporary, String filter) throws Exception {
-
-      boolean hasQueue = true;
-      if (!connection.containsKnownDestination(queueName)) {
-         RoutingType routingTypeToUse = RoutingType.ANYCAST;
-         if (CompositeAddress.isFullyQualified(queueName.toString())) {
-            SimpleString addressToUse = CompositeAddress.extractAddressName(queueName);
+   private void checkAutoCreate(SimpleString destinationName, boolean isTemporary, String filter, boolean isQueue) throws Exception {
+      if (isQueue && connection.containsKnownDestination(destinationName)) {
+         return;
+      } else {
+         RoutingType routingTypeToUse;
+         if (CompositeAddress.isFullyQualified(destinationName.toString())) {
+            SimpleString addressToUse = CompositeAddress.extractAddressName(destinationName);
             AddressInfo addressInfo = server.getAddressInfo(addressToUse);
             if (addressInfo != null) {
                routingTypeToUse = addressInfo.getRoutingType();
@@ -243,18 +238,22 @@ public class AMQSession implements SessionCallback {
                AddressSettings as = server.getAddressSettingsRepository().getMatch(addressToUse.toString());
                routingTypeToUse = as.getDefaultAddressRoutingType();
             }
+         } else if (isQueue) {
+            routingTypeToUse = RoutingType.ANYCAST;
+         } else {
+            routingTypeToUse = RoutingType.MULTICAST;
          }
-         AutoCreateResult autoCreateResult = coreSession.checkAutoCreate(QueueConfiguration.of(queueName)
-                                                                            .setAddress(queueName)
+         AutoCreateResult autoCreateResult = coreSession.checkAutoCreate(QueueConfiguration.of(destinationName)
+                                                                            .setAddress(destinationName)
                                                                             .setRoutingType(routingTypeToUse)
                                                                             .setTemporary(isTemporary)
                                                                             .setFilterString(filter));
          if (autoCreateResult == AutoCreateResult.NOT_FOUND) {
-            throw ActiveMQMessageBundle.BUNDLE.noSuchQueue(queueName);
+            throw new InvalidDestinationException("Destination '" + destinationName + "' doesn't exist and auto-creation is disabled.");
+         } else if (isQueue) {
+            connection.addKnownDestination(destinationName);
          }
-         connection.addKnownDestination(queueName);
       }
-      return hasQueue;
    }
 
    public void start() {

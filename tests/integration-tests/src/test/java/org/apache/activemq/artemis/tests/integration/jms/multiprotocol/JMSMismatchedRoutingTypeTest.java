@@ -44,6 +44,10 @@ public class JMSMismatchedRoutingTypeTest extends MultiprotocolJMSClientTestSupp
    protected final String ANYCAST_ADDRESS = RandomUtil.randomUUIDString();
    protected final String MULTICAST_ADDRESS = RandomUtil.randomUUIDString();
 
+   protected ConnectionSupplier OpenWireConnection = () -> {
+      return createOpenWireConnection(getBrokerOpenWireJMSConnectionString(), null, null, null, true, false);
+   };
+
    @Override
    protected boolean isAutoCreateAddresses() {
       return false;

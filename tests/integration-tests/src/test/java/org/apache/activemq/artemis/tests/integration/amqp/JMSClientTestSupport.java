@@ -259,8 +259,16 @@ public abstract class JMSClientTestSupport extends AmqpClientTestSupport {
       return createOpenWireConnection(getBrokerOpenWireJMSConnectionString(), username, password, null, true);
    }
 
-   private Connection createOpenWireConnection(String connectionString, String username, String password, String clientId, boolean start) throws JMSException {
+   protected Connection createOpenWireConnection(String connectionString, String username, String password, String clientId, boolean start) throws JMSException {
+      return createOpenWireConnection(connectionString, username, password, clientId, start, true);
+   }
+
+   protected Connection createOpenWireConnection(String connectionString, String username, String password, String clientId, boolean start, boolean watchAdvisories) throws JMSException {
       ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(connectionString);
+
+      if (!watchAdvisories) {
+         factory.setWatchTopicAdvisories(false);
+      }
 
       Connection connection = trackJMSConnection(factory.createConnection(username, password));
 

@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.core.config.Configuration;
@@ -125,32 +126,32 @@ public class MessagesExpiredPagingTest extends ActiveMQTestBase {
 
    @Test
    public void testSendReceiveCORELarge() throws Exception {
-      testSendReceive("CORE", 50, 20, 10, 500 * 1024);
+      testSendReceive(CFUtil.createConnectionFactory("CORE", "tcp://localhost:61616"), 50, 20, 10, 500 * 1024);
    }
 
    @Test
    public void testSendReceiveCORE() throws Exception {
-      testSendReceive("CORE", 5000, 1000, 100, 0);
+      testSendReceive(CFUtil.createConnectionFactory("CORE", "tcp://localhost:61616"), 5000, 1000, 100, 0);
    }
 
    @Test
    public void testSendReceiveAMQP() throws Exception {
-      testSendReceive("AMQP", 5000, 1000, 100, 0);
+      testSendReceive(CFUtil.createConnectionFactory("AMQP", "tcp://localhost:61616"), 5000, 1000, 100, 0);
    }
 
    @Test
    public void testSendReceiveAMQPLarge() throws Exception {
-      testSendReceive("AMQP", 50, 20, 10, 500 * 1024);
+      testSendReceive(CFUtil.createConnectionFactory("AMQP", "tcp://localhost:61616"), 50, 20, 10, 500 * 1024);
    }
 
    @Test
    public void testSendReceiveOpenWire() throws Exception {
-      testSendReceive("OPENWIRE", 5000, 1000, 100, 0);
+      ActiveMQConnectionFactory cf = (ActiveMQConnectionFactory) CFUtil.createConnectionFactory("OPENWIRE", "tcp://localhost:61616");
+      cf.setWatchTopicAdvisories(false);
+      testSendReceive(cf, 5000, 1000, 100, 0);
    }
 
-   public void testSendReceive(String protocol, int numberOfMessages, int numberOfMessageSecondWave, int pagingInterval, int bodySize) throws Exception {
-      ConnectionFactory factory = CFUtil.createConnectionFactory(protocol, "tcp://localhost:61616");
-
+   public void testSendReceive(ConnectionFactory factory, int numberOfMessages, int numberOfMessageSecondWave, int pagingInterval, int bodySize) throws Exception {
       String extraBody = "*".repeat(bodySize);
 
       Consumer[] consumers = new Consumer[NUMBER_OF_QUEUES];

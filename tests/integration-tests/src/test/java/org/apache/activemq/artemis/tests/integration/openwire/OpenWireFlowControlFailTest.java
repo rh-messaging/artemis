@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
@@ -63,7 +62,8 @@ public class OpenWireFlowControlFailTest extends OpenWireTestBase {
       server.createQueue(QueueConfiguration.of(addressInfo.getName()).setRoutingType(RoutingType.ANYCAST));
 
       String textBody = " ".repeat(10);
-      ConnectionFactory factory = new ActiveMQConnectionFactory(urlString);
+      ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(urlString);
+      factory.setWatchTopicAdvisories(false);
       int numberOfMessage = 0;
       try (Connection connection = factory.createConnection()) {
          Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -93,6 +93,7 @@ public class OpenWireFlowControlFailTest extends OpenWireTestBase {
       }
 
       factory = new ActiveMQConnectionFactory(urlString);
+      factory.setWatchTopicAdvisories(false);
       try (Connection connection2 = factory.createConnection()) {
          Session session2 = connection2.createSession(false, Session.AUTO_ACKNOWLEDGE);
          javax.jms.Queue queue = session2.createQueue(addressInfo.getName().toString());
