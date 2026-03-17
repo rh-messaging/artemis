@@ -180,7 +180,7 @@ public class BrokerInSyncTest extends AmqpClientTestSupport {
    public void testSingleMessage(String protocol) throws Exception {
       server.setIdentity("Server1");
       {
-         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("connectTowardsServer2", "tcp://localhost:" + AMQP_PORT_2).setReconnectAttempts(3).setRetryInterval(100);
+         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("connectTowardsServer2", "tcp://localhost:" + AMQP_PORT_2).setReconnectAttempts(300).setRetryInterval(100);
          amqpConnection.addElement(new AMQPMirrorBrokerConnectionElement().setDurable(true));
          server.getConfiguration().addAMQPConnection(amqpConnection);
       }
@@ -190,7 +190,7 @@ public class BrokerInSyncTest extends AmqpClientTestSupport {
       server_2.setIdentity("Server2");
 
       {
-         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("connectTowardsServer1", "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(-1).setRetryInterval(100);
+         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("connectTowardsServer1", "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(300).setRetryInterval(100);
          amqpConnection.addElement(new AMQPMirrorBrokerConnectionElement().setDurable(true));
          server_2.getConfiguration().addAMQPConnection(amqpConnection);
       }
@@ -265,8 +265,15 @@ public class BrokerInSyncTest extends AmqpClientTestSupport {
          session1.commit();
       }
 
-      connection1.close();
-      connection2.close();
+      try {
+         connection1.close();
+      } catch (Exception ignored) {
+      }
+
+      try {
+         connection2.close();
+      } catch (Exception ignored) {
+      }
 
       Wait.assertEquals(0L, queueOnServer1::getMessageCount, 5000, 100);
       Wait.assertEquals(0L, queueOnServer2::getMessageCount, 5000, 100);
@@ -344,7 +351,7 @@ public class BrokerInSyncTest extends AmqpClientTestSupport {
       server_2.setIdentity("Server2");
 
       {
-         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("to_1", "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(-1).setRetryInterval(100);
+         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("to_1", "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(300).setRetryInterval(100);
          amqpConnection.addElement(new AMQPMirrorBrokerConnectionElement().setDurable(true));
          server_2.getConfiguration().addAMQPConnection(amqpConnection);
       }
@@ -444,7 +451,7 @@ public class BrokerInSyncTest extends AmqpClientTestSupport {
       server_2.setIdentity("Server2");
 
       {
-         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("to_1", "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(-1).setRetryInterval(100);
+         AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration("to_1", "tcp://localhost:" + AMQP_PORT).setReconnectAttempts(300).setRetryInterval(100);
          amqpConnection.addElement(new AMQPMirrorBrokerConnectionElement().setDurable(true));
          server_2.getConfiguration().addAMQPConnection(amqpConnection);
       }
