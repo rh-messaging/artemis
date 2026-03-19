@@ -290,6 +290,8 @@ public class ActiveMQServerImpl implements ActiveMQServer {
 
    protected volatile ExecutorFactory executorFactory;
 
+   protected volatile Executor transientQueueExecutor;
+
    private volatile ExecutorService ioExecutorPool;
 
    private ReplayManager replayManager;
@@ -1110,7 +1112,9 @@ public class ActiveMQServerImpl implements ActiveMQServer {
       try {
          stop(false, isShutdown);
       } finally {
-         if (isShutdown) networkHealthCheck.stop();
+         if (isShutdown) {
+            networkHealthCheck.stop();
+         }
       }
    }
 
@@ -1394,8 +1398,9 @@ public class ActiveMQServerImpl implements ActiveMQServer {
       // *************************************************************************************************************
 
       final StorageManager storageManager = this.storageManager;
-      if (storageManager != null)
+      if (storageManager != null) {
          storageManager.clearContext();
+      }
 
       //before we stop any components deactivate any callbacks
       callDeActiveCallbacks();
@@ -1501,8 +1506,9 @@ public class ActiveMQServerImpl implements ActiveMQServer {
          shutdownPool(pageExecutorPool);
       }
 
-      if (!scheduledPoolSupplied)
+      if (!scheduledPoolSupplied) {
          scheduledPool = null;
+      }
 
       if (securityStore != null) {
          try {
@@ -1770,6 +1776,11 @@ public class ActiveMQServerImpl implements ActiveMQServer {
    @Override
    public StorageManager getStorageManager() {
       return storageManager;
+   }
+
+   @Override
+   public Executor getTransientQueueExecutor() {
+      return transientQueueExecutor;
    }
 
    @Override
@@ -2605,7 +2616,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
          }
 
          if (mirrorControllerService != null) {
-            mirrorControllerService.deleteQueue(queue.getAddress(), queue.getName());
+            mirrorControllerService.deleteQueue(queue.getAddress(), queue.getName(), queue.getQueueConfiguration());
          }
 
          queue.deleteQueue(removeConsumers);
@@ -3267,6 +3278,8 @@ public class ActiveMQServerImpl implements ActiveMQServer {
       }
       this.executorFactory = new OrderedExecutorFactory(threadPool);
 
+      this.transientQueueExecutor = executorFactory.getExecutor();
+
       if (serviceRegistry.getIOExecutorService() == null) {
          this.ioExecutorPool = new ActiveMQThreadPoolExecutor(0, maxIoThreads, THREAD_POOL_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, getThreadFactory("io"));
       } else {
@@ -3328,8 +3341,9 @@ public class ActiveMQServerImpl implements ActiveMQServer {
     * After optional intermediary steps, this is meant to be followed by {@link #initialisePart2(boolean)}.
     */
    synchronized boolean initialisePart1(boolean scalingDown) throws Exception {
-      if (state == SERVER_STATE.STOPPED)
+      if (state == SERVER_STATE.STOPPED) {
          return false;
+      }
 
 
       ServerStatus.starting(this);
