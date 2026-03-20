@@ -376,6 +376,102 @@ public class AMQPFederationConnectTest extends AmqpClientTestSupport {
 
    @Test
    @Timeout(20)
+   public void testFederationCleanUpControlLinkWhenBrokerConnectionDrops() throws Exception {
+      final String controlLinkAddress = "test-control-address";
+
+      try (ProtonTestServer peer = new ProtonTestServer()) {
+         peer.expectSASLAnonymousConnect("PLAIN", "ANONYMOUS");
+         peer.expectOpen().respond();
+         peer.expectBegin().respond();
+         peer.expectAttach().ofSender()
+                            .withDesiredCapability(FEDERATION_CONTROL_LINK.toString())
+                            .withProperty(FEDERATION_VERSION.toString(), FEDERATION_V2)
+                            .respond()
+                            .withTarget().withAddress(controlLinkAddress)
+                            .and()
+                            .withProperty(FEDERATION_VERSION.toString(), FEDERATION_V1)
+                            .withOfferedCapabilities(FEDERATION_CONTROL_LINK.toString());
+         peer.start();
+
+         final URI remoteURI = peer.getServerURI();
+         logger.info("Connect test started, peer listening on: {}", remoteURI);
+
+         AMQPBrokerConnectConfiguration amqpConnection =
+               new AMQPBrokerConnectConfiguration(getTestName(), "tcp://" + remoteURI.getHost() + ":" + remoteURI.getPort());
+         amqpConnection.setReconnectAttempts(0);// No reconnects
+         amqpConnection.addElement(new AMQPFederatedBrokerConnectionElement(getTestName()));
+         server.getConfiguration().addAMQPConnection(amqpConnection);
+         server.start();
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+         final SimpleString controlLinkName = SimpleString.of(FEDERATION_BASE_VALIDATION_ADDRESS +
+                                                              "." + FEDERATION_CONTROL_LINK_PREFIX +
+                                                              "." + controlLinkAddress);
+
+         Wait.assertNotNull(() -> server.locateQueue(controlLinkName), 2_000, 50);
+
+         peer.close();
+
+         Wait.assertNull(() -> server.locateQueue(controlLinkName), 2_000, 50);
+         Wait.assertFalse(() -> server.addressQuery(controlLinkName).isExists(), 2_000, 50);
+      }
+   }
+
+   @Test
+   @Timeout(20)
+   public void testFederationCleanUpControlLinkWhenBrokerConnectionStopped() throws Exception {
+      final String controlLinkAddress = "test-control-address";
+
+      try (ProtonTestServer peer = new ProtonTestServer()) {
+         peer.expectSASLAnonymousConnect("PLAIN", "ANONYMOUS");
+         peer.expectOpen().respond();
+         peer.expectBegin().respond();
+         peer.expectAttach().ofSender()
+                            .withDesiredCapability(FEDERATION_CONTROL_LINK.toString())
+                            .withProperty(FEDERATION_VERSION.toString(), FEDERATION_V2)
+                            .respond()
+                            .withTarget().withAddress(controlLinkAddress)
+                            .and()
+                            .withProperty(FEDERATION_VERSION.toString(), FEDERATION_V2)
+                            .withOfferedCapabilities(FEDERATION_CONTROL_LINK.toString());
+         peer.start();
+
+         final URI remoteURI = peer.getServerURI();
+         logger.info("Connect test started, peer listening on: {}", remoteURI);
+
+         AMQPBrokerConnectConfiguration amqpConnection =
+               new AMQPBrokerConnectConfiguration(getTestName(), "tcp://" + remoteURI.getHost() + ":" + remoteURI.getPort());
+         amqpConnection.setReconnectAttempts(0);// No reconnects
+         amqpConnection.addElement(new AMQPFederatedBrokerConnectionElement(getTestName()));
+         server.getConfiguration().addAMQPConnection(amqpConnection);
+         server.start();
+
+         peer.waitForScriptToComplete(5, TimeUnit.SECONDS);
+
+         final SimpleString controlLinkName = SimpleString.of(FEDERATION_BASE_VALIDATION_ADDRESS +
+                                                              "." + FEDERATION_CONTROL_LINK_PREFIX +
+                                                              "." + controlLinkAddress);
+
+         Wait.assertNotNull(() -> server.locateQueue(controlLinkName), 2_000, 50);
+
+         server.getBrokerConnections().forEach((connection) -> {
+            try {
+               connection.stop();
+            } catch (Exception e) {
+               fail("Broker connection shutdown should not have thrown an exception");
+            }
+         });
+
+         Wait.assertNull(() -> server.locateQueue(controlLinkName), 2_000, 50);
+         Wait.assertFalse(() -> server.addressQuery(controlLinkName).isExists(), 2_000, 50);
+
+         peer.close();
+      }
+   }
+
+   @Test
+   @Timeout(20)
    public void testFederationCreatesControlLinkAndClosesConnectionIfCapabilityIsAbsent() throws Exception {
       try (ProtonTestServer peer = new ProtonTestServer()) {
          peer.expectSASLAnonymousConnect("PLAIN", "ANONYMOUS");

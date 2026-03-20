@@ -2106,7 +2106,7 @@ public class AMQPFederationServerToServerTest extends AmqpClientTestSupport {
 
       final AMQPBrokerConnectConfiguration amqpConnection =
          new AMQPBrokerConnectConfiguration(getTestName(), "tcp://localhost:" + SERVER_PORT);
-      amqpConnection.setReconnectAttempts(10); // Limit reconnects
+      amqpConnection.setReconnectAttempts(20); // Limit reconnects
       amqpConnection.setRetryInterval(50);
       amqpConnection.addElement(element);
 
@@ -2143,6 +2143,8 @@ public class AMQPFederationServerToServerTest extends AmqpClientTestSupport {
       assertNotNull(received);
       received.reject(); // Terminal outcome should be DLQ'd
 
+      Wait.assertEquals(1L, () -> server.queueQuery(SimpleString.of(getDeadLetterAddress())).getMessageCount(), 5_000, 10);
+
       final ConnectionFactory factoryRemote = new JmsConnectionFactory(
          "amqp://localhost:" + SERVER_PORT_REMOTE + "?jms.prefetchPolicy.all=0");
 
@@ -2155,8 +2157,9 @@ public class AMQPFederationServerToServerTest extends AmqpClientTestSupport {
          final MessageConsumer consumer = sessionR.createConsumer(queue);
 
          Wait.assertTrue(() -> server.queueQuery(SimpleString.of(getDeadLetterAddress())).isExists(), 1_000);
+         Wait.assertEquals(1, () -> server.bindingQuery(SimpleString.of(getDeadLetterAddress())).getQueueNames().size(), 5_000);
          Wait.assertTrue(() -> remoteServer.queueQuery(SimpleString.of(getDeadLetterAddress())).isExists(), 1_000);
-         Wait.assertEquals(1L, () -> remoteServer.queueQuery(SimpleString.of(getDeadLetterAddress())).getMessageCount(), 5_000, 10);
+         Wait.assertEquals(1L, () -> remoteServer.queueQuery(SimpleString.of(getDeadLetterAddress())).getMessageCount(), 5_000);
 
          assertNotNull(consumer.receiveNoWait());
       }

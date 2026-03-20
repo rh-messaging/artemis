@@ -91,6 +91,7 @@ public class AMQPFederationSource extends AMQPFederation {
 
    private volatile AMQPFederationConfiguration configuration;
    private volatile AMQPFederationCapabilities capabilities;
+   private volatile AMQPFederationCommandDispatcher controlLink;
 
    /**
     * Creates a new AMQP Federation instance that will manage the state of a single AMQP broker federation instance
@@ -240,6 +241,14 @@ public class AMQPFederationSource extends AMQPFederation {
          errorCaught.compareAndExchange(null, ex);
       } finally {
          eventProcessor = null;
+      }
+
+      try {
+         controlLink.close(false);
+      } catch (Exception ex) {
+         errorCaught.compareAndExchange(null, ex);
+      } finally {
+         controlLink = null;
       }
 
       connection = null;
@@ -678,9 +687,10 @@ public class AMQPFederationSource extends AMQPFederation {
                      throw new ActiveMQAMQPInternalErrorException("Error while configuring interal session metadata");
                   }
 
-                  final AMQPFederationCommandDispatcher commandLink = new AMQPFederationCommandDispatcher(sender, getServer(), session.getSessionSPI());
+                  controlLink = new AMQPFederationCommandDispatcher(sender, getServer(), session.getSessionSPI());
+
                   final ProtonServerSenderContext senderContext =
-                     new ProtonServerSenderContext(connection, sender, session, session.getSessionSPI(), commandLink);
+                     new ProtonServerSenderContext(connection, sender, session, session.getSessionSPI(), controlLink);
 
                   session.addSender(sender, senderContext);
 
@@ -689,7 +699,7 @@ public class AMQPFederationSource extends AMQPFederation {
 
                   // Setup events sender link to the target if there are any remote policies and
                   // then send those polices to start remote federation.
-                  asyncCreateTargetEventsSender(commandLink);
+                  asyncCreateTargetEventsSender(controlLink);
 
                   // Setup events receiver link from the target if there are any local policies
                   // and then start the policy managers to begin tracking local demand.
