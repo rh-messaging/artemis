@@ -102,7 +102,6 @@
 		<bundle>mvn:org.apache.artemis/artemis-jakarta-client-osgi/${pom.version}</bundle>
 	</feature>
 
-	<!-- Disable Artemis AMQP Client OSGi Feature
 	<feature name="artemis-amqp-client" version="${pom.version}" description="Apache Artemis AMQP Client libraries">
 		<feature>transaction</feature>
 		<feature>netty-core</feature>
@@ -110,14 +109,11 @@
 		<bundle>mvn:org.apache.qpid/proton-j/${proton.version}</bundle>
 		<bundle>mvn:org.apache.qpid/qpid-jms-client/${qpid.jms.version}</bundle>
 	</feature>
-	-->
 
 	<feature name="artemis-amqp" version="${pom.version}" description="Apache Artemis AMQP protocol libraries">
 		<feature>artemis-core</feature>
 		<bundle>mvn:org.apache.qpid/proton-j/${proton.version}</bundle>
-		<!-- Remove QpidJMS Client from AMQP Client OSGi Feature
 		<bundle>mvn:org.apache.qpid/qpid-jms-client/${qpid.jms.version}</bundle>
-		-->
 		<bundle>mvn:org.apache.artemis/artemis-amqp-protocol/${pom.version}</bundle>
 	</feature>
 
@@ -148,14 +144,12 @@
 
 	<feature name="artemis-openwire-client" version="${pom.version}" description="Apache Artemis Openwire Client libraries">
 		<feature>transaction</feature>
-		<!-- The activemq-client-5.11 dependency is JMS 1.1 -->
-		<bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-jms_1.1_spec/1.1.1</bundle>
+		<bundle dependency="true">mvn:jakarta.jms/jakarta.jms-api/${jakarta.jms-api.version}</bundle>
 		<bundle dependency="true">mvn:org.fusesource.hawtbuf/hawtbuf/${hawtbuff.version}</bundle>
 		<bundle>mvn:jakarta.ejb/jakarta.ejb-api/${jakarta.ejb-api.version}</bundle>
 		<bundle>mvn:jakarta.transaction/jakarta.transaction-api/${jakarta.transaction-api.version}</bundle>
 		<bundle>mvn:jakarta.management.j2ee/jakarta.management.j2ee-api/${jakarta.management.j2ee-api.version}</bundle>
-		<!-- The activemq-client-5.11 dependency requires wrap protocol because it is non OSGi dependency -->
-		<bundle>wrap:mvn:org.apache.activemq/activemq-client/${activemq5-version}</bundle>
+		<bundle>mvn:org.apache.activemq/activemq-client/${activemq5-version}</bundle>
 	</feature>
 
 </features>
