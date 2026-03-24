@@ -59,6 +59,7 @@ import org.apache.activemq.artemis.protocol.amqp.sasl.AnonymousServerSASL;
 import org.apache.activemq.artemis.protocol.amqp.sasl.ClientSASLFactory;
 import org.apache.activemq.artemis.protocol.amqp.sasl.PlainSASLResult;
 import org.apache.activemq.artemis.protocol.amqp.sasl.SASLResult;
+import org.apache.activemq.artemis.protocol.amqp.sasl.TokenSASLResult;
 import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
 import org.apache.activemq.artemis.spi.core.remoting.ReadyListener;
 import org.apache.activemq.artemis.utils.ByteUtil;
@@ -732,6 +733,8 @@ public class AMQPConnectionContext extends ProtonInitializable implements EventH
          user = saslResult.getUser();
          if (saslResult instanceof PlainSASLResult plainSASLResult) {
             password = plainSASLResult.getPassword();
+         } else if (saslResult instanceof TokenSASLResult tokenSASLResult) {
+            password = tokenSASLResult.getToken();
          }
       }
 
@@ -991,6 +994,8 @@ public class AMQPConnectionContext extends ProtonInitializable implements EventH
          if (saslResult != null) {
             if (saslResult instanceof PlainSASLResult plainSASLResult) {
                password = plainSASLResult.getPassword();
+            } else if (saslResult instanceof TokenSASLResult tokenSASLResult) {
+               password = tokenSASLResult.getToken();
             }
          }
 
