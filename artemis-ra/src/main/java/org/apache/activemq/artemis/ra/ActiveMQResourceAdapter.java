@@ -1030,20 +1030,20 @@ public class ActiveMQResourceAdapter implements ResourceAdapter, Serializable {
          // If transacted we need to send the ack flush as soon as possible as if any transaction times out, we need
          // the ack on the server already
          if (useLocalTx) {
-            result = parameterFactory.createSession(user, pass, false, false, false, false, 0);
+            result = parameterFactory.createSession(user, pass, false, false, false, false, 0, getClientID());
          } else {
-            result = parameterFactory.createSession(user, pass, true, false, false, false, 0);
+            result = parameterFactory.createSession(user, pass, true, false, false, false, 0, getClientID());
          }
       } else {
          if (preAck != null && preAck) {
-            result = parameterFactory.createSession(user, pass, false, true, true, true, -1);
+            result = parameterFactory.createSession(user, pass, false, true, true, true, -1, getClientID());
          } else {
             // only auto ack and dups ok are supported
             result = switch (ackMode) {
-               case Session.AUTO_ACKNOWLEDGE -> parameterFactory.createSession(user, pass, false, true, true, false, 0);
+               case Session.AUTO_ACKNOWLEDGE -> parameterFactory.createSession(user, pass, false, true, true, false, 0, getClientID());
                case Session.DUPS_OK_ACKNOWLEDGE -> {
                   int actDupsOkBatchSize = dupsOkBatchSize != null ? dupsOkBatchSize : ActiveMQClient.DEFAULT_ACK_BATCH_SIZE;
-                  yield parameterFactory.createSession(user, pass, false, true, true, false, actDupsOkBatchSize);
+                  yield parameterFactory.createSession(user, pass, false, true, true, false, actDupsOkBatchSize, getClientID());
                }
                default -> throw new IllegalArgumentException("Invalid ackmode: " + ackMode);
             };

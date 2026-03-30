@@ -891,6 +891,69 @@ public class ResourceAdapterTest extends ActiveMQRATestBase {
 
    }
 
+   @Test
+   public void testClientIDPassedToSessionWithUseLocalTx() throws Exception {
+      testClientIDPassedToSession("testClientID", ra -> ra.setUseLocalTx(true), spec -> { }, false);
+   }
+
+   @Test
+   public void testClientIDPassedToSessionWithDeliveryTransacted() throws Exception {
+      testClientIDPassedToSession("testClientIDTransacted", ra -> { }, spec -> { }, true);
+   }
+
+   @Test
+   public void testClientIDPassedToSessionWithPreAck() throws Exception {
+      testClientIDPassedToSession("testClientIDPreAck", ra -> ra.setPreAcknowledge(true), spec -> { }, false);
+   }
+
+   @Test
+   public void testClientIDPassedToSessionWithDupsOkAck() throws Exception {
+      testClientIDPassedToSession("testClientIDDupsOk",
+         ra -> ra.setDupsOKBatchSize(100),
+         spec -> spec.setAcknowledgeMode("Dups-ok-acknowledge"),
+         false);
+   }
+
+   @Test
+   public void testClientIDPassedToSessionWithAutoAck() throws Exception {
+      testClientIDPassedToSession("testClientIDAutoAck",
+         ra -> { },
+         spec -> spec.setAcknowledgeMode("Auto-acknowledge"),
+         false);
+   }
+
+   private void testClientIDPassedToSession(String clientID,
+                                             java.util.function.Consumer<ActiveMQResourceAdapter> raConfigurator,
+                                             java.util.function.Consumer<ActiveMQActivationSpec> specConfigurator,
+                                             boolean deliveryTransacted) throws Exception {
+      ActiveMQResourceAdapter ra = new ActiveMQResourceAdapter();
+      ra.setConnectorClassName(INVM_CONNECTOR_FACTORY);
+      ra.setClientID(clientID);
+      raConfigurator.accept(ra);
+      ra.start(new BootstrapContext());
+
+      ActiveMQActivationSpec spec = new ActiveMQActivationSpec();
+      spec.setResourceAdapter(ra);
+      spec.setUseJNDI(false);
+      spec.setDestinationType("javax.jms.Queue");
+      spec.setDestination(MDBQUEUE);
+      specConfigurator.accept(spec);
+
+      CountDownLatch latch = new CountDownLatch(1);
+      DummyMessageEndpoint endpoint = new DummyMessageEndpoint(latch);
+      DummyMessageEndpointFactory endpointFactory = new DummyMessageEndpointFactory(endpoint, deliveryTransacted);
+
+      ra.endpointActivation(endpointFactory, spec);
+
+      // Verify the clientID is set on the server-side remoting connection
+      assertFalse(server.getRemotingService().getConnections().isEmpty());
+      assertTrue(server.getRemotingService().getConnections().stream().allMatch(
+         remotingConnection -> clientID.equals(remotingConnection.getClientID())));
+
+      ra.stop();
+      assertTrue(endpoint.released);
+   }
+
    @Override
    public boolean useSecurity() {
       return false;
