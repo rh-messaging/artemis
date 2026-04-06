@@ -64,16 +64,18 @@ public class AuditLoggerAMQPMutualSSLTest extends AuditLoggerTestBase {
 
       ConnectionFactory connectionFactory = new JmsConnectionFactory(remoteUri);
       try (Connection connection = connectionFactory.createConnection()) {
-         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+         Session session = connection.createSession(true, Session.SESSION_TRANSACTED);
          Queue queue = session.createQueue("exampleQueue");
          MessageProducer sender = session.createProducer(queue);
          TextMessage stm = session.createTextMessage("Hello world ");
          stm.setStringProperty("foo", "bar");
          sender.send(stm);
+         session.commit();
          MessageConsumer consumer = session.createConsumer(queue);
          connection.start();
          Message m = consumer.receive(500);
          assertNotNull(m);
+         session.commit();
       }
 
       assertTrue(findLogRecord(getAuditLog(), "AMQ601715: User myUser(consumers,producers)@", "successfully authenticated"));
