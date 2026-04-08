@@ -35,12 +35,16 @@ import org.apache.activemq.artemis.core.security.SecurityStore;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.Queue;
 import org.apache.activemq.artemis.core.server.impl.AddressInfo;
+import org.apache.activemq.artemis.core.server.management.GuardInvocationHandler;
+import org.apache.activemq.artemis.core.server.management.HawtioSecurityControl;
 import org.apache.activemq.artemis.spi.core.remoting.Acceptor;
 import org.apache.activemq.artemis.utils.ExecutorFactory;
 import org.apache.activemq.artemis.utils.actors.ArtemisExecutor;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -234,5 +238,44 @@ public class ManagementServiceImplTest {
       managementService.getAttribute(ResourceNames.ACCEPTOR + transportConfig.getName(), "name", auth);
 
       Mockito.verifyNoInteractions(securityStore);
+   }
+
+   @Test
+   public void testGetResourcesWithNullHawtioSecurity() throws Exception {
+      Configuration configuration = new FileConfiguration();
+      ManagementServiceImpl managementService = new ManagementServiceImpl(mBeanServer, configuration);
+
+      Mockito.when(executorFactory.getExecutor()).thenReturn(artemisExecutor);
+      Mockito.when(messagingServer.getExecutorFactory()).thenReturn(executorFactory);
+      Mockito.when(messagingServer.getManagementService()).thenReturn(managementService);
+      Mockito.when(postOffice.isStarted()).thenReturn(true);
+      Mockito.when(messagingServer.getPostOffice()).thenReturn(postOffice);
+
+      managementService.registerServer(null, securityStore, null, configuration, null, null, null, null, messagingServer, null, null, null, false);
+
+      // HawtioSecurity is not registered - getResources must not throw NPE
+      Object[] resources = managementService.getResources(HawtioSecurityControl.class);
+      assertEquals(0, resources.length);
+   }
+
+   @Test
+   public void testGetResourcesWithHawtioSecurity() throws Exception {
+      Configuration configuration = new FileConfiguration();
+      ManagementServiceImpl managementService = new ManagementServiceImpl(mBeanServer, configuration);
+
+      Mockito.when(executorFactory.getExecutor()).thenReturn(artemisExecutor);
+      Mockito.when(messagingServer.getExecutorFactory()).thenReturn(executorFactory);
+      Mockito.when(messagingServer.getManagementService()).thenReturn(managementService);
+      Mockito.when(postOffice.isStarted()).thenReturn(true);
+      Mockito.when(messagingServer.getPostOffice()).thenReturn(postOffice);
+
+      managementService.registerServer(null, securityStore, null, configuration, null, null, null, null, messagingServer, null, null, null, false);
+
+      GuardInvocationHandler guard = Mockito.mock(GuardInvocationHandler.class);
+      managementService.registerHawtioSecurity(guard);
+
+      Object[] resources = managementService.getResources(HawtioSecurityControl.class);
+      assertEquals(1, resources.length);
+      assertInstanceOf(HawtioSecurityControl.class, resources[0]);
    }
 }

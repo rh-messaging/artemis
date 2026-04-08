@@ -15,4 +15,5 @@
 # specific language governing permissions and limitations
 # under the License.
 
-org.apache.activemq.artemis.service.extensions.tests.transactions.DummyTransactionManagerLocator
+org.apache.activemq.artemis.cli.factory.security.JaasSecurityHandler
+org.apache.activemq.artemis.cli.factory.security.SecurityManagerHandler
