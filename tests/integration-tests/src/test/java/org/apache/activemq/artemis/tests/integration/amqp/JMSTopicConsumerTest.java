@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.postoffice.Bindings;
+import org.apache.activemq.artemis.tests.util.Wait;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -336,8 +337,7 @@ public class JMSTopicConsumerTest extends JMSClientTestSupport {
 
          connection.close();
          latch.await(5, TimeUnit.SECONDS);
-         bindingsForAddress = server.getPostOffice().getBindingsForAddress(SimpleString.of(getTopicName()));
-         assertEquals(1, bindingsForAddress.getBindings().size());
+         Wait.assertEquals(1, () -> server.getPostOffice().getBindingsForAddress(SimpleString.of(getTopicName())).getBindings().size(), 2000, 20);
       } finally {
          connection.close();
       }

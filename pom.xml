@@ -93,9 +93,9 @@
       <artemis-console-version>1.7.0</artemis-console-version>
       <karaf.version>4.4.10</karaf.version>
       <pax.exam.version>4.14.0</pax.exam.version>
-      <commons.config.version>2.13.0</commons.config.version>
+      <commons.config.version>2.14.0</commons.config.version>
       <commons.lang.version>3.20.0</commons.lang.version>
-      <activemq5-version>5.19.4</activemq5-version>
+      <activemq5-version>5.19.5</activemq5-version>
       <apache.derby.version>10.15.2.0</apache.derby.version>
       <commons.beanutils.version>1.11.0</commons.beanutils.version>
       <commons.logging.version>1.3.6</commons.logging.version>
@@ -179,7 +179,7 @@
       <paho.client.mqtt.version>1.2.5</paho.client.mqtt.version>
       <postgresql.version>42.7.10</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
-      <selenium.version>4.41.0</selenium.version>
+      <selenium.version>4.43.0</selenium.version>
       <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
@@ -204,7 +204,7 @@
       <hadoop.minikdc.version>3.5.0</hadoop.minikdc.version>
       <mockserver.version>5.15.0</mockserver.version>
 
-      <owasp.version>12.2.0</owasp.version>
+      <owasp.version>12.2.1</owasp.version>
       <spring.version>5.3.39</spring.version>
 
       <jackson.version>2.21.2</jackson.version>
