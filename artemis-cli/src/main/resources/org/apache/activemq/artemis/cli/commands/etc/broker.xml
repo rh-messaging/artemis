@@ -117,8 +117,15 @@ ${cluster-security.settings}${cluster.settings}${replicated.settings}${shared-st
             <permission type="consume" roles="${role}"/>
             <permission type="browse" roles="${role}"/>
             <permission type="send" roles="${role}"/>
-            <!-- we need this otherwise ./artemis data imp wouldn't work -->
+         </security-setting>
+         <security-setting match="activemq.management.#">
             <permission type="manage" roles="${role}"/>
+            <permission type="createNonDurableQueue" roles="${role}"/>
+            <permission type="deleteNonDurableQueue" roles="${role}"/>
+            <permission type="createAddress" roles="${role}"/>
+            <permission type="deleteAddress" roles="${role}"/>
+            <permission type="consume" roles="${role}"/>
+            <permission type="send" roles="${role}"/>
          </security-setting>
       </security-settings>
 

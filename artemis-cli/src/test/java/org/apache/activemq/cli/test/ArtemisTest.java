@@ -44,7 +44,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.apache.activemq.artemis.core.security.Role;
 
 import org.apache.activemq.artemis.api.config.ActiveMQDefaultConfiguration;
 import org.apache.activemq.artemis.api.core.ActiveMQIllegalStateException;
@@ -2378,6 +2381,46 @@ public class ArtemisTest extends CliTestBase {
       public String getPropertyTwo() {
          return propertyTwo;
       }
+   }
+
+   @Test
+   @Timeout(60)
+   public void testDefaultSecuritySettings() throws Exception {
+      FileConfiguration configuration = createFileConfiguration(getTestMethodName(),
+                                                                "--silent", "--no-web", "--no-autotune");
+
+      Map<String, Set<Role>> securityRoles = configuration.getSecurityRoles();
+
+      // wildcard match should have all permissions except manage
+      Set<Role> wildcardRoles = securityRoles.get("#");
+      assertNotNull(wildcardRoles, "Expected security-setting for '#'");
+      assertEquals(1, wildcardRoles.size());
+      Role wildcardRole = wildcardRoles.iterator().next();
+      assertEquals("amq", wildcardRole.getName());
+      assertTrue(wildcardRole.isSend());
+      assertTrue(wildcardRole.isConsume());
+      assertTrue(wildcardRole.isBrowse());
+      assertTrue(wildcardRole.isCreateDurableQueue());
+      assertTrue(wildcardRole.isDeleteDurableQueue());
+      assertTrue(wildcardRole.isCreateNonDurableQueue());
+      assertTrue(wildcardRole.isDeleteNonDurableQueue());
+      assertTrue(wildcardRole.isCreateAddress());
+      assertTrue(wildcardRole.isDeleteAddress());
+      assertFalse(wildcardRole.isManage(), "manage permission must not be on the wildcard '#' address");
+
+      // management address match should have manage plus supporting permissions
+      Set<Role> mgmtRoles = securityRoles.get("activemq.management.#");
+      assertNotNull(mgmtRoles, "Expected security-setting for 'activemq.management.#'");
+      assertEquals(1, mgmtRoles.size());
+      Role mgmtRole = mgmtRoles.iterator().next();
+      assertEquals("amq", mgmtRole.getName());
+      assertTrue(mgmtRole.isManage());
+      assertTrue(mgmtRole.isSend());
+      assertTrue(mgmtRole.isConsume());
+      assertTrue(mgmtRole.isCreateNonDurableQueue());
+      assertTrue(mgmtRole.isDeleteNonDurableQueue());
+      assertTrue(mgmtRole.isCreateAddress());
+      assertTrue(mgmtRole.isDeleteAddress());
    }
 
    private static File newFolder(File root, String subFolder) throws IOException {
