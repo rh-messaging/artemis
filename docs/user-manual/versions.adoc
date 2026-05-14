@@ -45,6 +45,7 @@ To restore functionality, we recommend specifying `user` and `password` values o
 However, there was a `--silent` option that would skip all prompts and use default values.
 This has been changed so that that no passwords will have default values, even when using the `--silent` option.
 **When using `--silent` you will need to explicitly define password values** (e.g., via `--password`, `--cluster-password`, etc.) or creation will fail.
+** Values specified for `--cluster-user` when creating a broker instance (either explicitly via the command-line switch or interactively) will be masked automatically using the xref:masking-passwords.adoc#the-default-codec[the default codec].
 * Due to https://issues.apache.org/jira/browse/ARTEMIS-5949[ARTEMIS-5949], the `security-settings` in the default `broker.xml` have changed so that permissions are explicitly set on the management address.
 There is no semantic change.
 This is simply to clarify permissions so that security is easier to understand.
