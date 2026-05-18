@@ -106,6 +106,13 @@ public class Wait {
       }
    }
 
+   public static void assertNotNull(ObjectCondition condition, long timeout, long sleepMillis) throws Exception {
+      boolean result = waitFor(() -> condition.getObject() != null, timeout, sleepMillis);
+      if (!result) {
+         Assert.assertNotNull(condition.getObject());
+      }
+   }
+
    public static void assertTrue(Condition condition) {
       assertTrue(DEFAULT_FAILURE_MESSAGE, condition);
    }
