@@ -60,8 +60,12 @@ public class FederationDownstreamDirectTest extends ActiveMQTestBase {
    @Override
    public void setUp() throws Exception {
       super.setUp();
+      startServer(true);
+   }
+
+   private void startServer(boolean configureAuth) throws Exception {
       Configuration config = createDefaultNettyConfig().setSecurityEnabled(true);
-      if (!"testNoAuthConfigured".equals(getName())) {
+      if (configureAuth) {
          config.addFederationDownstreamAuthorization(authorizedRole);
       }
       server = createServer(false, config);
@@ -78,6 +82,8 @@ public class FederationDownstreamDirectTest extends ActiveMQTestBase {
 
    @Test
    public void testNoAuthConfigured() throws Exception {
+      server.stop();
+      startServer(false);
       AssertionLoggerHandler.startCapture();
       try {
          sendFederationDownstreamConnectMessage(authorizedUser, authorizedPass, false);
@@ -91,7 +97,6 @@ public class FederationDownstreamDirectTest extends ActiveMQTestBase {
 
    @Test
    public void testUnauthenticatedDeployment() throws Exception {
-      // send the federation message without authenticating with a session first
       AssertionLoggerHandler.startCapture();
       try {
          sendFederationDownstreamConnectMessage(null, null, false);
@@ -105,7 +110,6 @@ public class FederationDownstreamDirectTest extends ActiveMQTestBase {
 
    @Test
    public void testUnauthorizedDeployment() throws Exception {
-      // send the federation message after authenticating with a user who isn't authorized for downstream deployment
       AssertionLoggerHandler.startCapture();
       try {
          sendFederationDownstreamConnectMessage(unauthorizedUser, unauthorizedPass, false);
@@ -119,7 +123,6 @@ public class FederationDownstreamDirectTest extends ActiveMQTestBase {
 
    @Test
    public void testSuccessfulDeployment() throws Exception {
-      // send the federation message after authenticating with a user who is authorized for downstream deployment
       AssertionLoggerHandler.startCapture();
       try {
          sendFederationDownstreamConnectMessage(authorizedUser, authorizedPass, true);
@@ -164,7 +167,7 @@ public class FederationDownstreamDirectTest extends ActiveMQTestBase {
       FederationDownstreamConnectMessage msg = new FederationDownstreamConnectMessage();
       msg.setName(name);
 
-      Map<String, FederationPolicy> policyMap = new HashMap<>();
+      Map<String, FederationPolicy<?>> policyMap = new HashMap<>();
       policyMap.put(policyConfigName, new FederationQueuePolicyConfiguration().setName(policyConfigName).addInclude(new FederationQueuePolicyConfiguration.Matcher().setQueueMatch("#").setAddressMatch("#")));
       policyMap.put(policySetName, new FederationPolicySet().setName(policySetName).addPolicyRef(policyConfigName));
       msg.setFederationPolicyMap(policyMap);
