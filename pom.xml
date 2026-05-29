@@ -20,7 +20,7 @@
    <groupId>org.apache.activemq</groupId>
    <artifactId>artemis-project</artifactId>
    <packaging>pom</packaging>
-   <version>2.40.0</version>
+   <version>2.40.0.PATCH.3320</version>
 
    <parent>
       <groupId>org.apache</groupId>
@@ -288,7 +288,7 @@
       <connection>scm:git:https://gitbox.apache.org/repos/asf/activemq-artemis.git</connection>
       <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/activemq-artemis.git</developerConnection>
       <url>https://github.com/apache/activemq-artemis</url>
-      <tag>2.40.0</tag>
+      <tag>2.40.0.PATCH.3320</tag>
    </scm>
 
    <issueManagement>
