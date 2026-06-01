@@ -4,9 +4,12 @@ Artemis is a project of the [Apache Software Foundation](https://apache.org) and
 
 ## Reporting a Vulnerability
 
-To report a new vulnerability you have discovered please follow the [ASF vulnerability reporting process](https://security.apache.org/report/).
+Before reporting a vulnerability please ensure:
 
-Be sure to check [Artemis' existing security advisories](https://artemis.apache.org/security-advisories) to ensure you're not reporting something that's already been resolved.
+- It falls within the scope of our [threat model](docs/user-manual/threat-model.adoc).
+- It has not already been reported. Existing advisories are enumerated on [our website](https://artemis.apache.org/components/artemis/security).
+
+To report a new vulnerability please follow the [ASF vulnerability reporting process](https://security.apache.org/report/).
 
 ## Supported Versions
 
