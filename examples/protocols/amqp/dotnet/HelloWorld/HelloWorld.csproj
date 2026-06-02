@@ -24,8 +24,23 @@
     <PackageId>HelloWorld</PackageId>
   </PropertyGroup>
 
+<<<<<<< HEAD:examples/protocols/amqp/dotnet/HelloWorld/HelloWorld.csproj
   <ItemGroup>
     <PackageReference Include="AMQPNetLite" Version="2.1.1" />
   </ItemGroup>
 
 </Project>
+=======
+   <properties>
+      <activemq.basedir>${project.basedir}/../..</activemq.basedir>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.apache.activemq</groupId>
+         <artifactId>artemis-commons</artifactId>
+      </dependency>
+   </dependencies>
+
+</project>
+>>>>>>> f5973d53e6 (ARTEMIS-4766 - validate type before newInstance calls):artemis-lockmanager/artemis-lockmanager-api/pom.xml

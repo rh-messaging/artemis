@@ -37,6 +37,6 @@ public class SecurityManagerHandler implements SecurityHandler {
       for (PropertyDTO property : customSecurity.properties) {
          properties.put(property.key, property.value);
       }
-      return AccessController.doPrivileged((PrivilegedAction<ActiveMQSecurityManager>) () -> (ActiveMQSecurityManager) ClassloadingUtil.newInstanceFromClassLoader(SecurityManagerHandler.class, clazz)).init(properties);
+      return AccessController.doPrivileged((PrivilegedAction<ActiveMQSecurityManager>) () -> (ActiveMQSecurityManager) ClassloadingUtil.newInstanceFromClassLoader(SecurityManagerHandler.class, clazz, ActiveMQSecurityManager.class)).init(properties);
    }
 }

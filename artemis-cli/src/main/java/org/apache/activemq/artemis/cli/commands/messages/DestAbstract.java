@@ -25,6 +25,7 @@ import io.airlift.airline.Option;
 import org.apache.activemq.artemis.cli.factory.serialize.MessageSerializer;
 import org.apache.activemq.artemis.cli.factory.serialize.XMLMessageSerializer;
 import org.apache.activemq.artemis.jms.client.ActiveMQDestination;
+import org.apache.activemq.artemis.utils.ClassloadingUtil;
 
 public class DestAbstract extends ConnectionAbstract {
 
@@ -49,7 +50,7 @@ public class DestAbstract extends ConnectionAbstract {
    protected MessageSerializer getMessageSerializer() {
       if (serializer != null) {
          try {
-            return (MessageSerializer) Class.forName(serializer).getConstructor().newInstance();
+            return (MessageSerializer) ClassloadingUtil.getInstanceWithTypeCheck(serializer, MessageSerializer.class, this.getClass().getClassLoader());
          } catch (Exception e) {
             System.err.println("Error: unable to instantiate serializer class: " + serializer);
             System.err.println("Defaulting to: " + XMLMessageSerializer.class.getName());
