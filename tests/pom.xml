@@ -83,12 +83,7 @@
          <!-- deprecated: use openwire-tests -->
          <id>activemq5-unit-tests</id>
          <modules>
-            <!--
-              Disable activemq5-unit-tests because it has a transitive dependency to
-              org.fusesource.hawtbuf:hawtbuf-proto:jar:1.11.0.redhat-2 that is causing
-              the the Prod Gate GC-M2 failure
-              <module>activemq5-unit-tests</module>
-            -->
+            <module>activemq5-unit-tests</module>
          </modules>
          <properties>
             <skipActiveMQ5Tests>false</skipActiveMQ5Tests>
@@ -97,12 +92,7 @@
       <profile>
          <id>openwire-tests</id>
          <modules>
-            <!--
-              Disable activemq5-unit-tests because it has a transitive dependency to
-              org.fusesource.hawtbuf:hawtbuf-proto:jar:1.11.0.redhat-2 that is causing
-              the the Prod Gate GC-M2 failure
-              <module>activemq5-unit-tests</module>
-            -->
+            <module>activemq5-unit-tests</module>
          </modules>
          <properties>
             <skipActiveMQ5Tests>false</skipActiveMQ5Tests>
@@ -111,12 +101,7 @@
       <profile>
          <id>release</id>
          <modules>
-            <!--
-              Disable activemq5-unit-tests because it has a transitive dependency to
-              org.fusesource.hawtbuf:hawtbuf-proto:jar:1.11.0.redhat-2 that is causing
-              the the Prod Gate GC-M2 failure
-              <module>activemq5-unit-tests</module>
-            -->
+            <module>activemq5-unit-tests</module>
             <module>performance-jmh</module>
          </modules>
          <properties>
@@ -140,6 +125,10 @@
       <module>jms-tests</module>
       <module>integration-tests</module>
       <module>integration-tests-isolated</module>
+      <module>karaf-client-integration-tests</module>
+      <module>karaf-jakarta-client-integration-tests</module>
+      <module>karaf-server-integration-tests</module>
+      <module>compatibility-tests</module>
       <module>soak-tests</module>
       <module>stress-tests</module>
       <module>performance-tests</module>
