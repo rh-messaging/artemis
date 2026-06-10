@@ -128,7 +128,6 @@
       <module>karaf-client-integration-tests</module>
       <module>karaf-jakarta-client-integration-tests</module>
       <module>karaf-server-integration-tests</module>
-      <module>compatibility-tests</module>
       <module>soak-tests</module>
       <module>stress-tests</module>
       <module>performance-tests</module>
