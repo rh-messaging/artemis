@@ -884,7 +884,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
       final CriticalAnalyzerPolicy criticalAnalyzerPolicy = configuration.getCriticalAnalyzerPolicy();
       CriticalAction criticalAction = switch (criticalAnalyzerPolicy) {
          case HALT -> criticalComponent -> {
-            if (ActiveMQServerImpl.this.state == SERVER_STATE.STARTING) {
+            if (!isActive()) {
                takingLongToStart(criticalComponent);
             } else {
                checkCriticalAnalyzerLogging();
@@ -897,7 +897,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
             }
          };
          case SHUTDOWN -> criticalComponent -> {
-            if (ActiveMQServerImpl.this.state == SERVER_STATE.STARTING) {
+            if (!isActive()) {
                takingLongToStart(criticalComponent);
             } else {
                checkCriticalAnalyzerLogging();
@@ -922,7 +922,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
             }
          };
          case LOG -> criticalComponent -> {
-            if (ActiveMQServerImpl.this.state == SERVER_STATE.STARTING) {
+            if (!isActive()) {
                takingLongToStart(criticalComponent);
             } else {
                checkCriticalAnalyzerLogging();
