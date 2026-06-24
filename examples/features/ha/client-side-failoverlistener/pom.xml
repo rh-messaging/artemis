@@ -67,6 +67,7 @@ under the License.
                      <sharedStore>true</sharedStore>
                      <slave>false</slave>
                      <failoverOnShutdown>true</failoverOnShutdown>
+                     <staticCluster>tcp://localhost:61617</staticCluster>
                   </configuration>
                </execution>
                <execution>
@@ -82,6 +83,7 @@ under the License.
                      <sharedStore>true</sharedStore>
                      <slave>true</slave>
                      <portOffset>1</portOffset>
+                     <staticCluster>tcp://localhost:61616</staticCluster>
                   </configuration>
                </execution>
                <execution>

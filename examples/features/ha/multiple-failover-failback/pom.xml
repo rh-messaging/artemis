@@ -66,6 +66,7 @@ under the License.
                      <slave>false</slave>
                      <dataFolder>../data</dataFolder>
                      <failoverOnShutdown>true</failoverOnShutdown>
+                     <staticCluster>tcp://localhost:61617,tcp://localhost:61618</staticCluster>
                   </configuration>
                </execution>
                <execution>
@@ -81,6 +82,7 @@ under the License.
                      <slave>true</slave>
                      <dataFolder>../data</dataFolder>
                      <failoverOnShutdown>true</failoverOnShutdown>
+                     <staticCluster>tcp://localhost:61616,tcp://localhost:61618</staticCluster>
                   </configuration>
                </execution>
                <execution>
@@ -94,6 +96,7 @@ under the License.
                      <instance>${basedir}/target/server2</instance>
                      <sharedStore>true</sharedStore>
                      <slave>true</slave>
+                     <staticCluster>tcp://localhost:61616,tcp://localhost:61617</staticCluster>
                      <dataFolder>../data</dataFolder>
                   </configuration>
                </execution>
