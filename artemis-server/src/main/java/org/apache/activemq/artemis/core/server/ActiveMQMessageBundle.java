@@ -535,4 +535,10 @@ public interface ActiveMQMessageBundle {
    @Message(id = 229257, value = "IDGenerator has been stopped")
    RuntimeException idGeneratorStopped();
 
+   @Message(id = 229261, value = "Broadcast groups are disabled by default. See the Server Discovery section in the user manual for security requirements and enablement.")
+   ActiveMQIllegalStateException broadcastGroupsConfiguredButDisabled();
+
+   @Message(id = 229262, value = "Discovery groups are disabled by default. See the Server Discovery section in the user manual for security requirements and enablement.")
+   ActiveMQIllegalStateException discoveryGroupsConfiguredButDisabled();
+
 }
