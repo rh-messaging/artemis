@@ -40,6 +40,7 @@ import org.apache.activemq.artemis.core.server.routing.policies.LeastConnections
 import org.apache.activemq.artemis.core.server.routing.policies.RoundRobinPolicy;
 import org.apache.activemq.artemis.tests.extensions.parameterized.ParameterizedTestExtension;
 import org.apache.activemq.artemis.tests.extensions.parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -62,6 +63,13 @@ public class RedirectTest extends RoutingTestBase {
 
    public RedirectTest(String pool) {
       this.pool = pool;
+   }
+
+   @Override
+   @BeforeEach
+   public void setUp() throws Exception {
+      enableDiscoveryForTest();
+      super.setUp();
    }
 
    @TestTemplate

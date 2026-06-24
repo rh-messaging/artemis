@@ -374,6 +374,8 @@ public class ResourceAdapterTest extends ActiveMQRATestBase {
 
    @Test
    public void testResourceAdapterSetup() throws Exception {
+      enableDiscoveryForTest();
+
       ActiveMQResourceAdapter adapter = new ActiveMQResourceAdapter();
       adapter.setDiscoveryAddress("231.1.1.1");
       ActiveMQConnectionFactory factory = adapter.getDefaultActiveMQConnectionFactory();
@@ -421,7 +423,6 @@ public class ResourceAdapterTest extends ActiveMQRATestBase {
       // override initial wait
       assertEquals(10000L, refresh);
       assertEquals(9999L, initWait);
-
    }
 
    @Test
@@ -501,6 +502,8 @@ public class ResourceAdapterTest extends ActiveMQRATestBase {
 
    @Test
    public void testResourceAdapterSetupNoOverrideDiscovery() throws Exception {
+      enableDiscoveryForTest();
+
       ActiveMQResourceAdapter qResourceAdapter = new ActiveMQResourceAdapter();
       qResourceAdapter.setDiscoveryAddress("231.6.6.6");
       qResourceAdapter.setDiscoveryPort(1234);
@@ -526,6 +529,8 @@ public class ResourceAdapterTest extends ActiveMQRATestBase {
 
    @Test
    public void testResourceAdapterSetupOverrideDiscovery() throws Exception {
+      enableDiscoveryForTest();
+
       ActiveMQResourceAdapter qResourceAdapter = new ActiveMQResourceAdapter();
       qResourceAdapter.setDiscoveryAddress("231.7.7.7");
 
