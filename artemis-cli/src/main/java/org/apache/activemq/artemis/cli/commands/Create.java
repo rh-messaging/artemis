@@ -34,6 +34,7 @@ import org.apache.activemq.artemis.core.server.JournalType;
 import org.apache.activemq.artemis.core.server.cluster.impl.MessageLoadBalancingType;
 import org.apache.activemq.artemis.nativo.jlibaio.LibaioContext;
 import org.apache.activemq.artemis.nativo.jlibaio.LibaioFile;
+import org.apache.activemq.artemis.api.config.ServerLocatorConfig;
 import org.apache.activemq.artemis.utils.FileUtil;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -163,6 +164,9 @@ public class Create extends InstallAbstract {
 
    @Option(names = "--clustered", description = "Enable clustering.")
    private boolean clustered = false;
+
+   @Option(names = "--discovery-enabled", description = "Enable server discovery.", hidden = true)
+   private boolean discoveryEnabled;
 
    @Option(names = "--max-hops", description = "Number of hops on the cluster configuration.")
    private int maxHops = DEFAULT_MAX_HOPS;
@@ -705,6 +709,10 @@ public class Create extends InstallAbstract {
 
 
       if (clustered) {
+         if (staticNode == null && !discoveryEnabled) {
+            throw new IllegalArgumentException("Clustered instances without --static-cluster use discovery groups, which are disabled by default. Supply static configuration, or see the Server Discovery section in the user manual for security requirements and enablement.");
+         }
+
          filters.put("${host}", getHostForClustered());
          if (name == null) {
             name = getHostForClustered();
@@ -761,6 +769,12 @@ public class Create extends InstallAbstract {
 
       String processedJavaOptions = getJavaOptions();
       String processedJavaUtilityOptions = getJavaUtilityOptions();
+
+      if (discoveryEnabled) {
+         String discoveryJvmArg = "-D" + ServerLocatorConfig.DISCOVERY_ENABLED_PROPERTY + "=true ";
+         processedJavaOptions = discoveryJvmArg + processedJavaOptions;
+         processedJavaUtilityOptions = discoveryJvmArg + processedJavaUtilityOptions;
+      }
 
       addScriptFilters(filters, getHome(), getInstance(), etcFolder, dataFolder, oomeDumpFile, javaMemory, processedJavaOptions, processedJavaUtilityOptions, role);
 

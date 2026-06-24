@@ -46,6 +46,10 @@ https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&versio
 * The timeout for xref:configuring-transports.adoc#configuring-netty-ssl[SSL/TLS] handshake is now configurable on any `acceptor` via the `sslHandshakeTimeout` URL parameter.
 * On the documentation front, we added a comprehensive xref:threat-model.adoc#threat-model[threat model] and a basic https://github.com/apache/artemis/blob/main/SECURITY.md[SECURITY.md] to help both humans and AI agents provide higher quality security reports. We also added an https://github.com/apache/artemis/blob/main/AGENTS.md[AGENTS.md] to help improve the quality of AI-assisted contributions.
 
+=== Upgrading from 2.54.0
+
+* Server discovery is disabled by default, see the xref:clusters.adoc#server-discovery[Server Discovery] section in the user manual for security requirements and enablement.
+
 == Version 2.54.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356777[Full release notes]
