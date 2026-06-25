@@ -681,11 +681,11 @@ public class ConfigurationImpl extends javax.security.auth.login.Configuration i
             beanProperties.put(key, value);
          }
       }
-      long fileAlder32 = 0;
+      long fileAdler32 = 0;
       if (properties instanceof InsertionOrderedProperties insertionOrderedProperties) {
-         fileAlder32 = insertionOrderedProperties.getFileChecksum();
+         fileAdler32 = insertionOrderedProperties.getFileChecksum();
       }
-      updateReadPropertiesStatus(name, checksum.getValue(), fileAlder32);
+      updateReadPropertiesStatus(name, checksum.getValue(), fileAdler32);
 
       if (!beanProperties.isEmpty()) {
          populateWithProperties(target, name, beanProperties);
@@ -1296,10 +1296,10 @@ public class ConfigurationImpl extends javax.security.auth.login.Configuration i
       this.jsonStatus = JsonUtil.mergeAndUpdate(status, jsonObjectBuilder.build());
    }
 
-   private synchronized void updateReadPropertiesStatus(String propsId, long alder32Hash, long fileAlder32) {
+   private synchronized void updateReadPropertiesStatus(String propsId, long adler32Hash, long fileAdler32) {
       JsonObjectBuilder propertiesReadStatusBuilder = JsonLoader.createObjectBuilder();
-      propertiesReadStatusBuilder.add("alder32", String.valueOf(alder32Hash));
-      propertiesReadStatusBuilder.add("fileAlder32", String.valueOf(fileAlder32));
+      propertiesReadStatusBuilder.add("adler32", String.valueOf(adler32Hash));
+      propertiesReadStatusBuilder.add("fileAdler32", String.valueOf(fileAdler32));
       JsonObjectBuilder jsonObjectBuilder = JsonUtil.objectBuilderWithValueAtPath("properties/" + propsId, propertiesReadStatusBuilder.build());
       JsonObject jsonStatus = getJsonStatus();
       this.jsonStatus = JsonUtil.mergeAndUpdate(jsonStatus, jsonObjectBuilder.build());

@@ -2453,7 +2453,7 @@ public class ConfigurationImplTest extends AbstractConfigurationTestBase {
       configuration.parseProperties(tmpFile.getAbsolutePath());
 
       testSimpleConfig(configuration);
-      assertTrue(configuration.getStatus().contains("\"fileAlder32\":\"2235122473\""));
+      assertTrue(configuration.getStatus().contains("\"fileAdler32\":\"2235122473\""));
    }
 
    @Test
@@ -2470,7 +2470,7 @@ public class ConfigurationImplTest extends AbstractConfigurationTestBase {
       configuration.parseProperties(tmpFile.getAbsolutePath());
 
       testSimpleConfig(configuration);
-      assertTrue(configuration.getStatus().contains("\"fileAlder32\":\"1145294432\""));
+      assertTrue(configuration.getStatus().contains("\"fileAdler32\":\"1145294432\""));
    }
 
    @Test
@@ -2851,8 +2851,8 @@ public class ConfigurationImplTest extends AbstractConfigurationTestBase {
       assertEquals("va", configuration.getDivertConfigurations().get(0).getTransformerConfiguration().getProperties().get("a"));
       assertEquals("vbc", configuration.getDivertConfigurations().get(0).getTransformerConfiguration().getProperties().get("b.c"));
 
-      assertTrue(configuration.getStatus().contains("\"alder32"));
-      assertTrue(configuration.getStatus().contains("\"fileAlder32"));
+      assertTrue(configuration.getStatus().contains("\"adler32"));
+      assertTrue(configuration.getStatus().contains("\"fileAdler32"));
    }
 
    @Test
@@ -3053,7 +3053,7 @@ public class ConfigurationImplTest extends AbstractConfigurationTestBase {
 
       assertTrue(jsonStatus.contains(UPDATED_SHA));
       assertFalse(jsonStatus.contains(SHA));
-      assertTrue(jsonStatus.contains("alder32"));
+      assertTrue(jsonStatus.contains("adler32"));
    }
 
    @Test
