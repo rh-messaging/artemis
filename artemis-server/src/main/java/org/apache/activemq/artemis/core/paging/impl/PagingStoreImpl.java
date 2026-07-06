@@ -1291,6 +1291,8 @@ public class PagingStoreImpl implements PagingStore {
 
       if (addressFullMessagePolicy == AddressFullMessagePolicy.DROP || addressFullMessagePolicy == AddressFullMessagePolicy.FAIL) {
          if (full) {
+            message.setDropped(true);
+
             if (message.isLargeMessage()) {
                ((LargeServerMessage) message).deleteFile();
             }
