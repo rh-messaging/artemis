@@ -139,13 +139,13 @@
       <proton.version>0.34.1</proton.version>
       <protonj2.version>1.1.0</protonj2.version>
       <slf4j.version>2.0.18</slf4j.version>
-      <log4j.version>2.26.0</log4j.version>
+      <log4j.version>2.26.1</log4j.version>
       <qpid.jms.version>1.16.0</qpid.jms.version>
       <johnzon.version>1.3.0</johnzon.version>
       <hawtbuff.version>1.11</hawtbuff.version>
       <hawtdispatch.version>1.22</hawtdispatch.version>
       <picocli.version>4.7.7</picocli.version>
-      <jline.version>4.2.1</jline.version>
+      <jline.version>4.3.1</jline.version>
       <jakarta.activation-api.version>1.2.2</jakarta.activation-api.version>
       <jakarta.annotation-api.version>1.3.5</jakarta.annotation-api.version>
       <jakarta.ejb-api.version>3.2.6</jakarta.ejb-api.version>
@@ -174,7 +174,7 @@
       <junit4.version>4.13.2</junit4.version>
       <version.jaxb.runtime>2.3.9</version.jaxb.runtime>
       <paho.client.mqtt.version>1.2.5</paho.client.mqtt.version>
-      <postgresql.version>42.7.12</postgresql.version>
+      <postgresql.version>42.7.13</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
       <selenium.version>4.45.0</selenium.version>
       <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
@@ -197,7 +197,7 @@
 
       <!-- used on tests -->
       <elementary.version>3.0.0</elementary.version>
-      <groovy.version>5.0.6</groovy.version>
+      <groovy.version>5.0.7</groovy.version>
       <hadoop.minikdc.version>3.5.0</hadoop.minikdc.version>
       <mockserver.version>7.2.0</mockserver.version>
 
