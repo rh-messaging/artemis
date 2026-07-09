@@ -1438,6 +1438,8 @@ public class PagingStoreImpl implements PagingStore {
 
       if (diskFullMessagePolicy == DiskFullMessagePolicy.DROP || diskFullMessagePolicy == DiskFullMessagePolicy.FAIL) {
          if (diskFull) {
+            message.setDropped(true);
+
             if (message.isLargeMessage()) {
                ((LargeServerMessage) message).deleteFile();
             }
@@ -1460,6 +1462,8 @@ public class PagingStoreImpl implements PagingStore {
 
       if (addressFullMessagePolicy == AddressFullMessagePolicy.DROP || addressFullMessagePolicy == AddressFullMessagePolicy.FAIL) {
          if (full) {
+            message.setDropped(true);
+
             if (message.isLargeMessage()) {
                ((LargeServerMessage) message).deleteFile();
             }

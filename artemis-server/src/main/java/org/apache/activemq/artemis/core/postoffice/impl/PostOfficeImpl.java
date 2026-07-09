@@ -1367,6 +1367,7 @@ public class PostOfficeImpl implements PostOffice, NotificationListener, Binding
          status = RoutingStatus.NO_BINDINGS;
          logger.debug("Message {} is not going anywhere as it didn't have a binding on address:{}", message, address);
          if (message.isLargeMessage()) {
+            message.setDropped(true);
             ((LargeServerMessage) message).deleteFile();
          }
       }
@@ -1700,9 +1701,17 @@ public class PostOfficeImpl implements PostOffice, NotificationListener, Binding
          }
 
          if (store != null && storageManager.addToPage(store, message, context.getTransaction(), entry.getValue())) {
-            // We need to kick delivery so the Queues may check for the cursors case they are empty
-            schedulePageDelivery(tx, entry);
+            if (!message.isDropped()) {
+               // we schedule prefetch checks when messages are added
+               schedulePageDelivery(tx, entry);
+            }
             continue;
+         }
+
+         if (message.isDropped()) {
+            // this should never happen
+            // adding defensive code just in case
+            throw new IllegalStateException("Paging returned false (NOT_PAGED) for a dropped message");
          }
 
          final List<Queue> nonDurableQueues = entry.getValue().getNonDurableQueues();
@@ -1725,11 +1734,19 @@ public class PostOfficeImpl implements PostOffice, NotificationListener, Binding
          }
       }
 
+      if (message.isDropped()) {
+         if (startedTX) {
+            // the transaction here should be empty
+            // calling rollback just for correctness
+            tx.rollback();
+         }
+         return;
+      }
+
       if (mirrorControllerSource != null && !context.isMirrorDisabled()) {
          // we check for isMirrorDisabled as to avoid recursive loop from there
          mirrorControllerSource.sendMessage(tx, message, context);
       }
-
 
       if (tx != null) {
          tx.addOperation(new AddOperation(refs));
