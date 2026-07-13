@@ -18,6 +18,7 @@ package org.apache.activemq.artemis.spi.core.protocol;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -31,6 +32,7 @@ import org.apache.activemq.artemis.core.client.ActiveMQClientLogger;
 import org.apache.activemq.artemis.core.client.ActiveMQClientMessageBundle;
 import org.apache.activemq.artemis.core.remoting.CloseListener;
 import org.apache.activemq.artemis.core.remoting.FailureListener;
+import org.apache.activemq.artemis.core.remoting.SubjectListener;
 import org.apache.activemq.artemis.spi.core.remoting.Connection;
 import org.apache.activemq.artemis.spi.core.remoting.ReadyListener;
 import org.slf4j.Logger;
@@ -45,6 +47,7 @@ public abstract class AbstractRemotingConnection implements RemotingConnection {
 
    protected final List<FailureListener> failureListeners = new CopyOnWriteArrayList<>();
    protected final List<CloseListener> closeListeners = new CopyOnWriteArrayList<>();
+   protected final List<SubjectListener> subjectListeners = new CopyOnWriteArrayList<>();
    protected final Connection transportConnection;
    protected final Executor executor;
    protected final long creationTime;
@@ -274,12 +277,31 @@ public abstract class AbstractRemotingConnection implements RemotingConnection {
 
    @Override
    public void setSubject(Subject subject) {
-      this.subject = subject;
+      if (this.subject != subject) {
+         this.subject = subject;
+
+         final List<SubjectListener> listeners = new ArrayList<>(subjectListeners);
+         for (final SubjectListener listener : listeners) {
+            listener.subjectChanged(subject);
+         }
+      }
    }
 
    @Override
    public Subject getSubject() {
       return subject;
+   }
+
+   @Override
+   public void addSubjectListener(final SubjectListener listener) {
+      Objects.requireNonNull(listener);
+      subjectListeners.add(listener);
+   }
+
+   @Override
+   public boolean removeSubjectListener(final SubjectListener listener) {
+      Objects.requireNonNull(listener);
+      return subjectListeners.remove(listener);
    }
 
    @Override

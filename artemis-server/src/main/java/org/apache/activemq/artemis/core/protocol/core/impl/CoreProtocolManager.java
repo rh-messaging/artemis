@@ -38,6 +38,7 @@ import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
 import org.apache.activemq.artemis.api.core.client.ClusterTopologyListener;
 import org.apache.activemq.artemis.api.core.client.TopologyMember;
+import org.apache.activemq.artemis.core.client.impl.Topology;
 import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.FederationConfiguration;
 import org.apache.activemq.artemis.core.config.federation.FederationConnectionConfiguration;
@@ -61,8 +62,11 @@ import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.Ping;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.SubscribeClusterTopologyUpdatesMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.SubscribeClusterTopologyUpdatesMessageV2;
 import org.apache.activemq.artemis.core.remoting.FailureListener;
+import org.apache.activemq.artemis.core.remoting.SubjectListener;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnection;
 import org.apache.activemq.artemis.core.remoting.impl.netty.ActiveMQFrameDecoder2;
+import org.apache.activemq.artemis.core.remoting.impl.netty.CoreFrameWithSizeLimitDecoder;
+import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnection;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyServerConnection;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.ActiveMQServerLogger;
@@ -76,9 +80,15 @@ import org.apache.activemq.artemis.spi.core.security.jaas.UserPrincipal;
 import org.apache.activemq.artemis.utils.SecurityManagerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.security.auth.Subject;
 import java.lang.invoke.MethodHandles;
 
 public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveMQRoutingHandler> {
+
+   public static final int CORE_INITIAL_MAX_FRAME_SIZE = 4 * 1024;
+
+   public static final int CORE_MAX_FRAME_SIZE = 128 * 1024;
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -98,6 +108,12 @@ public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveM
 
    private final ActiveMQRoutingHandler routingHandler;
 
+   private boolean coreConnectionSecurityEnabled = true;
+
+   private int coreInitialMaxFrameSize = CORE_INITIAL_MAX_FRAME_SIZE;
+
+   private int coreMaxFrameSize = CORE_MAX_FRAME_SIZE;
+
    public CoreProtocolManager(final CoreProtocolManagerFactory factory,
                               final ActiveMQServer server,
                               final List<Interceptor> incomingInterceptors,
@@ -116,6 +132,30 @@ public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveM
    @Override
    public ProtocolManagerFactory<Interceptor> getFactory() {
       return protocolManagerFactory;
+   }
+
+   public boolean isCoreConnectionSecurityEnabled() {
+      return coreConnectionSecurityEnabled;
+   }
+
+   public void setCoreConnectionSecurityEnabled(boolean coreConnectionSecurityEnabled) {
+      this.coreConnectionSecurityEnabled = coreConnectionSecurityEnabled;
+   }
+
+   public int getCoreInitialMaxFrameSize() {
+      return coreInitialMaxFrameSize;
+   }
+
+   public void setCoreInitialMaxFrameSize(int coreInitialMaxFrameSize) {
+      this.coreInitialMaxFrameSize = coreInitialMaxFrameSize;
+   }
+
+   public int getCoreMaxFrameSize() {
+      return coreMaxFrameSize;
+   }
+
+   public void setCoreMaxFrameSize(int coreMaxFrameSize) {
+      this.coreMaxFrameSize = coreMaxFrameSize;
    }
 
    @Override
@@ -168,6 +208,18 @@ public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveM
 
       rc.getChannel(CHANNEL_ID.FEDERATION.id, -1).setHandler(new FederationChannelHandler(acceptorUsed, rc));
 
+      final Connection transportConnection = rc.getTransportConnection();
+      if (transportConnection instanceof NettyConnection nettyConnection) {
+         rc.addSubjectListener(new SubjectListener() {
+            @Override
+            public void subjectChanged(Subject subject) {
+               if (subject != null) {
+                  rc.removeSubjectListener(this);
+                  CoreFrameWithSizeLimitDecoder.setFrameSizeLimit(nettyConnection.getChannel(), getCoreMaxFrameSize());
+               }
+            }
+         });
+      }
       return entry;
    }
 
@@ -192,7 +244,11 @@ public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveM
 
    @Override
    public void addChannelHandlers(ChannelPipeline pipeline) {
-      pipeline.addLast("activemq-decoder", new ActiveMQFrameDecoder2());
+      if (server.getSecurityStore().isSecurityEnabled() && isCoreConnectionSecurityEnabled()) {
+         pipeline.addLast("activemq-decoder", new CoreFrameWithSizeLimitDecoder(getCoreInitialMaxFrameSize()));
+      } else {
+         pipeline.addLast("activemq-decoder", new ActiveMQFrameDecoder2());
+      }
    }
 
    @Override
@@ -270,6 +326,10 @@ public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveM
       private final Acceptor acceptorUsed;
       private final CoreRemotingConnection rc;
 
+      private boolean preAuthTopologySent = false;
+      private boolean postAuthTopologySent = false;
+      private boolean topologySubscribed = false;
+
       private LocalChannelHandler(final Configuration config,
                                   final ConnectionEntry entry,
                                   final Channel channel0,
@@ -296,11 +356,84 @@ public class CoreProtocolManager implements ProtocolManager<Interceptor, ActiveM
             channel0.send(packet);
          } else if (packet.getType() == PacketImpl.SUBSCRIBE_TOPOLOGY
             || packet.getType() == PacketImpl.SUBSCRIBE_TOPOLOGY_V2) {
-            SubscribeClusterTopologyUpdatesMessage msg = (SubscribeClusterTopologyUpdatesMessage) packet;
+            // Reject multiple subscriptions: only one topology subscription is permitted per connection.
+            // A second request indicates a misbehaving or malicious client; close the connection immediately.
+            if (topologySubscribed) {
+               ActiveMQServerLogger.LOGGER.multipleTopologySubscriptions(rc.getRemoteAddress());
+               rc.close();
+               return;
+            }
+            topologySubscribed = true;
 
             if (packet.getType() == PacketImpl.SUBSCRIBE_TOPOLOGY_V2) {
                channel0.getConnection().setChannelVersion(
-                  ((SubscribeClusterTopologyUpdatesMessageV2) msg).getClientVersion());
+                  ((SubscribeClusterTopologyUpdatesMessageV2) packet).getClientVersion());
+            }
+
+            if (server.getSecurityStore().isSecurityEnabled() && isCoreConnectionSecurityEnabled() && rc.getSubject() == null) {
+               if (((SubscribeClusterTopologyUpdatesMessage)packet).isClusterConnection()) {
+                  ActiveMQServerLogger.LOGGER.unauthenticatedClusterTopologySubscriptionRequest(rc.getRemoteAddress());
+               }
+
+               sendPreAuthTopology();
+            } else {
+               sendPostAuthTopology();
+            }
+         }
+      }
+
+      // Send a single dummy topology response to unblock the client's isLast=true wait (the client blocks
+      // until it receives a topology message before proceeding to CREATE_SESSION). The dummy response
+      // uses PRE_AUTH_NODE_ID and an empty connector pair so no real broker identity or connectivity
+      // information is disclosed to unauthenticated callers.
+      private void sendPreAuthTopology() {
+         preAuthTopologySent = true;
+         Pair<TransportConfiguration, TransportConfiguration> preAuthConfig = new Pair<>(null,
+            new TransportConfiguration("", null, ""));
+
+         logger.debug("Sending pre-authentication topology to unauthenticated connection from {}.", rc.getRemoteAddress());
+
+         entry.connectionExecutor.execute(() -> {
+            if (channel0.supports(PacketImpl.CLUSTER_TOPOLOGY_V4)) {
+               channel0.send(new ClusterTopologyChangeMessage_V4(System.currentTimeMillis(), Topology.PRE_AUTH_NODE_ID,
+                  null, null, preAuthConfig, true, server.getVersion().getIncrementingVersion()));
+            } else if (channel0.supports(PacketImpl.CLUSTER_TOPOLOGY_V2)) {
+               channel0.send(new ClusterTopologyChangeMessage_V2(System.currentTimeMillis(),
+                  Topology.PRE_AUTH_NODE_ID, null, preAuthConfig, true));
+            } else {
+               channel0.send(new ClusterTopologyChangeMessage(Topology.PRE_AUTH_NODE_ID, preAuthConfig, true));
+            }
+         });
+
+         // Defer the real topology subscription until authentication completes. The subject
+         // listener fires once when setSubject() is called with a non-null subject (i.e. after
+         // a successful CONNECT or CREATE_SESSION), then removes itself to avoid further executions.
+         rc.addSubjectListener(new SubjectListener() {
+            @Override
+            public void subjectChanged(Subject subject) {
+               if (subject != null) {
+                  rc.removeSubjectListener(this);
+                  sendPostAuthTopology();
+               }
+            }
+         });
+      }
+
+      private void sendPostAuthTopology() {
+         if (!postAuthTopologySent) {
+            postAuthTopologySent = true;
+
+            if (preAuthTopologySent) {
+               // Remove the placeholder entry the client added when it received the pre-auth dummy response.
+               // Without this nodeDown the client's topology map would contain PRE_AUTH_NODE_ID alongside
+               // the real nodes delivered below.
+               entry.connectionExecutor.execute(() -> {
+                  if (channel0.supports(PacketImpl.CLUSTER_TOPOLOGY_V2)) {
+                     channel0.send(new ClusterTopologyChangeMessage_V2(System.currentTimeMillis(), Topology.PRE_AUTH_NODE_ID));
+                  } else {
+                     channel0.send(new ClusterTopologyChangeMessage(Topology.PRE_AUTH_NODE_ID));
+                  }
+               });
             }
 
             final ClusterTopologyListener listener = new ClusterTopologyListener() {

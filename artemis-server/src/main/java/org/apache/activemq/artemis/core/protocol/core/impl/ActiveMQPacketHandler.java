@@ -33,8 +33,8 @@ import org.apache.activemq.artemis.core.protocol.core.CoreRemotingConnection;
 import org.apache.activemq.artemis.core.protocol.core.Packet;
 import org.apache.activemq.artemis.core.protocol.core.ServerSessionPacketHandler;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ActiveMQExceptionMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CheckFailoverMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CheckFailoverReplyMessage;
+import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ConnectMessage;
+import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ConnectResponseMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateQueueMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateSessionMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateSessionMessage_V2;
@@ -69,6 +69,8 @@ public class ActiveMQPacketHandler implements ChannelHandler {
    private final CoreProtocolManager protocolManager;
 
    private final Actor<Packet> packetActor;
+
+   private boolean connectReceived;
 
    public ActiveMQPacketHandler(final CoreProtocolManager protocolManager,
                                 final ActiveMQServer server,
@@ -107,10 +109,10 @@ public class ActiveMQPacketHandler implements ChannelHandler {
 
             break;
          }
-         case PacketImpl.CHECK_FOR_FAILOVER: {
-            CheckFailoverMessage request = (CheckFailoverMessage) packet;
+         case PacketImpl.CONNECT: {
+            ConnectMessage request = (ConnectMessage) packet;
 
-            handleCheckForFailover(request);
+            handleConnect(request);
 
             break;
          }
@@ -136,10 +138,33 @@ public class ActiveMQPacketHandler implements ChannelHandler {
       }
    }
 
-   private void handleCheckForFailover(CheckFailoverMessage failoverMessage) {
-      String nodeID = failoverMessage.getNodeID();
+   private void handleConnect(ConnectMessage connectMessage) {
+      if (connectReceived) {
+         ActiveMQServerLogger.LOGGER.invalidPacket(connectMessage);
+         connection.close();
+         return;
+      }
+      connectReceived = true;
+
+      connection.setChannelVersion(connectMessage.getClientVersion());
+
+      if (server.getSecurityStore().isSecurityEnabled() && protocolManager.isCoreConnectionSecurityEnabled() && connectMessage.getUser() != null) {
+         try {
+            server.validateUser(connectMessage.getUser(), connectMessage.getPassword(), connection, protocolManager.getSecurityDomain());
+         } catch (ActiveMQClusterSecurityException | ActiveMQSecurityException e) {
+            channel1.sendAndFlush(new ActiveMQExceptionMessage(e));
+            connection.close();
+            return;
+         } catch (Exception e) {
+            channel1.sendAndFlush(new ActiveMQExceptionMessage(new ActiveMQInternalErrorException()));
+            connection.close();
+            return;
+         }
+      }
+
+      String nodeID = connectMessage.getNodeID();
       boolean okToFailover = nodeID == null || server.getNodeID().toString().equals(nodeID) || !(server.getHAPolicy().canScaleDown() && !server.hasScaledDown(SimpleString.of(nodeID)));
-      channel1.send(new CheckFailoverReplyMessage(okToFailover));
+      channel1.send(new ConnectResponseMessage(okToFailover, server.getVersion().getIncrementingVersion()));
    }
 
    private void handleCreateSession(final CreateSessionMessage request) {

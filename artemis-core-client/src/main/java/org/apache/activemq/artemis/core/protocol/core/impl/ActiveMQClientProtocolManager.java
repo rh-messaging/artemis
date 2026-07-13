@@ -41,8 +41,8 @@ import org.apache.activemq.artemis.core.protocol.core.Channel;
 import org.apache.activemq.artemis.core.protocol.core.ChannelHandler;
 import org.apache.activemq.artemis.core.protocol.core.CoreRemotingConnection;
 import org.apache.activemq.artemis.core.protocol.core.Packet;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CheckFailoverMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CheckFailoverReplyMessage;
+import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ConnectMessage;
+import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ConnectResponseMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ClusterTopologyChangeMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ClusterTopologyChangeMessage_V2;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ClusterTopologyChangeMessage_V3;
@@ -419,9 +419,10 @@ public class ActiveMQClientProtocolManager implements ClientProtocolManager {
    }
 
    @Override
-   public boolean checkForFailover(String nodeID) throws ActiveMQException {
-      CheckFailoverMessage packet = new CheckFailoverMessage(nodeID);
-      CheckFailoverReplyMessage message = (CheckFailoverReplyMessage) getChannel1().sendBlocking(packet, PacketImpl.CHECK_FOR_FAILOVER_REPLY);
+   public boolean sendConnect(String nodeID, String connectionUser, String connectionPassword) throws ActiveMQException {
+      ConnectMessage packet = new ConnectMessage(nodeID, VersionLoader.getVersion().getIncrementingVersion(), connectionUser, connectionPassword);
+      ConnectResponseMessage message = (ConnectResponseMessage) getChannel1().sendBlocking(packet, PacketImpl.CONNECT_RESPONSE);
+      connection.setChannelVersion(message.getServerVersion());
       return message.isOkToFailover();
    }
 
@@ -492,8 +493,8 @@ public class ActiveMQClientProtocolManager implements ClientProtocolManager {
             ClusterTopologyChangeMessage_V4 topMessage = (ClusterTopologyChangeMessage_V4) packet;
             notifyTopologyChange(updateTransportConfiguration(topMessage));
             connection.setChannelVersion(topMessage.getServerVersion());
-         } else if (type == PacketImpl.CHECK_FOR_FAILOVER_REPLY) {
-            System.out.println("Channel0Handler.handlePacket");
+         } else if (type == PacketImpl.CONNECT_RESPONSE) {
+            logger.debug("Handle connect response: {}", packet);
          }
       }
 

@@ -26,6 +26,7 @@ import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.remoting.CloseListener;
 import org.apache.activemq.artemis.core.remoting.FailureListener;
+import org.apache.activemq.artemis.core.remoting.SubjectListener;
 import org.apache.activemq.artemis.core.server.MessageReference;
 import org.apache.activemq.artemis.core.server.ServerConsumer;
 import org.apache.activemq.artemis.spi.core.protocol.RemotingConnection;
@@ -178,6 +179,16 @@ public class ManagementRemotingConnection implements RemotingConnection {
    @Override
    public Subject getSubject() {
       return subject;
+   }
+
+   @Override
+   public void addSubjectListener(SubjectListener listener) {
+
+   }
+
+   @Override
+   public boolean removeSubjectListener(SubjectListener listener) {
+      return false;
    }
 
    @Override
