@@ -541,4 +541,6 @@ public interface ActiveMQMessageBundle {
    @Message(id = 229259, value = "Invalid disk full message policy type {}")
    IllegalArgumentException invalidDiskFullPolicyType(String val);
 
+   @Message(id = 229261, value = "Authentication mechanism not supported: {}")
+   ActiveMQSecurityException authenticationMechanismNotSupported(String authMechanism);
 }
