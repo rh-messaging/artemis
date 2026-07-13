@@ -77,6 +77,8 @@ public class SecurityStoreImpl implements SecurityStore, HierarchicalRepositoryC
 
    private static final byte[] CACHE_KEY_SEPARATOR = new byte[]{0};
 
+   private static final Subject CLUSTER_SUBJECT = new Subject();
+
    private final HierarchicalRepository<Set<Role>> securityRepository;
 
    private final ActiveMQSecurityManager securityManager;
@@ -380,6 +382,9 @@ public class SecurityStoreImpl implements SecurityStore, HierarchicalRepositoryC
 
       if (checkResult == ClusterCredentialsCheckResult.VALID) {
          AUTHENTICATION_SUCCESS_COUNT_UPDATER.incrementAndGet(this);
+         if (connection != null) {
+            connection.setSubject(CLUSTER_SUBJECT);
+         }
          return user;
       } else if (checkResult == ClusterCredentialsCheckResult.INVALID) {
          AUTHENTICATION_FAILURE_COUNT_UPDATER.incrementAndGet(this);

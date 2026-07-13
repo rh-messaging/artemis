@@ -42,6 +42,7 @@ import org.apache.activemq.artemis.ra.ConnectionFactoryProperties;
 import org.apache.activemq.artemis.ra.inflow.ActiveMQActivation;
 import org.apache.activemq.artemis.ra.inflow.ActiveMQActivationSpec;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
+import org.apache.activemq.artemis.utils.Wait;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -646,7 +647,7 @@ public class ResourceAdapterTest extends ActiveMQTestBase {
             // ignore
          }
 
-         assertEquals(0, server.getRemotingService().getConnections().size());
+         Wait.assertEquals(0, () -> server.getRemotingService().getConnections().size());
       } finally {
          if (activation != null) {
             activation.stop();

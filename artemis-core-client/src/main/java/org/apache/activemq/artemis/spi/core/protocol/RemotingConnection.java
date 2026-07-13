@@ -27,6 +27,7 @@ import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.api.core.TransportConfiguration;
 import org.apache.activemq.artemis.core.remoting.CloseListener;
 import org.apache.activemq.artemis.core.remoting.FailureListener;
+import org.apache.activemq.artemis.core.remoting.SubjectListener;
 import org.apache.activemq.artemis.spi.core.remoting.BufferHandler;
 import org.apache.activemq.artemis.spi.core.remoting.Connection;
 import org.apache.activemq.artemis.spi.core.remoting.ReadyListener;
@@ -218,6 +219,24 @@ public interface RemotingConnection extends BufferHandler {
     * the possibly null subject associated with this connection
     */
    Subject getSubject();
+
+
+   /**
+    * add a SubjectListener.
+    * <p>
+    * This will be called in the connection subject changes.
+    *
+    * @param listener the listener to add
+    */
+   void addSubjectListener(SubjectListener listener);
+
+   /**
+    * remove a SubjectListener
+    *
+    * @param listener the listener to remove
+    * @return true if removed
+    */
+   boolean removeSubjectListener(SubjectListener listener);
 
    /**
     * {@return the name of the protocol for this Remoting Connection}

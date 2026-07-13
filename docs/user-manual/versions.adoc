@@ -15,24 +15,71 @@ NOTE: Follow the general upgrade procedure outlined in the xref:upgrading.adoc#u
 
 :sectnums!:
 
+== Version 2.56.0
+
+link:++https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12357208[Full release notes]++[Full release notes]
+
+=== Upgrading from 2.55.0
+
+* The Core protocol connect handshake packet was extended in a backward-compatible way on the wire (same packet type identifiers).
+When security is enabled, Core clients that authenticate at connection time should pass credentials via `ServerLocator.setConnectionCredentials(user, password)` or `ServerLocator.createSessionFactory(user, password)`.
+Cluster components on new brokers (cluster connections, bridges, backups, federation) do this automatically using the configured `cluster-user` / `cluster-password` or bridge `user` / `password`.
+See xref:core.adoc#core-connection-handshake[Core connection handshake] for details.
+* On secured Core connections the broker initially limits frame size to 4 KiB until the connection is authenticated, then raises the limit to 128 KiB.
+Unauthenticated clients no longer receive real cluster topology; they receive a placeholder response until authentication succeeds.
+Both behaviors can be tuned or disabled per acceptor; see xref:core.adoc#core-connection-handshake[Core connection handshake].
+* *Upgrade brokers before mixing old and new versions in a secured cluster.*
+An old broker connecting to a broker that has already been upgraded does not send connection-level credentials in the Core connect handshake.
+The upgraded broker therefore treats the connection as unauthenticated and responds with only the placeholder topology entry, not the real cluster view.
+Until that old broker is upgraded as well, it may be unable to discover or connect properly to the new brokers (cluster connections, bridges, replication, backup registration, and similar Core links can fail or stall).
+Upgrade every broker in the cluster, or temporarily disable `coreConnectionSecurityEnabled` on acceptors during a transitional window, before relying on cross-version cluster connectivity.
+
+== Version 2.55.0
+
+https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12357054[Full release notes]
+
+=== Highlights
+
+* The `exp` command from the xref:data-tools.adoc#data-tools[data tools] now supports exporting messages from a specific queue via the `--queue` switch.
+* The xref:security.adoc#oidcloginmodule[OIDCLoginModule] now supports configurable mandatory claims and role mapping via the `requiredClaims` and `roleMapping` parameters.
+* The value for `cluster-password` specified via `create` command is now masked in the resulting `broker.xml`.
+* The timeout for xref:configuring-transports.adoc#configuring-netty-ssl[SSL/TLS] handshake is now configurable on any `acceptor` via the `sslHandshakeTimeout` URL parameter.
+* On the documentation front, we added a comprehensive xref:threat-model.adoc#threat-model[threat model] and a basic https://github.com/apache/artemis/blob/main/SECURITY.md[SECURITY.md] to help both humans and AI agents provide higher quality security reports. We also added an https://github.com/apache/artemis/blob/main/AGENTS.md[AGENTS.md] to help improve the quality of AI-assisted contributions.
+
 == Version 2.54.0
 
 https://issues.apache.org/jira/secure/ReleaseNote.jspa?projectId=12315920&version=12356777[Full release notes]
 
 === Highlights
 
-* xxx
+* OpenID Connect is now supported via the xref:security.adoc#oidcloginmodule[`OIDCLoginModule`].
+A full demonstration is available in the https://github.com/apache/artemis-examples/tree/main/examples/features/standard/security-oidc[examples repo].
+* The xref:configuring-transports.adoc#configuring-netty-ssl[`keyPassword`] property is now supported for SSL connections.
+It is used to access the private key within a keystore.
+It is only supported for JKS & JCEKS stores.
+* The xref:using-cli.adoc[CLI] now supports listing xref:lock-coordination.adoc[locks] and their status via the `lock list` command.
+* The xref:management-console.adoc[web console] was upgraded to 1.8.0.
+This release mainly contains bug fixes and dependency updates.
+See the https://issues.apache.org/jira/projects/ARTEMIS/versions/12356761[release notes] for more details.
 
 === Upgrading from 2.53.0
 
-* To improve security we've hardened the code dealing with cluster credentials.
-In short, *any connection using the default values of `cluster-user` and `cluster-password` will be rejected*.
+* To improve security we've hardened the broker in a few areas:
+** First, *any connection using the default values of `cluster-user` and `cluster-password` will be rejected*.
 +
 Therefore, any broker using the default `cluster-user` and `cluster-password` will no longer cluster properly.
 To restore functionality, use a non-default value for `cluster-user` and `cluster-password`.
 +
 This change similarly impacts any Core bridge connecting to a secured broker using the default `user` and `password` because those defaults are based on the default  `cluster-user` and `cluster-password` respectively.
 To restore functionality, we recommend specifying `user` and `password` values on the `bridge` that correspond to a valid user account on the target broker. The corresponding role on the target broker should have the xref:security.adoc#role-based-security-for-addresses[`send` permission] for the bridge's `forwarding-address`.
+** When creating a broker via the xref:using-cli.adoc[CLI] (i.e., using the `create` command) we've always prompted users for default credentials.
+However, there was a `--silent` option that would skip all prompts and use default values.
+This has been changed so that that no passwords will have default values, even when using the `--silent` option.
+**When using `--silent` you will need to explicitly define password values** (e.g., via `--password`, `--cluster-password`, etc.) or creation will fail.
+** Values specified for `--cluster-user` when creating a broker instance (either explicitly via the command-line switch or interactively) will be masked automatically using the xref:masking-passwords.adoc#the-default-codec[the default codec].
+* Due to https://issues.apache.org/jira/browse/ARTEMIS-5949[ARTEMIS-5949], the `security-settings` in the default `broker.xml` have changed so that permissions are explicitly set on the management address.
+There is no semantic change.
+This is simply to clarify permissions so that security is easier to understand.
 
 == Version 2.53.0
 
