@@ -1515,4 +1515,10 @@ public interface ActiveMQServerLogger {
 
    @LogMessage(id = 224161, value = "Connection from {} closed. Undeployed Core federation {}.", level = LogMessage.Level.INFO)
    void federationDownstreamConnectionClosed(String remoteAddress, String name);
+
+   @LogMessage(id = 224165, value = "Unauthenticated cluster topology subscription request. Update the remote broker to authenticate the cluster connection from {}.", level = LogMessage.Level.WARN)
+   void unauthenticatedClusterTopologySubscriptionRequest(String remoteAddress);
+
+   @LogMessage(id = 224166, value = "Multiple topology subscriptions to connection from {}. Closing connection.", level = LogMessage.Level.WARN)
+   void multipleTopologySubscriptions(String remoteAddress);
 }

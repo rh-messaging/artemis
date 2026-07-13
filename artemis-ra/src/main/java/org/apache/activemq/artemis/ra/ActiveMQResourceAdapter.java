@@ -1197,6 +1197,10 @@ public class ActiveMQResourceAdapter implements ResourceAdapter, Serializable {
          throw new IllegalArgumentException("must provide either TransportType or DiscoveryGroupAddress and DiscoveryGroupPort for ResourceAdapter Connection Factory");
       }
 
+      cf.setUser(getUserName());
+      cf.setPassword(getPassword());
+      cf.setPasswordCodec(getPasswordCodec());
+
       cf.setUseTopologyForLoadBalancing(raProperties.isUseTopologyForLoadBalancing());
 
       cf.setEnableSharedClientID(true);
@@ -1259,6 +1263,11 @@ public class ActiveMQResourceAdapter implements ResourceAdapter, Serializable {
 
          cf = ActiveMQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.XA_CF, transportConfigurations);
       }
+
+      cf.setUser(getUserName());
+      cf.setPassword(getPassword());
+      cf.setPasswordCodec(getPasswordCodec());
+
       setParams(cf, overrideProperties);
 
       //now make sure we are HA in any way

@@ -535,4 +535,6 @@ public interface ActiveMQMessageBundle {
    @Message(id = 229257, value = "IDGenerator has been stopped")
    RuntimeException idGeneratorStopped();
 
+   @Message(id = 229261, value = "Authentication mechanism not supported: {}")
+   ActiveMQSecurityException authenticationMechanismNotSupported(String authMechanism);
 }

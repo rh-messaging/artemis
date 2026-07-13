@@ -42,6 +42,7 @@ import org.apache.activemq.artemis.ra.ConnectionFactoryProperties;
 import org.apache.activemq.artemis.ra.inflow.ActiveMQActivation;
 import org.apache.activemq.artemis.ra.inflow.ActiveMQActivationSpec;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
+import org.apache.activemq.artemis.utils.Wait;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -646,7 +647,7 @@ public class ResourceAdapterTest extends ActiveMQTestBase {
             // ignore
          }
 
-         assertEquals(0, server.getRemotingService().getConnections().size());
+         Wait.assertEquals(0, () -> server.getRemotingService().getConnections().size());
       } finally {
          if (activation != null)
             activation.stop();
@@ -654,5 +655,46 @@ public class ResourceAdapterTest extends ActiveMQTestBase {
             ra.stop();
          server.stop();
       }
+   }
+   @Test
+   public void testConnectionFactoryPropagatesUserCredentials() throws Exception {
+      ActiveMQResourceAdapter ra = new ActiveMQResourceAdapter();
+      ra.setConnectorClassName(InVMConnectorFactory.class.getName());
+      ra.setUserName("testUser");
+      ra.setPassword("testPassword");
+      ra.setPasswordCodec("org.apache.activemq.artemis.utils.DefaultSensitiveStringCodec");
+
+      ActiveMQConnectionFactory factory = ra.getConnectionFactory(new ConnectionFactoryProperties());
+      assertEquals("testUser", factory.getUser());
+      assertEquals("testPassword", factory.getPassword());
+      assertEquals("org.apache.activemq.artemis.utils.DefaultSensitiveStringCodec", factory.getPasswordCodec());
+   }
+
+   @Test
+   public void testRecoveryConnectionFactoryPropagatesUserCredentials() throws Exception {
+      ActiveMQResourceAdapter ra = new ActiveMQResourceAdapter();
+      ra.setConnectorClassName(InVMConnectorFactory.class.getName());
+      ra.setUserName("recoveryUser");
+      ra.setPassword("recoveryPassword");
+      ra.setPasswordCodec("org.apache.activemq.artemis.utils.DefaultSensitiveStringCodec");
+
+      ActiveMQConnectionFactory factory = ra.createRecoveryActiveMQConnectionFactory(new ConnectionFactoryProperties());
+      assertEquals("recoveryUser", factory.getUser());
+      assertEquals("recoveryPassword", factory.getPassword());
+      assertEquals("org.apache.activemq.artemis.utils.DefaultSensitiveStringCodec", factory.getPasswordCodec());
+   }
+
+   @Test
+   public void testDefaultConnectionFactoryPropagatesUserCredentials() throws Exception {
+      ActiveMQResourceAdapter ra = new ActiveMQResourceAdapter();
+      ra.setConnectorClassName(InVMConnectorFactory.class.getName());
+      ra.setUserName("defaultUser");
+      ra.setPassword("defaultPassword");
+      ra.setPasswordCodec("org.apache.activemq.artemis.utils.DefaultSensitiveStringCodec");
+
+      ActiveMQConnectionFactory factory = ra.getDefaultActiveMQConnectionFactory();
+      assertEquals("defaultUser", factory.getUser());
+      assertEquals("defaultPassword", factory.getPassword());
+      assertEquals("org.apache.activemq.artemis.utils.DefaultSensitiveStringCodec", factory.getPasswordCodec());
    }
 }

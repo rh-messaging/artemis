@@ -451,6 +451,7 @@ public class ClusterManager implements ActiveMQComponent {
       // We are going to manually retry on the bridge in case of failure
       serverLocator.setReconnectAttempts(0);
       serverLocator.setInitialConnectAttempts(0);
+      serverLocator.setConnectionCredentials(config.getUser(), config.getPassword());
       serverLocator.setRetryInterval(config.getRetryInterval());
       serverLocator.setMaxRetryInterval(config.getMaxRetryInterval());
       serverLocator.setRetryIntervalMultiplier(config.getRetryIntervalMultiplier());
