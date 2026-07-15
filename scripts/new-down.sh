@@ -16,17 +16,24 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# Setting the script to fail if anything goes wrong
-set -e
+
+# Use this script to generate the downstream branch:
+# Usage example:
+
+# ./scripts/new-down ENTMQBR-XXX commit1 commit2... commitN
 
 export PRG_PATH=`dirname $0`
 . $PRG_PATH/downstream-env.profile
 
-# this script is a helper that will checkout the PR Branch
-
-git fetch $REDHAT_USER
 git fetch $REDHAT_DOWNSTREAM
+git checkout $REDHAT_DOWNSTREAM/$DOWNSTREAM_BRANCH -B $1
 
-git checkout $REDHAT_DOWNSTREAM/pr/$1 -B $1
+for i in "${@:2}"
+do
+    echo "$i"
+    git cherry-pick -x $i
+    OLD_MSG=$(git log --format=%B -n1)
+    git commit --amend -m"$OLD_MSG" -m"downstream: $1"
+done
 
-echo "\ndo your own rebase by typing: git pull --rebase $REDHAT_DOWNSTREAM $DOWNSTREAM_BRANCH"
+git push origin-rh $1 -f
