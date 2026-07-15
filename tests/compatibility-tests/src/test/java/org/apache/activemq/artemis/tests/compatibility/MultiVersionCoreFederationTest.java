@@ -17,11 +17,6 @@
 
 package org.apache.activemq.artemis.tests.compatibility;
 
-import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.ARTEMIS_2_44_0;
-import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.SNAPSHOT;
-import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageConsumer;
@@ -46,12 +41,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.ARTEMIS_2_44_0;
+import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.SNAPSHOT;
+import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @ExtendWith(ParameterizedTestExtension.class)
-public class MultiVersionFederationTest extends ClasspathBase {
+public class MultiVersionCoreFederationTest extends ClasspathBase {
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-   private static final String QUEUE_NAME = "MultiVersionFederationTestQueue";
+   private static final String QUEUE_NAME = "MultiVersionCoreFederationTestQueue";
 
    private final String broker1Version;
    private final ClassLoader broker1Classloader;
@@ -65,7 +65,7 @@ public class MultiVersionFederationTest extends ClasspathBase {
    public static Collection getParameters() {
       List<Object[]> combinations = new ArrayList<>();
 
-      // Test federation with mixed versions
+      // Test core federation with mixed versions
       combinations.add(new Object[]{ARTEMIS_2_44_0, SNAPSHOT, true});
       combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_44_0, true});
       combinations.add(new Object[]{ARTEMIS_2_44_0, SNAPSHOT, false});
@@ -78,7 +78,9 @@ public class MultiVersionFederationTest extends ClasspathBase {
       return combinations;
    }
 
-   public MultiVersionFederationTest(String broker1Version, String broker2Version, boolean security) throws Exception {
+   public MultiVersionCoreFederationTest(String broker1Version,
+                                         String broker2Version,
+                                         boolean security) throws Exception {
       this.broker1Version = broker1Version;
       this.broker1Classloader = getClasspath(broker1Version);
 
@@ -87,28 +89,33 @@ public class MultiVersionFederationTest extends ClasspathBase {
       this.security = security;
    }
 
+
+
    @AfterEach
    public void cleanupServers() {
       try {
-         evaluate(broker1Classloader, "multiVersionFederation/broker1Stop.groovy");
+         evaluate(broker1Classloader, "multiVersionCoreFederation/broker1Stop.groovy");
       } catch (Exception e) {
          logger.warn(e.getMessage(), e);
       }
       try {
-         evaluate(broker2Classloader, "multiVersionFederation/broker2Stop.groovy");
+         evaluate(broker2Classloader, "multiVersionCoreFederation/broker2Stop.groovy");
       } catch (Exception e) {
          logger.warn(e.getMessage(), e);
       }
+
+      clearClassLoaders();
    }
 
    @TestTemplate
-   public void testFederation() throws Throwable {
+   public void testCoreFederation() throws Throwable {
+      FileUtil.deleteDirectory(serverFolder.getAbsoluteFile());
       FileUtil.deleteDirectory(serverFolder.getAbsoluteFile());
       System.out.println("Starting broker1 with version " + broker1Version);
-      evaluate(broker1Classloader, "multiVersionFederation/broker1.groovy", serverFolder.getAbsolutePath(), String.valueOf(security));
+      evaluate(broker1Classloader, "multiVersionCoreFederation/broker1.groovy", serverFolder.getAbsolutePath(), String.valueOf(security));
 
       System.out.println("Starting broker2 with version " + broker2Version);
-      evaluate(broker2Classloader, "multiVersionFederation/broker2.groovy", serverFolder.getAbsolutePath(), String.valueOf(security));
+      evaluate(broker2Classloader, "multiVersionCoreFederation/broker2.groovy", serverFolder.getAbsolutePath(), String.valueOf(security));
 
       // Send messages on broker1
       send(new ActiveMQConnectionFactory("tcp://localhost:61000"), 100, 1024);
@@ -129,9 +136,6 @@ public class MultiVersionFederationTest extends ClasspathBase {
       send(new JmsConnectionFactory("amqp://localhost:61000"), 10, 300 * 1024);
       // receive amqp large messages on broker2
       receive(new JmsConnectionFactory("amqp://localhost:61001"), 10, 300 * 1024);
-
-      evaluate(broker1Classloader, "multiVersionFederation/broker1Stop.groovy");
-      evaluate(broker2Classloader, "multiVersionFederation/broker2Stop.groovy");
    }
 
    private void send(ConnectionFactory factory, int numberOfMessages, int textSize) throws Throwable {

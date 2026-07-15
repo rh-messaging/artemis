@@ -1,4 +1,4 @@
-package multiVersionFederation
+package multiVersionCoreFederation
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
@@ -21,9 +21,6 @@ import org.apache.activemq.artemis.api.core.RoutingType
 import org.apache.activemq.artemis.core.config.CoreAddressConfiguration
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
 import org.apache.activemq.artemis.core.config.impl.SecurityConfiguration
-import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectConfiguration
-import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPFederationQueuePolicyElement
-import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPFederatedBrokerConnectionElement
 import org.apache.activemq.artemis.core.security.Role
 import org.apache.activemq.artemis.core.server.JournalType
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ
@@ -40,46 +37,20 @@ id = 0;
 configuration = new ConfigurationImpl();
 configuration.setJournalType(JournalType.NIO);
 configuration.setBrokerInstance(new File(folder + "/" + id));
-configuration.addAcceptorConfiguration("amqp", "tcp://localhost:" + 61000);
+configuration.addAcceptorConfiguration("artemis", "tcp://localhost:61000");
 configuration.setSecurityEnabled(security);
 configuration.setPersistenceEnabled(true);
 
 configuration.addAddressSetting("#", new AddressSettings()
         .setAddressFullMessagePolicy(AddressFullMessagePolicy.PAGE).setMaxSizeMessages(100_000).setMaxSizeMessages(100 * 1024 * 1024));
 
-
-// Configure AMQP broker connection with federation
-AMQPBrokerConnectConfiguration amqpConnection = new AMQPBrokerConnectConfiguration()
-    .setName("federation-to-broker2")
-    .setUri("tcp://localhost:61001")
-    .setReconnectAttempts(-1)
-    .setRetryInterval(1000)
-
-if (security) {
-    amqpConnection.setUser("admin")
-    amqpConnection.setPassword("admin")
-}
-
-// Configure federation for queues
-AMQPFederatedBrokerConnectionElement federation = new AMQPFederatedBrokerConnectionElement();
-federation.setName("broker2-federation")
-
-AMQPFederationQueuePolicyElement queuePolicy = new AMQPFederationQueuePolicyElement()
-    .setName("queue-federation-policy")
-    .addToIncludes("MultiVersionFederationTestQueue", "MultiVersionFederationTestQueue")
-
-federation.addRemoteQueuePolicy(queuePolicy)
-amqpConnection.addFederation(federation)
-
-configuration.addAMQPConnection(amqpConnection)
-
 if (security) {
     configuration.putSecurityRoles("#", new HashSet<Role>(Arrays.asList(new Role("amq", true, true, true, true, true, true, true, true))))
 }
 
-configuration.addAddressConfiguration(new CoreAddressConfiguration().setName("MultiVersionFederationTestQueue"));
-configuration.addQueueConfiguration(new QueueConfiguration("MultiVersionFederationTestQueue")
-    .setAddress("MultiVersionFederationTestQueue")
+configuration.addAddressConfiguration(new CoreAddressConfiguration().setName("MultiVersionCoreFederationTestQueue"));
+configuration.addQueueConfiguration(new QueueConfiguration("MultiVersionCoreFederationTestQueue")
+    .setAddress("MultiVersionCoreFederationTestQueue")
     .setRoutingType(RoutingType.ANYCAST));
 
 theBroker1 = new EmbeddedActiveMQ();
