@@ -135,6 +135,8 @@ The following elements are configured on every lock-coordinator regardless of im
 |How often to check if the lock is still valid, in milliseconds
 |===
 
+NOTE: In a journal HA setup with either shared storage or journal replication, lock coordinators will stay inactive and will not poll for the lock until the server is activated.
+
 === File-Based Lock Manager
 
 The file-based lock manager uses the file system to manage distributed locks through file locking mechanisms.
