@@ -153,6 +153,10 @@ public class FileConfigurationParserTest extends ServerTestBase {
                <property key='test2' value='value2'/>
             </properties>
          </lock-coordinator>
+         <lock-coordinator name="my-lock-no-autostart" auto-start="false">
+            <lock-id>sausage-factory-2</lock-id>
+            <class-name>some.class.somewhere</class-name>
+         </lock-coordinator>
       </lock-coordinators>""";
 
    private static final String BROKER_CONNECTION_PART = """
@@ -464,16 +468,24 @@ public class FileConfigurationParserTest extends ServerTestBase {
 
       Collection<LockCoordinatorConfiguration> lockConfigurations = configuration.getLockCoordinatorConfigurations();
       lockConfigurations.forEach(f -> logger.info("lockConfiguration={}", f));
-      assertEquals(1, lockConfigurations.size());
-      for (LockCoordinatorConfiguration lockConfiguration : lockConfigurations) {
-         assertEquals("my-lock", lockConfiguration.getName());
-         assertEquals("sausage-factory", lockConfiguration.getLockId());
-         assertEquals("some.class.somewhere", lockConfiguration.getClassName());
-         Map<String, String> properties = lockConfiguration.getProperties();
-         assertEquals(2, properties.size());
-         assertEquals("value1", properties.get("test1"));
-         assertEquals("value2", properties.get("test2"));
-      }
+      assertEquals(2, lockConfigurations.size());
+      Map<String, LockCoordinatorConfiguration> lockConfigurationsByName = lockConfigurations.stream().collect(Collectors.toMap(LockCoordinatorConfiguration::getName, Function.identity()));
+
+      LockCoordinatorConfiguration lockConfiguration = lockConfigurationsByName.get("my-lock");
+      assertNotNull(lockConfiguration);
+      assertEquals("my-lock", lockConfiguration.getName());
+      assertEquals("sausage-factory", lockConfiguration.getLockId());
+      assertEquals("some.class.somewhere", lockConfiguration.getClassName());
+      assertTrue(lockConfiguration.isAutoStart(), "auto-start must default to true when the attribute is absent");
+      Map<String, String> properties = lockConfiguration.getProperties();
+      assertEquals(2, properties.size());
+      assertEquals("value1", properties.get("test1"));
+      assertEquals("value2", properties.get("test2"));
+
+      LockCoordinatorConfiguration lockConfigurationNoAutoStart = lockConfigurationsByName.get("my-lock-no-autostart");
+      assertNotNull(lockConfigurationNoAutoStart);
+      assertFalse(lockConfigurationNoAutoStart.isAutoStart(), "auto-start=\"false\" must be honored by the parser");
+
       configuration.getAcceptorConfigurations().stream().filter(f -> f.getName().equals("netty-with-lock")).forEach(f -> assertEquals("my-lock", f.getLockCoordinator()));
       assertEquals(1, configuration.getAMQPConnection().size());
       assertEquals("my-lock", configuration.getAMQPConnection().get(0).getLockCoordinator());

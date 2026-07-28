@@ -1525,7 +1525,7 @@ public interface ActiveMQServerLogger {
    void lockCoordinatorNotFoundOnAcceptor(String lockName, String acceptorName);
 
    @LogMessage(id = 224156, value = "LockCoordinator {} starting with className={} and lockID={} with checkPeriod={} milliseconds", level = LogMessage.Level.INFO)
-   void lockCoordinatorStarting(String lockName, String className, String lockID, int checkPeriod);
+   void lockCoordinatorStarting(String lockName, String className, String lockID, long checkPeriod);
 
    @LogMessage(id = 224157, value = "At least one of the components failed to start under the lockCoordinator {}. A retry will be executed", level = LogMessage.Level.INFO)
    void retryLockCoordinator(String name);

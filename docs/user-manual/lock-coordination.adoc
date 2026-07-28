@@ -133,7 +133,14 @@ The following elements are configured on every lock-coordinator regardless of im
 |No
 |5000
 |How often to check if the lock is still valid, in milliseconds
+
+|auto-start
+|No
+|true
+|Whether the lock coordinator starts polling for the distributed lock as soon as the broker is activated. When `false`, the coordinator stays stopped, and the lock is not contended for, until it is started explicitly through management (see <<Management Operations>>).
 |===
+
+NOTE: In a journal HA setup with either shared storage or journal replication, lock coordinators will stay inactive and will not poll for the lock until the server is activated.
 
 === File-Based Lock Manager
 
@@ -202,3 +209,12 @@ This is the recommended approach for production deployments as it provides bette
 |1000
 |Delay in milliseconds between retry attempts
 |===
+
+== Management Operations
+
+The `ActiveMQServerControl` management interface exposes the following operations for lock coordinators, on top of the existing `listLockCoordinatorsAsJSON` that reports their current status:
+
+* `startLockCoordinator(name)` - starts polling for the distributed lock of a lock coordinator that isn't already started, most commonly one configured with `auto-start="false"`. Calling it on an already started lock coordinator is a no-op. An unknown `name` throws `IllegalArgumentException`.
+* `stopLockCoordinator(name)` - stops polling for the distributed lock. If the lock is currently held, it is released, and any element bound to the lock coordinator (acceptors, broker connections) is paused as if the lock had been lost. An unknown `name` throws `IllegalArgumentException`.
+
+These operations allow an administrator to manually control which broker owns a lock coordinator's elements, e.g. to force a controlled fail-over, or to defer contention for a coordinator configured with `auto-start="false"` until some external condition is met.

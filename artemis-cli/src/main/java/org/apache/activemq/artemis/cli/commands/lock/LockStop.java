@@ -17,22 +17,14 @@
 
 package org.apache.activemq.artemis.cli.commands.lock;
 
-import org.apache.activemq.artemis.cli.commands.HelpAction;
+import org.apache.activemq.artemis.api.core.management.SimpleManagement;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
 
-@Command(name = "lock", description = "Lock coordinators group. use 'help lock' for sub commands list", subcommands = {LockList.class, LockStart.class, LockStop.class})
-public class LockGroup implements Runnable {
-
-   CommandLine commandLine;
-
-   public LockGroup(CommandLine commandLine) {
-      this.commandLine = commandLine;
-   }
+@CommandLine.Command(name = "stop", description = "Stop a lock coordinator.")
+public class LockStop extends LockManagementAbstract {
 
    @Override
-   public void run() {
-      HelpAction.help(commandLine, "lock");
+   protected void executeManagement(SimpleManagement simpleManagement) throws Exception {
+      simpleManagement.stopLockCoordinator(lockName);
    }
-
 }

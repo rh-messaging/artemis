@@ -2912,4 +2912,18 @@ public interface AuditLogger {
    @LogMessage(id = 601804, value = "User {} is listing lock coordinators as json on target resource: {}", level = LogMessage.Level.INFO)
    void listLockCoordinatorsAsJSON(String user, Object source);
 
+   static void startLockCoordinator(Object source, Object... args) {
+      BASE_LOGGER.startLockCoordinator(getCaller(), source, parametersList(args));
+   }
+
+   @LogMessage(id = 601805, value = "User {} is starting a lock coordinator on target resource: {} {}", level = LogMessage.Level.INFO)
+   void startLockCoordinator(String user, Object source, String args);
+
+   static void stopLockCoordinator(Object source, Object... args) {
+      BASE_LOGGER.stopLockCoordinator(getCaller(), source, parametersList(args));
+   }
+
+   @LogMessage(id = 601806, value = "User {} is stopping a lock coordinator on target resource: {} {}", level = LogMessage.Level.INFO)
+   void stopLockCoordinator(String user, Object source, String args);
+
 }

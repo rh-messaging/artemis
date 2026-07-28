@@ -105,6 +105,14 @@ public class SimpleManagement implements AutoCloseable {
       return simpleManagementBoolean("broker", "isReplicaSync");
    }
 
+   public void startLockCoordinator(String lockName) throws Exception {
+      simpleManagementVoid("broker", "startLockCoordinator", lockName);
+   }
+
+   public void stopLockCoordinator(String lockName) throws Exception {
+      simpleManagementVoid("broker", "stopLockCoordinator", lockName);
+   }
+
    public void rebuildPageCounters() throws Exception {
       simpleManagementVoid("broker", "rebuildPageCounters");
    }

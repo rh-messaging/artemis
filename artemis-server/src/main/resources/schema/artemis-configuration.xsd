@@ -3314,6 +3314,16 @@
          </xsd:annotation>
       </xsd:attribute>
 
+      <xsd:attribute name="auto-start" type="xsd:boolean" default="true">
+         <xsd:annotation>
+            <xsd:documentation>
+               should the lock coordinator start polling for the distributed lock as soon as the broker is
+               activated. When false, the lock is not contended for until it is started explicitly through
+               management (startLockCoordinator).
+            </xsd:documentation>
+         </xsd:annotation>
+      </xsd:attribute>
+
    </xsd:complexType>
 
    <xsd:element name="lock-coordinators">

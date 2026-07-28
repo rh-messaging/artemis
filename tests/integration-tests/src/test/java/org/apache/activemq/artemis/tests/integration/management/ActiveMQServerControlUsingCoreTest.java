@@ -1892,6 +1892,16 @@ public class ActiveMQServerControlUsingCoreTest extends ActiveMQServerControlTes
                return null;
             }
          }
+
+         @Override
+         public void startLockCoordinator(String name) throws Exception {
+            proxy.invokeOperation("startLockCoordinator", name);
+         }
+
+         @Override
+         public void stopLockCoordinator(String name) throws Exception {
+            proxy.invokeOperation("stopLockCoordinator", name);
+         }
       };
    }
 

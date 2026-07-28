@@ -26,6 +26,7 @@ public class LockCoordinatorConfiguration {
    String lockId;
    String className;
    int checkPeriod;
+   boolean autoStart = true;
    Map<String, String> properties;
 
    public LockCoordinatorConfiguration() {
@@ -85,8 +86,17 @@ public class LockCoordinatorConfiguration {
       return properties;
    }
 
+   public boolean isAutoStart() {
+      return autoStart;
+   }
+
+   public LockCoordinatorConfiguration setAutoStart(boolean autoStart) {
+      this.autoStart = autoStart;
+      return this;
+   }
+
    @Override
    public String toString() {
-      return "LockCoordinatorConfiguration{" + "name='" + name + '\'' + ", lockId='" + lockId + '\'' + ", className='" + className + '\'' + ", checkPeriod=" + checkPeriod + ", properties=" + properties + '}';
+      return "LockCoordinatorConfiguration{" + "name='" + name + '\'' + ", lockId='" + lockId + '\'' + ", className='" + className + '\'' + ", checkPeriod=" + checkPeriod + ", autoStart=" + autoStart + ", properties=" + properties + '}';
    }
 }

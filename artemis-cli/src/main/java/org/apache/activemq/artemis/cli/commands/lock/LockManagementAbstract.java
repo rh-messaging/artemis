@@ -17,22 +17,26 @@
 
 package org.apache.activemq.artemis.cli.commands.lock;
 
-import org.apache.activemq.artemis.cli.commands.HelpAction;
+import org.apache.activemq.artemis.api.core.management.SimpleManagement;
+import org.apache.activemq.artemis.cli.commands.ActionContext;
+import org.apache.activemq.artemis.cli.commands.messages.ConnectionAbstract;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
 
-@Command(name = "lock", description = "Lock coordinators group. use 'help lock' for sub commands list", subcommands = {LockList.class, LockStart.class, LockStop.class})
-public class LockGroup implements Runnable {
+public abstract class LockManagementAbstract extends ConnectionAbstract {
 
-   CommandLine commandLine;
-
-   public LockGroup(CommandLine commandLine) {
-      this.commandLine = commandLine;
-   }
+   @CommandLine.Parameters(description = "Name of the lock coordinator to start.")
+   protected String lockName;
 
    @Override
-   public void run() {
-      HelpAction.help(commandLine, "lock");
+   public Object execute(ActionContext context) throws Exception {
+      super.execute(context);
+
+      try (SimpleManagement simpleManagement = new SimpleManagement(brokerURL, user, password).open()) {
+         executeManagement(simpleManagement);
+      }
+
+      return null;
    }
 
+   protected abstract void executeManagement(SimpleManagement simpleManagement) throws Exception;
 }

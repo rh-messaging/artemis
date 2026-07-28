@@ -62,6 +62,12 @@ public interface ActiveMQServerControl {
    @Operation(desc = "Return the status of lock coordinators")
    String listLockCoordinatorsAsJSON();
 
+   @Operation(desc = "Start polling for the distributed lock of a lock coordinator that isn't already started, e.g. one configured with auto-start=false", impact = MBeanOperationInfo.ACTION)
+   void startLockCoordinator(@Parameter(name = "name", desc = "The name of the lock coordinator") String name) throws Exception;
+
+   @Operation(desc = "Stop polling for the distributed lock of a lock coordinator, releasing it if currently held", impact = MBeanOperationInfo.ACTION)
+   void stopLockCoordinator(@Parameter(name = "name", desc = "The name of the lock coordinator") String name) throws Exception;
+
    /**
     * {@return the number of clients connected to this server.}
     */

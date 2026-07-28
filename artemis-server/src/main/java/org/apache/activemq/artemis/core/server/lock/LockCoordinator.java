@@ -79,6 +79,21 @@ public class LockCoordinator extends ActiveMQScheduledComponent {
    DistributedLock distributedLock;
    volatile boolean locked;
 
+   /**
+    * Whether this coordinator should start polling for the distributed lock as soon as the server is activated.
+    * When {@code false}, the coordinator stays stopped until it is started explicitly, e.g. through management.
+    */
+   private volatile boolean autoStart = true;
+
+   public boolean isAutoStart() {
+      return autoStart;
+   }
+
+   public LockCoordinator setAutoStart(boolean autoStart) {
+      this.autoStart = autoStart;
+      return this;
+   }
+
    public DistributedLockManager getLockManager() {
       return lockManager;
    }
@@ -313,7 +328,12 @@ public class LockCoordinator extends ActiveMQScheduledComponent {
       try {
          if (!locked) {
             if (!lockManager.isStarted()) {
-               lockManager.start();
+               // a bounded start: an unreachable lock manager must not hold this executor forever,
+               // it is simply retried on the next scheduled run
+               if (!lockManager.start(getPeriod(), getTimeUnit())) {
+                  logger.debug("Not able to start the lock manager for {}, lockID={}", name, lockID);
+                  return;
+               }
             }
             DistributedLock lock = lockManager.getDistributedLock(lockID);
             if (lock.tryLock(1, TimeUnit.SECONDS)) {

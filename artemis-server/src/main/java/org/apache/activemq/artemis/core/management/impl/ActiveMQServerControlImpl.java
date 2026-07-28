@@ -4787,6 +4787,44 @@ public class ActiveMQServerControlImpl extends AbstractControl implements Active
       }
    }
 
+   @Override
+   public void startLockCoordinator(String name) throws Exception {
+      if (AuditLogger.isBaseLoggingEnabled()) {
+         AuditLogger.startLockCoordinator(this.server, name);
+      }
+      checkStarted();
+
+      clearIO();
+      try {
+         LockCoordinator lockCoordinator = server.getLockCoordinator(name);
+         if (lockCoordinator == null) {
+            throw new IllegalArgumentException("No lock coordinator found with name: " + name);
+         }
+         lockCoordinator.start();
+      } finally {
+         blockOnIO();
+      }
+   }
+
+   @Override
+   public void stopLockCoordinator(String name) throws Exception {
+      if (AuditLogger.isBaseLoggingEnabled()) {
+         AuditLogger.stopLockCoordinator(this.server, name);
+      }
+      checkStarted();
+
+      clearIO();
+      try {
+         LockCoordinator lockCoordinator = server.getLockCoordinator(name);
+         if (lockCoordinator == null) {
+            throw new IllegalArgumentException("No lock coordinator found with name: " + name);
+         }
+         lockCoordinator.stop();
+      } finally {
+         blockOnIO();
+      }
+   }
+
    public ActiveMQServer getServer() {
       return server;
    }

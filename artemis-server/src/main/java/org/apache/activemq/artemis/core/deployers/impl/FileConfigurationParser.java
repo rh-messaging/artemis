@@ -958,6 +958,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
       String lockId = getString(lockCoordinatorElement, "lock-id", name, NO_CHECK);
       String className = getString(lockCoordinatorElement, "class-name", null, NOT_NULL_OR_EMPTY);
       int checkPeriod = getInteger(lockCoordinatorElement, "check-period", LockCoordinator.DEFAULT_CHECK_PERIOD, NO_CHECK);
+      boolean autoStart = getBooleanAttribute(lockCoordinatorElement, "auto-start", true);
 
       HashMap<String, String> properties = new HashMap<>();
 
@@ -973,7 +974,7 @@ public final class FileConfigurationParser extends XMLConfigurationUtil {
          }
       }
 
-      LockCoordinatorConfiguration lockCoordinatorConfiguration = new LockCoordinatorConfiguration(properties).setName(name).setLockId(lockId).setClassName(className).setCheckPeriod(checkPeriod);
+      LockCoordinatorConfiguration lockCoordinatorConfiguration = new LockCoordinatorConfiguration(properties).setName(name).setLockId(lockId).setClassName(className).setCheckPeriod(checkPeriod).setAutoStart(autoStart);
       mainConfig.addLockCoordinatorConfiguration(lockCoordinatorConfiguration);
    }
 
