@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +33,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
@@ -42,6 +44,7 @@ import org.apache.activemq.artemis.core.buffers.impl.ChannelBufferWrapper;
 import org.apache.activemq.artemis.core.remoting.impl.netty.ConnectionCreator;
 import org.apache.activemq.artemis.core.remoting.impl.netty.HAProxyMessageEnforcer;
 import org.apache.activemq.artemis.core.remoting.impl.netty.HttpAcceptorHandler;
+import org.apache.activemq.artemis.core.remoting.impl.netty.HttpKeepAliveRunnable;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyAcceptor;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnector;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettySNIHostnameHandler;
@@ -66,6 +69,8 @@ public class ProtocolHandler {
 
    private ScheduledExecutorService scheduledThreadPool;
 
+   private HttpKeepAliveRunnable httpKeepAliveRunnable;
+
    private final List<String> websocketSubprotocolIds;
 
    public ProtocolHandler(Map<String, ProtocolManager> protocolMap,
@@ -89,6 +94,16 @@ public class ProtocolHandler {
 
    public ChannelHandler getProtocolDecoder() {
       return new ProtocolDecoder(true, false);
+   }
+
+   public HttpKeepAliveRunnable getHttpKeepAliveRunnable() {
+      return httpKeepAliveRunnable;
+   }
+
+   public void close() {
+      if (httpKeepAliveRunnable != null) {
+         httpKeepAliveRunnable.close();
+      }
    }
 
    public ProtocolManager getProtocol(String name) {
@@ -140,7 +155,7 @@ public class ProtocolHandler {
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
          if (msg instanceof FullHttpRequest httpRequest) {
             HttpHeaders headers = httpRequest.headers();
-            String upgrade = headers.get("upgrade");
+            String upgrade = headers.get(HttpHeaderNames.UPGRADE);
 
             if (upgrade != null && upgrade.equalsIgnoreCase("websocket")) {
                int stompMaxFramePayloadLength = ConfigurationHelper.getIntProperty(TransportConstants.STOMP_MAX_FRAME_PAYLOAD_LENGTH, -1, nettyAcceptor.getConfiguration());
@@ -274,8 +289,16 @@ public class ProtocolHandler {
          p.addLast("http-decoder", new HttpRequestDecoder());
          p.addLast("http-aggregator", new HttpObjectAggregator(Integer.MAX_VALUE));
          p.addLast("http-encoder", new HttpResponseEncoder());
-         HttpAcceptorHandler httpHandler = new HttpAcceptorHandler(ctx.channel());
-         p.addLast(HTTP_HANDLER, httpHandler);
+         //create it lazily if and when we need it
+         if (httpKeepAliveRunnable == null) {
+            long httpServerScanPeriod = ConfigurationHelper.getLongProperty(TransportConstants.HTTP_SERVER_SCAN_PERIOD_PROP_NAME, TransportConstants.DEFAULT_HTTP_SERVER_SCAN_PERIOD, nettyAcceptor.getConfiguration());
+            httpKeepAliveRunnable = new HttpKeepAliveRunnable();
+            Future<?> future = scheduledThreadPool.scheduleAtFixedRate(httpKeepAliveRunnable, httpServerScanPeriod, httpServerScanPeriod, TimeUnit.MILLISECONDS);
+            httpKeepAliveRunnable.setFuture(future);
+         }
+         long httpResponseTime = ConfigurationHelper.getLongProperty(TransportConstants.HTTP_RESPONSE_TIME_PROP_NAME, TransportConstants.DEFAULT_HTTP_RESPONSE_TIME, nettyAcceptor.getConfiguration());
+         HttpAcceptorHandler httpHandler = new HttpAcceptorHandler(httpKeepAliveRunnable, httpResponseTime, ctx.channel());
+         ctx.pipeline().addLast(HTTP_HANDLER, httpHandler);
          p.addLast(new ProtocolDecoder(false, true));
          p.remove(this);
       }

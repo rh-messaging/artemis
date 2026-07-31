@@ -150,6 +150,12 @@ artemis/
 │   └── unit-tests/
 ```
 
+## Build Policy
+
+- **Only build when explicitly asked** by the operator, or at the very end of a task as a final validation step
+- **Do NOT rebuild after every file edit** — compile/build loops waste time on a large multi-module project
+- If a build fails, fix the issue and rebuild **once**, do not loop indefinitely
+
 ## Build Commands
 
 **Authoritative Reference**: See [docs/hacking-guide/_building.adoc](docs/hacking-guide/_building.adoc) for complete build documentation.
@@ -157,13 +163,13 @@ artemis/
 ### Most Common Commands
 ```bash
 # Fast build (no tests, no docs)
-mvn install -DskipTests
+mvn -T1C install -DskipTests
 
 # Development build with CheckStyle (recommended)
-mvn -Pdev install -DskipTests
+mvn -T1C -Pdev install -DskipTests
 
 # PR build (what CI runs)
-mvn -Pfast-tests -Pcompatibility-tests install
+mvn -T1C -Pfast-tests -Pcompatibility-tests install
 
 # Single test
 mvn -Ptests -DfailIfNoTests=false -Dtest=MyTest test
@@ -189,9 +195,12 @@ ARTEMIS-XXXX Brief summary (max 50 chars)
 
 Detailed description wrapped at 72 characters explaining
 the why, not just the what.
+
+Assisted-by: <AgentName>
 ```
 - Use `NO-JIRA` prefix ONLY for trivial changes (typos, small doc fixes)
 - Bug fixes and features require a JIRA ticket
+- Add `Assisted-by: <AgentName>` trailer when an AI agent contributed meaningfully to the work (implementation, bug fix, refactor). Omit it for trivial automation (formatting, rename, boilerplate generation).
 
 ### Key Conventions
 - Tests: `*Test.java` (JUnit 5)
