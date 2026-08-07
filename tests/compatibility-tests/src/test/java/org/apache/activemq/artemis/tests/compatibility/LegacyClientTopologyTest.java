@@ -54,8 +54,6 @@ public class LegacyClientTopologyTest extends ClasspathBase {
 
    @BeforeEach
    public void setUp() throws Exception {
-      FileUtil.deleteDirectory(serverFolder);
-
       ConfigurationImpl configuration = new ConfigurationImpl();
       configuration.setJournalType(JournalType.NIO);
       configuration.addAcceptorConfiguration("artemis", "tcp://0.0.0.0:61616?anycastPrefix=jms.queue.&multicastPrefix=jms.topic.");
@@ -64,7 +62,7 @@ public class LegacyClientTopologyTest extends ClasspathBase {
       configuration.addConnectorConfiguration("netty-connector", "tcp://localhost:61616");
       configuration.addClusterConfiguration(new ClusterConnectionConfiguration().setName("my-cluster").setConnectorName("netty-connector"));
 
-      server = ActiveMQServers.newActiveMQServer(configuration, true);
+      server = ActiveMQServers.newActiveMQServer(configuration, false);
       server.start();
 
       ActiveMQJAASSecurityManager securityManager = (ActiveMQJAASSecurityManager) server.getSecurityManager();
