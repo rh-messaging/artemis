@@ -17,7 +17,7 @@
 
 package org.apache.activemq.artemis.tests.compatibility;
 
-import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.HORNETQ_2_4_7;
+import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.HORNETQ_2_4_11;
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.SNAPSHOT;
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.ARTEMIS_2_4_0;
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.ARTEMIS_1_4_0;
@@ -43,7 +43,7 @@ public class SendAckTest extends ServerBase {
 
       combinations.add(new Object[]{ARTEMIS_2_4_0, SNAPSHOT, SNAPSHOT});
       combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_4_0, ARTEMIS_2_4_0});
-      combinations.add(new Object[]{HORNETQ_2_4_7, SNAPSHOT, SNAPSHOT});
+      combinations.add(new Object[]{HORNETQ_2_4_11, SNAPSHOT, SNAPSHOT});
       return combinations;
    }
 

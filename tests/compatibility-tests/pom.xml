@@ -666,7 +666,7 @@
                         </configuration>
                      </execution>
                      <execution>
-                        <id>hornetq-2_4_7</id>
+                        <id>hornetq-2_4_11</id>
                         <phase>compile</phase>
                         <goals>
                            <goal>dependency-scan</goal>
@@ -679,13 +679,13 @@
                               <arg>https://repository.jboss.org/nexus/content/groups/public</arg>
                            </extraRepositories>
                            <libListWithDeps>
-                              <arg>org.hornetq:hornetq-jms-server:2.4.7.Final</arg>
+                              <arg>org.hornetq:hornetq-jms-server:2.4.11.Final</arg>
                               <arg>org.apache.groovy:groovy-all:pom:${groovy.version}</arg>
                            </libListWithDeps>
                            <libList>
                               <arg>org.apache.artemis.tests:compatibility-tests:${project.version}</arg>
                            </libList>
-                           <file>${basedir}/target/HORNETQ-2_4_7.cp</file>
+                           <file>${basedir}/target/HORNETQ-2_4_11.cp</file>
                         </configuration>
                      </execution>
 

@@ -43,7 +43,7 @@ public class GroovyRun {
    public static final String ARTEMIS_2_28_0 = "ARTEMIS-2_28_0";
    public static final String ARTEMIS_2_33_0 = "ARTEMIS-2_33_0";
    public static final String HORNETQ_2_3_5 = "HORNETQ-2_3_5";
-   public static final String HORNETQ_2_4_7 = "HORNETQ-2_4_7";
+   public static final String HORNETQ_2_4_11 = "HORNETQ-2_4_11";
    public static final String AMQ_5_11 = "AMQ_5_11";
 
    private static Binding theBinding;
