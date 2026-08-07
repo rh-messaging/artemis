@@ -18,7 +18,7 @@
 package org.apache.activemq.artemis.tests.compatibility;
 
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.HORNETQ_2_3_5;
-import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.HORNETQ_2_4_7;
+import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.HORNETQ_2_4_11;
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.ARTEMIS_1_4_0;
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.SNAPSHOT;
 import static org.apache.activemq.artemis.tests.compatibility.GroovyRun.ARTEMIS_2_4_0;
@@ -48,7 +48,7 @@ public class MeshTest extends ServerBase {
       combinations.addAll(combinatory(SNAPSHOT, new Object[]{SNAPSHOT}, new Object[]{ARTEMIS_1_4_0, ARTEMIS_2_4_0, SNAPSHOT, HORNETQ_2_3_5}, new Object[]{ARTEMIS_1_4_0, ARTEMIS_2_4_0, SNAPSHOT, HORNETQ_2_3_5}));
       combinations.addAll(combinatory(SNAPSHOT, new Object[]{ARTEMIS_1_4_0}, new Object[]{ARTEMIS_1_4_0, SNAPSHOT}, new Object[]{ARTEMIS_1_4_0, SNAPSHOT}));
       combinations.addAll(combinatory(SNAPSHOT, new Object[]{HORNETQ_2_3_5}, new Object[]{ARTEMIS_1_4_0, SNAPSHOT, HORNETQ_2_3_5}, new Object[]{ARTEMIS_1_4_0, SNAPSHOT, HORNETQ_2_3_5}));
-      combinations.addAll(combinatory(SNAPSHOT, new Object[]{HORNETQ_2_4_7}, new Object[]{SNAPSHOT, HORNETQ_2_4_7}, new Object[]{SNAPSHOT, HORNETQ_2_4_7}));
+      combinations.addAll(combinatory(SNAPSHOT, new Object[]{HORNETQ_2_4_11}, new Object[]{SNAPSHOT, HORNETQ_2_4_11}, new Object[]{SNAPSHOT, HORNETQ_2_4_11}));
       combinations.add(new Object[]{SNAPSHOT, ARTEMIS_1_4_0, ARTEMIS_1_4_0});
       combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_28_0, ARTEMIS_2_28_0});
       combinations.add(new Object[]{ARTEMIS_2_28_0, SNAPSHOT, SNAPSHOT});
