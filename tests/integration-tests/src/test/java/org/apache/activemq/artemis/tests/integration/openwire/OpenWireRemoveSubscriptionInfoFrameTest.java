@@ -135,7 +135,7 @@ public class OpenWireRemoveSubscriptionInfoFrameTest extends BasicOpenWireTest {
          final Topic destination = session.createTopic(ADDRESS);
 
          final MessageProducer producer = session.createProducer(destination);
-         final MessageConsumer consumer = session.createDurableConsumer(destination, SUBSCRIPTION_NAME);
+         final MessageConsumer consumer = session.createDurableSubscriber(destination, SUBSCRIPTION_NAME);
 
          consumer.close();
 
@@ -189,7 +189,7 @@ public class OpenWireRemoveSubscriptionInfoFrameTest extends BasicOpenWireTest {
          final Topic destination = session.createTopic(ADDRESS);
 
          final MessageProducer producer = session.createProducer(destination);
-         final MessageConsumer consumer = session.createDurableConsumer(destination, SUBSCRIPTION_NAME);
+         final MessageConsumer consumer = session.createDurableSubscriber(destination, SUBSCRIPTION_NAME);
 
          consumer.close();
 
