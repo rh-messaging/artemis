@@ -131,8 +131,6 @@ public class AMQPConnectionContextTest {
          scheduledPool,
          false,
          null,
-         null,
-         null,
          null);
 
       assertEquals(expectedMaxTransfersPerDelivery, connectionContext.getHandler().getTransport().getMaxTransfersPerDelivery());
