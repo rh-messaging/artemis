@@ -27,20 +27,24 @@ import org.apache.activemq.artemis.utils.critical.CriticalAnalyzerAccessor;
 import org.apache.activemq.artemis.utils.critical.CriticalAnalyzerPolicy;
 import org.apache.activemq.artemis.utils.critical.CriticalComponentImpl;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 public class ActiveMQServerStartupTest extends ServerTestBase {
 
    @Test
+   @Timeout(10)
    public void testTooLongToStartHalt() throws Exception {
       testTooLongToStart(CriticalAnalyzerPolicy.HALT);
    }
 
    @Test
+   @Timeout(10)
    public void testTooLongToStartShutdown() throws Exception {
       testTooLongToStart(CriticalAnalyzerPolicy.SHUTDOWN);
    }
 
    @Test
+   @Timeout(10)
    public void testTooLongToStartLOG() throws Exception {
       testTooLongToStart(CriticalAnalyzerPolicy.LOG);
    }
