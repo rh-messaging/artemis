@@ -110,12 +110,12 @@
       <caffeine.version>3.2.4</caffeine.version>
       <guava.version>33.6.0-jre</guava.version>
       <jsr305.version>3.0.2</jsr305.version>
-      <jetty.version>12.1.11</jetty.version>
+      <jetty.version>12.1.12</jetty.version>
       <jetty-servlet-api.version>5.0.2</jetty-servlet-api.version>
       <jgroups.version>5.3.13.Final</jgroups.version>
       <errorprone.version>2.50.0</errorprone.version>
       <maven.bundle.plugin.version>6.0.2</maven.bundle.plugin.version>
-      <jib.maven.plugin.version>3.5.1</jib.maven.plugin.version>
+      <jib.maven.plugin.version>3.5.2</jib.maven.plugin.version>
       <versions.maven.plugin.version>2.16.1</versions.maven.plugin.version>
       <maven.pmd.plugin.version>3.28.0</maven.pmd.plugin.version>
       <sevntu.checks.version>1.44.1</sevntu.checks.version>
@@ -140,7 +140,7 @@
       <protonj2.version>1.1.0</protonj2.version>
       <slf4j.version>2.0.18</slf4j.version>
       <log4j.version>2.26.1</log4j.version>
-      <qpid.jms.version>1.16.0</qpid.jms.version>
+      <qpid.jms.version>1.17.0</qpid.jms.version>
       <johnzon.version>1.3.0</johnzon.version>
       <hawtbuff.version>1.11</hawtbuff.version>
       <hawtdispatch.version>1.22</hawtdispatch.version>
@@ -176,7 +176,7 @@
       <paho.client.mqtt.version>1.2.5</paho.client.mqtt.version>
       <postgresql.version>42.7.13</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
-      <selenium.version>4.45.0</selenium.version>
+      <selenium.version>4.46.0</selenium.version>
       <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
@@ -274,7 +274,7 @@
 
       <directory-version>2.0.0.AM25</directory-version>
       <directory-jdbm2-version>2.0.0-M3</directory-jdbm2-version>
-      <bc-java-version>1.84</bc-java-version>
+      <bc-java-version>1.85</bc-java-version>
 
       <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
       <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
