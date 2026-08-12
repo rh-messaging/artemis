@@ -16,6 +16,7 @@
  */
 package org.apache.activemq.artemis.core.protocol.mqtt;
 
+import java.lang.invoke.MethodHandles;
 import java.util.UUID;
 
 import io.netty.buffer.EmptyByteBuf;
@@ -32,7 +33,6 @@ import org.apache.activemq.artemis.core.server.impl.ServerSessionImpl;
 import org.apache.activemq.artemis.spi.core.protocol.SessionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.lang.invoke.MethodHandles;
 
 public class MQTTSession {
 
@@ -80,7 +80,7 @@ public class MQTTSession {
                       MQTTConnection connection,
                       MQTTProtocolManager protocolManager,
                       WildcardConfiguration wildcardConfiguration,
-                      OperationContext sessionContext) throws Exception {
+                      OperationContext sessionContext) {
       this.protocolHandler = protocolHandler;
       this.protocolManager = protocolManager;
       this.stateManager = protocolManager.getStateManager();
@@ -91,7 +91,7 @@ public class MQTTSession {
       mqttConnectionManager = new MQTTConnectionManager(this);
       mqttPublishManager = new MQTTPublishManager(this, protocolManager.isCloseMqttConnectionOnPublishAuthorizationFailure());
       sessionCallback = new MQTTSessionCallback(this, connection, protocolManager.getDefaultMaximumInFlightPublishMessages());
-      subscriptionManager = new MQTTSubscriptionManager(this, stateManager);
+      subscriptionManager = new MQTTSubscriptionManager(this);
       retainMessageManager = new MQTTRetainMessageManager(this);
 
       state = MQTTSessionState.DEFAULT;
@@ -104,7 +104,6 @@ public class MQTTSession {
     * which is synchronized with MQTTConnectionManager.disconnect
     */
    void start() throws Exception {
-      mqttPublishManager.start();
       subscriptionManager.start();
       stopped = false;
    }
@@ -129,7 +128,8 @@ public class MQTTSession {
          state.setAttached(false);
          state.setDisconnectedTime(System.currentTimeMillis());
          state.clearTopicAliases();
-         state.getOutboundStore().resetSendQuota();
+         state.resetSendQuota();
+         state.clearCoreDeliveryInfo();
 
          if (getVersion() == MQTTVersion.MQTT_5) {
             if (state.getClientSessionExpiryInterval() == 0) {
@@ -230,7 +230,6 @@ public class MQTTSession {
 
    void clean(boolean enforceSecurity) throws Exception {
       subscriptionManager.clean(enforceSecurity);
-      mqttPublishManager.clean();
       state.clear();
    }
 
