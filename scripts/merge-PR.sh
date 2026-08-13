@@ -19,6 +19,9 @@
 # Setting the script to fail if anything goes wrong
 set -e
 
+export PRG_PATH=`dirname $0`
+. $PRG_PATH/downstream-env.profile
+
 # Use this to simplify the rebasing of PRs. PRs will be rebased during the merge on this process.
 # use: ./merge-PR <PRID> textual description
 
@@ -31,17 +34,21 @@ set -e
 # Notice: you should add +refs/pull/*/head to your fetch config on upstream
 #        as specified on https://github.com/apache/activemq-artemis/blob/main/docs/hacking-guide/en/maintainers.md
 
-ARTEMIS_USER_REMOTE_NAME=${ARTEMIS_USER_REMOTE_NAME:-origin}
-ARTEMIS_APACHE_REMOTE_NAME=${ARTEMIS_APACHE_REMOTE_NAME:-apache}
-ARTEMIS_GITHUB_REMOTE_NAME=${ARTEMIS_GITHUB_REMOTE_NAME:-upstream}
+REDHAT_DOWNSTREAM=${REDHAT_DOWNSTREAM:-downstream}
 
-git fetch $ARTEMIS_USER_REMOTE_NAME
-git fetch $ARTEMIS_APACHE_REMOTE_NAME
-git fetch $ARTEMIS_GITHUB_REMOTE_NAME
+git fetch $REDHAT_DOWNSTREAM
 
-git checkout $ARTEMIS_APACHE_REMOTE_NAME/main -B main
-git checkout $ARTEMIS_GITHUB_REMOTE_NAME/pr/$1 -B $1
-git pull --rebase $ARTEMIS_APACHE_REMOTE_NAME main
-git checkout main
-git merge --no-ff $1 -m "This closes #$*"
+git checkout $REDHAT_DOWNSTREAM/$DOWNSTREAM_BRANCH -B $DOWNSTREAM_BRANCH
+git checkout $REDHAT_DOWNSTREAM/pr/$1 -B $1
+git pull --rebase $REDHAT_DOWNSTREAM $DOWNSTREAM_BRANCH
+git checkout $DOWNSTREAM_BRANCH
+git merge --no-ff $1 -m "This is PR #$*"
 git branch -D $1
+
+
+echo ""
+echo "please check everything and execute yourself this:"
+echo "git push downstream $DOWNSTREAM_BRANCH"
+
+echo ""
+echo "Then you need to make sure the PR $1 is closed on github"
