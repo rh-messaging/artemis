@@ -95,7 +95,7 @@
       <pax.exam.version>4.14.0</pax.exam.version>
       <commons.config.version>2.15.1</commons.config.version>
       <commons.lang.version>3.20.0</commons.lang.version>
-      <activemq5-version>5.19.9</activemq5-version>
+      <activemq5-version>5.19.10</activemq5-version>
       <apache.derby.version>10.15.2.0</apache.derby.version>
       <commons.beanutils.version>1.11.0</commons.beanutils.version>
       <commons.logging.version>1.4.0</commons.logging.version>
@@ -114,14 +114,14 @@
       <jetty-servlet-api.version>5.0.2</jetty-servlet-api.version>
       <jgroups.version>5.3.13.Final</jgroups.version>
       <errorprone.version>2.50.0</errorprone.version>
-      <maven.bundle.plugin.version>6.0.2</maven.bundle.plugin.version>
+      <maven.bundle.plugin.version>6.1.0</maven.bundle.plugin.version>
       <jib.maven.plugin.version>3.5.2</jib.maven.plugin.version>
       <versions.maven.plugin.version>2.16.1</versions.maven.plugin.version>
       <maven.pmd.plugin.version>3.28.0</maven.pmd.plugin.version>
       <sevntu.checks.version>1.44.1</sevntu.checks.version>
       <checkstyle.version>12.3.1</checkstyle.version>
       <mockito.version>5.23.0</mockito.version>
-      <jctools.version>4.0.6</jctools.version>
+      <jctools.version>4.0.7</jctools.version>
       <netty.version>4.1.137.Final</netty.version>
       <hdrhistogram.version>2.2.2</hdrhistogram.version>
       <curator.version>5.9.0</curator.version>
@@ -163,13 +163,13 @@
       <arquillian-weld-embedded.version>2.1.0.Final</arquillian-weld-embedded.version>
       <owb.version>2.0.28</owb.version>
       <arquillian.version>1.10.2.Final</arquillian.version>
-      <snakeyaml-engine.version>3.0.1</snakeyaml-engine.version>
+      <snakeyaml-engine.version>3.1.1</snakeyaml-engine.version>
       <servicemix.json-1.1.spec.version>2.9.0</servicemix.json-1.1.spec.version>
       <version.org.jacoco>0.8.15</version.org.jacoco>
       <version.org.jacoco.plugin>0.8.15</version.org.jacoco.plugin>
       <version.micrometer>1.17.0</version.micrometer>
       <hamcrest.version>3.0</hamcrest.version>
-      <junit.version>6.1.1</junit.version>
+      <junit.version>6.1.3</junit.version>
       <junit5.version>5.14.0</junit5.version>
       <junit4.version>4.13.2</junit4.version>
       <version.jaxb.runtime>2.3.9</version.jaxb.runtime>
@@ -198,11 +198,11 @@
 
       <!-- used on tests -->
       <elementary.version>3.0.0</elementary.version>
-      <groovy.version>5.0.8</groovy.version>
+      <groovy.version>5.1.0</groovy.version>
       <hadoop.minikdc.version>3.5.0</hadoop.minikdc.version>
       <mockserver.version>7.2.0</mockserver.version>
 
-      <owasp.version>12.2.2</owasp.version>
+      <owasp.version>13.0.0</owasp.version>
       <spring.version>5.3.39</spring.version>
 
       <jackson.version>2.22.1</jackson.version>
