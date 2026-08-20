@@ -84,7 +84,7 @@ public class ActiveMQServerStartupTest extends ServerTestBase {
          try {
             assertTrue(Wait.waitFor(() -> server.getCriticalAnalyzer() != null));
             CriticalAnalyzerAccessor.fireActions(server.getCriticalAnalyzer(), new CriticalComponentImpl(server.getCriticalAnalyzer(), 2));
-            assertTrue(loggerHandler.findText("AMQ224116"));
+            Wait.assertTrue(() -> loggerHandler.findText("AMQ224116"), 5000, 100);
             assertFalse(server.isActive()); // should not be changed
          } finally {
             latch.countDown();

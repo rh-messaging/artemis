@@ -952,10 +952,11 @@ public class ActiveMQSession implements QueueSession, TopicSession {
                } else {
                   queueName = SimpleString.of(UUID.randomUUID().toString());
                   createTemporaryQueue(dest, RoutingType.MULTICAST, queueName, coreFilterString, response);
+                  // Only temporary queues are auto-deleted; FQQN queues are not.
+                  autoDeleteQueueName = queueName;
                }
 
                consumer = createClientConsumer(dest, queueName, coreFilterString);
-               autoDeleteQueueName = queueName;
             } else {
                // Durable sub
                if (durability != ConsumerDurability.DURABLE) {

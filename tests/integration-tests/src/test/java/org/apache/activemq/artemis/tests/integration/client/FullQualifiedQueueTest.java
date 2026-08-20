@@ -16,6 +16,13 @@
  */
 package org.apache.activemq.artemis.tests.integration.client;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
 import java.lang.invoke.MethodHandles;
 
 import org.apache.activemq.artemis.api.core.ActiveMQNonExistentQueueException;
@@ -30,7 +37,9 @@ import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
 import org.apache.activemq.artemis.api.core.client.ServerLocator;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.server.QueueQueryResult;
+import org.apache.activemq.artemis.core.server.impl.AddressInfo;
 import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
+import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.utils.RandomUtil;
 import org.apache.activemq.artemis.utils.CompositeAddress;
 import org.apache.activemq.artemis.utils.Wait;
@@ -315,5 +324,49 @@ public class FullQualifiedQueueTest extends ActiveMQTestBase {
       Wait.assertEquals(useProperty ? 1L : 0L, () -> server.getAddressInfo(anycastAddress).getRoutedMessageCount(), 2000, 100);
       Wait.assertEquals(useProperty ? 0L : 1L, () -> server.getAddressInfo(anycastAddress).getUnRoutedMessageCount(), 2000, 100);
       Wait.assertEquals(useProperty ? 1L : 0L, () -> server.locateQueue(anycastQ1).getMessageCount(), 2000, 100);
+   }
+
+   @Test
+   public void testMulticastFQQN_AMQP() throws Exception {
+      testMulticastFQQN("AMQP");
+   }
+
+   @Test
+   public void testMulticastFQQN_CORE() throws Exception {
+      testMulticastFQQN("CORE");
+   }
+
+   @Test
+   public void testMulticastFQQN_OpenWire() throws Exception {
+      testMulticastFQQN("OPENWIRE");
+   }
+
+   private void testMulticastFQQN(String protocol) throws Exception {
+      final String topicName = "topic" + RandomUtil.randomUUIDString();
+      final String queueName = "queue" + RandomUtil.randomUUIDString();
+      final String fqqn = topicName + "::" + queueName;
+
+      server.addAddressInfo(new AddressInfo(topicName).addRoutingType(RoutingType.ANYCAST));
+      server.createQueue(QueueConfiguration.of(queueName).setAddress(topicName).setRoutingType(RoutingType.MULTICAST).setDurable(true));
+
+      assertNotNull(server.locateQueue(queueName));
+
+      ConnectionFactory cf = CFUtil.createConnectionFactory(protocol, "tcp://localhost:61616");
+
+      try (Connection connection = cf.createConnection()) {
+         connection.start();
+         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+         MessageProducer producer = session.createProducer(session.createTopic(topicName));
+         String text = RandomUtil.randomAlphaNumericString(100);
+         producer.send(session.createTextMessage(text));
+         Destination dest = session.createTopic(fqqn);
+         MessageConsumer consumer = session.createConsumer(dest);
+         TextMessage received = (TextMessage) consumer.receive(5000);
+         assertNotNull(received);
+         assertEquals(text, received.getText());
+         consumer.close();
+      }
+
+      assertNotNull(server.locateQueue(queueName));
    }
 }

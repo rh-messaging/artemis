@@ -545,7 +545,7 @@ A simple example to check whether a broker is active would be to use a `curl` co
 
 [,console]
 ----
-$ curl -s -H "Origin: http://localhost" -u myUser:myPass http://localhost:8161/console/jolokia/read/org.apache.activemq.artemis:broker=\"0.0.0.0\"/Active
+$ curl -s -H "Origin: http://localhost" -u myUser:myPass http://localhost:8161/console/jolokia/read/org.apache.activemq.artemis:broker=%220.0.0.0%22/Active
 ----
 
 Or you could send a JSON formatted `POST` request instead of using the URL
@@ -597,7 +597,7 @@ For example, you can list the connections to the broker with `curl` and parse th
 
 [,console]
 ----
-$ curl -s -H "Origin: http://localhost" -u myUser:myPass "http://localhost:8161/console/jolokia/exec/org.apache.activemq.artemis:broker=\"0.0.0.0\"/listConnections/\"\"/-1/-1" | jq '.value | fromjson'
+$ curl -s -H "Origin: http://localhost" -u myUser:myPass "http://localhost:8161/console/jolokia/exec/org.apache.activemq.artemis:broker=%220.0.0.0%22/listConnections/%22%22/-1/-1" | jq '.value | fromjson'
 ----
 
 Or you could send a JSON formatted `POST` request instead of using the URL
@@ -644,7 +644,7 @@ You could also leverage the <<management-method-option-syntax>> to get more spec
 
 [,console]
 ----
-$ curl -s -H "Origin: http://localhost" -u myUser:myPass "http://localhost:8161/console/jolokia/exec/org.apache.activemq.artemis:broker=\"0.0.0.0\"/listConnections/\{\"field\":\"protocol\",\"operation\":\"EQUALS\",\"value\":\"OPENWIRE\"\}/-1/-1" | jq '.value | fromjson'
+$ curl -s -H "Origin: http://localhost" -u myUser:myPass "http://localhost:8161/console/jolokia/exec/org.apache.activemq.artemis:broker=%220.0.0.0%22/listConnections/%7B%22field%22:%22protocol%22,%22operation%22:%22EQUALS%22,%22value%22:%22OPENWIRE%22%7D/-1/-1" | jq '.value | fromjson'
 ----
 
 Or you could send a JSON formatted `POST` request instead of using the URL

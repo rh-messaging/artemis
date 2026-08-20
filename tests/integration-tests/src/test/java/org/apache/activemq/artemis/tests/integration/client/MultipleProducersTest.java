@@ -17,27 +17,37 @@
 package org.apache.activemq.artemis.tests.integration.client;
 
 import javax.jms.Connection;
-import javax.jms.DeliveryMode;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
+import java.lang.invoke.MethodHandles;
 
+import org.apache.activemq.artemis.api.core.QueueConfiguration;
+import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
-import org.apache.activemq.artemis.api.core.management.QueueControl;
-import org.apache.activemq.artemis.core.settings.HierarchicalRepository;
+import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.apache.activemq.artemis.core.settings.impl.AddressFullMessagePolicy;
 import org.apache.activemq.artemis.core.settings.impl.AddressSettings;
 import org.apache.activemq.artemis.core.settings.impl.SlowConsumerPolicy;
-import org.apache.activemq.artemis.tests.util.JMSTestBase;
+import org.apache.activemq.artemis.logs.AssertionLoggerHandler;
+import org.apache.activemq.artemis.tests.util.ActiveMQTestBase;
+import org.apache.activemq.artemis.tests.util.CFUtil;
 import org.apache.activemq.artemis.tests.util.Wait;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class MultipleProducersTest extends JMSTestBase {
+public class MultipleProducersTest extends ActiveMQTestBase {
+
+   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    public Connection conn;
    public Queue queueOne = null;
@@ -49,23 +59,13 @@ public class MultipleProducersTest extends JMSTestBase {
 
    public SimpleString queueOneName = SimpleString.of("queueOne");
    public SimpleString queueTwoName = SimpleString.of("queueTwo");
-   public QueueControl control = null;
-   public long queueOneMsgCount = 0;
-   public long queueTwoMsgCount = 0;
+
+   ActiveMQServer server;
 
    @BeforeEach
-   public void iniTest() throws Exception {
+   public void setupServer() throws Exception {
 
-   }
-
-   @Test
-   public void wrongQueue() throws Exception {
-
-      conn = cf.createConnection();
-
-      session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-      HierarchicalRepository<AddressSettings> repos = server.getAddressSettingsRepository();
+      server = createServer(false, true);
 
       AddressSettings addressSettings = new AddressSettings();
 
@@ -76,8 +76,8 @@ public class MultipleProducersTest extends JMSTestBase {
       addressSettings.setMessageCounterHistoryDayLimit(2);
       addressSettings.setDefaultLastValueQueue(false);
       addressSettings.setMaxDeliveryAttempts(10);
-      addressSettings.setMaxSizeBytes(1048576);
-      addressSettings.setPageCacheMaxSize(5);
+      addressSettings.setMaxSizeBytes(Integer.MAX_VALUE);
+      addressSettings.setMaxSizeMessages(5);
       addressSettings.setPageSizeBytes(2097152);
       addressSettings.setRedistributionDelay(-1);
       addressSettings.setSendToDLAOnNoRoute(false);
@@ -85,38 +85,55 @@ public class MultipleProducersTest extends JMSTestBase {
       addressSettings.setSlowConsumerPolicy(SlowConsumerPolicy.NOTIFY);
       addressSettings.setSlowConsumerThreshold(-1);
 
-      repos.setDefault(addressSettings);
+      server.getConfiguration().getAddressSettings().clear();
+      server.getConfiguration().getAddressSettings().put("#", addressSettings);
 
-      queueOne = createQueue("queueOne");
+      server.getConfiguration().addQueueConfiguration(QueueConfiguration.of(queueOneName).setAddress(queueOneName).setRoutingType(RoutingType.ANYCAST));
+      server.getConfiguration().addQueueConfiguration(QueueConfiguration.of(queueTwoName).setAddress(queueTwoName).setRoutingType(RoutingType.ANYCAST));
 
-      queueTwo = createQueue("queueTwo");
+      server.start();
 
-      try {
-         while (true) {
-            sendMessage(queueOne, session);
-         }
-      } catch (Throwable t) {
-         //         t.printStackTrace();
-         // expected
-      }
+   }
 
-      session.close();
+   @Test
+   public void wrongQueue() throws Exception {
 
-      conn.close();
-
-      session = null;
-      conn = null;
+      ConnectionFactory cf = CFUtil.createConnectionFactory("CORE", "tcp://localhost:61616");
 
       conn = cf.createConnection();
+      conn.start();
+      runAfter(conn::close);
+
+      session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+      queueOne = session.createQueue(queueOneName.toString());
+
+      queueTwo = session.createQueue(queueTwoName.toString());
+
+      org.apache.activemq.artemis.core.server.Queue serverQueueOne = server.locateQueue(queueOneName);
+      org.apache.activemq.artemis.core.server.Queue serverQueueTwo = server.locateQueue(queueTwoName);
+
+      try (AssertionLoggerHandler loggerHandler = new AssertionLoggerHandler()) {
+         try {
+            while (true) {
+               sendMessage(queueOne, session);
+            }
+         } catch (Exception expected) {
+            expected.printStackTrace();
+         }
+      }
+
+      Wait.assertTrue(serverQueueOne.getPagingStore()::isFull, 5000, 100);
+
+      conn.close();
+      conn = cf.createConnection();
+      runAfter(conn::close);
+      conn.start();
       session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
       // send a message to a queue which is already full
       // result an exception
-      try {
-         sendMessage(queueOne, session);
-         fail("Exception expected");
-      } catch (Exception t) {
-      }
+      assertThrows(JMSException.class, () -> sendMessage(queueOne, session));
 
       // send 5 message to queueTwo
       // there should be 5 messages on queueTwo
@@ -124,34 +141,37 @@ public class MultipleProducersTest extends JMSTestBase {
          sendMessage(queueTwo, session);
       }
 
-      // before sending any messages to queueOne it has to be drained.
-      // after draining queueOne send 5 message to queueOne
-      queueTwoMsgCount = server.locateQueue(queueTwoName).getMessageCount();
+      Wait.assertEquals(5L, serverQueueOne::getMessageCount, 5000, 100);
 
-      control = server.getManagementService().getQueueControl(queueOne.getQueueName());
+      consumeMessages(queueOne, session, 5);
 
-      control.removeMessages(null);
+      Wait.assertEquals(0L, serverQueueOne::getMessageCount, 5000, 100);
+      Wait.assertFalse(serverQueueOne.getPagingStore()::isFull, 5000, 100);
+
+      conn.close();
+      conn = cf.createConnection();
+      runAfter(conn::close);
+      conn.start();
+      session = conn.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
       for (int i = 0; i < 5; i++) {
+         logger.info("Sending message {}", i);
          sendMessage(queueOne, session);
       }
-
-      // at the end of the test there should be 5 message on queueOne and 5 messages on queueTwo
 
       session.close();
 
       conn.close();
 
-      Wait.waitFor(() -> server.locateQueue(queueOneName).getMessageCount() == 5);
-      Wait.waitFor(() -> server.locateQueue(queueTwoName).getMessageCount() == 5);
+      Wait.assertEquals(5L, serverQueueTwo::getMessageCount, 5000, 100);
+   }
 
-      queueOneMsgCount = server.locateQueue(queueOneName).getMessageCount();
-
-      queueTwoMsgCount = server.locateQueue(queueTwoName).getMessageCount();
-
-      assertEquals(5, queueTwoMsgCount, "queueTwo message count");
-      assertEquals(5, queueOneMsgCount, "queueOne message count");
-
+   private void consumeMessages(Queue queue, Session session, int numberOfMessages) throws Exception {
+      MessageConsumer consumer = session.createConsumer(queue);
+      for (int i = 0; i < numberOfMessages; i++) {
+         Message message = consumer.receive(5000);
+         assertNotNull(message);
+      }
    }
 
    private void sendMessage(Queue queue, Session session) throws Exception {
@@ -159,11 +179,6 @@ public class MultipleProducersTest extends JMSTestBase {
       MessageProducer mp = session.createProducer(queue);
 
       try {
-         mp.setDisableMessageID(true);
-         mp.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-         mp.setPriority(Message.DEFAULT_PRIORITY);
-         mp.setTimeToLive(Message.DEFAULT_TIME_TO_LIVE);
-
          mp.send(session.createTextMessage("This is message for " + queue.getQueueName()));
       } finally {
 
