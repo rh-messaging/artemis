@@ -53,7 +53,7 @@ public class InVMConnection implements Connection {
 
    private final String id;
 
-   private volatile boolean closed;
+   private boolean closed;
 
    // Used on tests
    private static boolean flushEnabled = true;
@@ -61,6 +61,8 @@ public class InVMConnection implements Connection {
    private final int serverID;
 
    private final ArtemisExecutor executor;
+
+   private volatile boolean closing;
 
    private final ActiveMQPrincipal defaultActiveMQPrincipal;
 
@@ -144,15 +146,18 @@ public class InVMConnection implements Connection {
    }
 
    private void internalClose(boolean failed) {
-      // guarantee connectionDestroyed  is fired exactly once
+      if (closing) {
+         return;
+      }
+
+      closing = true;
+
       synchronized (this) {
-         if (closed) {
-            return;
+         if (!closed) {
+            listener.connectionDestroyed(id, failed);
+
+            closed = true;
          }
-
-         listener.connectionDestroyed(id, failed);
-
-         closed = true;
       }
    }
 
