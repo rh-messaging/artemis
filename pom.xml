@@ -207,7 +207,7 @@
       <owasp.version>12.1.0</owasp.version>
       <spring.version>5.3.39</spring.version>
 
-      <jackson.version>2.22.1.redhat-00003</jackson.version>
+      <jackson.version>2.22.2</jackson.version>
       <jackson-databind.version>${jackson.version}</jackson-databind.version>
 
       <activemq.version.versionName>${project.version}</activemq.version.versionName>
