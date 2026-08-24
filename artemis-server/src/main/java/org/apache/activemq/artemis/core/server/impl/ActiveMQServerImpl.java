@@ -889,8 +889,6 @@ public class ActiveMQServerImpl implements ActiveMQServer {
          } else {
             analyzer = EmptyCriticalAnalyzer.getInstance();
          }
-
-         this.analyzer = analyzer;
       }
 
       /*
@@ -956,6 +954,7 @@ public class ActiveMQServerImpl implements ActiveMQServer {
       };
 
       analyzer.addAction(criticalAction);
+      this.analyzer = analyzer;
    }
 
    private static void checkCriticalAnalyzerLogging() {
