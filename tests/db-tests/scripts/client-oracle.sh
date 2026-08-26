@@ -18,5 +18,9 @@
 
 source ./container-define.sh
 
-$CONTAINER_COMMAND exec -it oracle-artemis-test sqlplus system/artemis@FREE
+# Using SQLcl (modern replacement for SQL*Plus) from Docker Hub: https://hub.docker.com/r/oracletools/sqlcl
+$CONTAINER_COMMAND run -it --rm docker.io/oracletools/sqlcl:v22.3_lin system/artemis@//host.docker.internal:1521/FREE
+
+# Alternative: use SQL*Plus from inside the running Oracle container
+#$CONTAINER_COMMAND exec -it oracle-artemis-test sqlplus system/artemis@FREE
 
