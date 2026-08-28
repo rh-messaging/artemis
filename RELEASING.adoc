@@ -28,7 +28,7 @@ mvn clean install -Prelease
 * Verify:
 
 . User Manual has been created properly (in `artemis-website/target/classes/user-manual/`)
-. JavaDocs are created correctly, including the diagrams (in `artemis-website/target/apidocs/`)
+. JavaDocs are created correctly, including the diagrams (in `artemis-website/target/reports/apidocs/`)
 
 * Test the standalone release on Windows as well as Linux:
 

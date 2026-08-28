@@ -70,6 +70,7 @@ import org.apache.activemq.artemis.core.persistence.impl.journal.codec.Scheduled
 import org.apache.activemq.artemis.core.server.LargeServerMessage;
 import org.apache.activemq.artemis.spi.core.protocol.MessagePersister;
 import org.apache.activemq.artemis.utils.Base64;
+import org.apache.activemq.artemis.utils.TableOut;
 import org.apache.activemq.artemis.utils.XMLUtil;
 import org.apache.activemq.artemis.utils.XidCodecSupport;
 import org.slf4j.Logger;
@@ -184,11 +185,15 @@ public final class DescribeJournal {
    }
 
    public static DescribeJournal describeBindingsJournal(final File bindingsDir, PrintStream out, boolean safe, boolean printRecords, boolean printSurviving, boolean reclaimed) throws Exception {
+      return describeBindingsJournal(bindingsDir, out, safe, printRecords, printSurviving, reclaimed, false);
+   }
+
+   public static DescribeJournal describeBindingsJournal(final File bindingsDir, PrintStream out, boolean safe, boolean printRecords, boolean printSurviving, boolean reclaimed, boolean legacyOutput) throws Exception {
 
       SequentialFileFactory bindingsFF = new NIOSequentialFileFactory(bindingsDir, null, 1);
 
       JournalImpl bindings = new JournalImpl(1024 * 1024, 2, 2, -1, 0, bindingsFF, "activemq-bindings", "bindings", 1);
-      return describeJournal(bindingsFF, bindings, bindingsDir, out, safe, printRecords, printSurviving, reclaimed);
+      return describeJournal(bindingsFF, bindings, bindingsDir, out, safe, printRecords, printSurviving, reclaimed, legacyOutput);
    }
 
    public static DescribeJournal describeMessagesJournal(final File messagesDir) throws Exception {
@@ -196,13 +201,17 @@ public final class DescribeJournal {
    }
 
    public static DescribeJournal describeMessagesJournal(final File messagesDir, PrintStream out, boolean safe, boolean printRecords, boolean printSurviving, boolean reclaimed) throws Exception {
+      return describeMessagesJournal(messagesDir, out, safe, printRecords, printSurviving, reclaimed, false);
+   }
+
+   public static DescribeJournal describeMessagesJournal(final File messagesDir, PrintStream out, boolean safe, boolean printRecords, boolean printSurviving, boolean reclaimed, boolean legacyOutput) throws Exception {
       Configuration configuration = getConfiguration();
       SequentialFileFactory messagesFF = new NIOSequentialFileFactory(messagesDir, null, 1);
 
       // Will use only default values. The load function should adapt to anything different
       JournalImpl messagesJournal = new JournalImpl(configuration.getJournalFileSize(), configuration.getJournalMinFiles(), configuration.getJournalPoolFiles(), 0, 0, messagesFF, "activemq-data", "amq", 1);
 
-      return describeJournal(messagesFF, messagesJournal, messagesDir, out, safe, printRecords, printSurviving, reclaimed);
+      return describeJournal(messagesFF, messagesJournal, messagesDir, out, safe, printRecords, printSurviving, reclaimed, legacyOutput);
    }
 
    private static final PrintStream nullPrintStream = new PrintStream(new OutputStream() {
@@ -219,7 +228,8 @@ public final class DescribeJournal {
                                                   boolean safe,
                                                   boolean printRecords,
                                                   boolean printSurving,
-                                                  boolean reclaimed) throws Exception {
+                                                  boolean reclaimed,
+                                                  boolean legacyOutput) throws Exception {
       List<JournalFile> files = journal.orderFiles();
 
       final Map<Long, PageSubscriptionCounterImpl> counters = new HashMap<>();
@@ -229,63 +239,111 @@ public final class DescribeJournal {
 
       recordsPrintStream.println("Journal path: " + path);
 
+      final int[] journalColumnSizes = {10, 8, 30, 10, 8, 120};
+      final TableOut journalTable = legacyOutput ? null : new TableOut("|", 2, journalColumnSizes);
+
       for (JournalFile file : files) {
          recordsPrintStream.println("#" + file + " (size=" + file.getFile().size() + ")");
+         if (journalTable != null) {
+            journalTable.printSeparator(recordsPrintStream);
+            journalTable.print(recordsPrintStream, new String[]{"Operation", "ID", "Record Type", "TX", "Compact", "Decoded"});
+            journalTable.printSeparator(recordsPrintStream);
+         }
 
          JournalImpl.readJournalFile(fileFactory, file, new JournalReaderCallback() {
             @Override
             public void onReadEventRecord(RecordInfo recordInfo) throws Exception {
-               recordsPrintStream.println("operation@Event;" + describeRecord(recordInfo, safe));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@Event;" + describeRecord(recordInfo, safe));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Event", String.valueOf(recordInfo.id), describeRecordType(recordInfo.userRecordType), "", String.valueOf(recordInfo.compactCount), DescribeJournal.toString(newObjectEncoding(recordInfo), safe)});
+               }
             }
 
             @Override
             public void onReadUpdateRecordTX(final long transactionID, final RecordInfo recordInfo) throws Exception {
-               recordsPrintStream.println("operation@UpdateTX;txID=" + transactionID + "," + describeRecord(recordInfo, safe));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@UpdateTX;txID=" + transactionID + "," + describeRecord(recordInfo, safe));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"UpdateTX", String.valueOf(recordInfo.id), describeRecordType(recordInfo.userRecordType), String.valueOf(transactionID), String.valueOf(recordInfo.compactCount), DescribeJournal.toString(newObjectEncoding(recordInfo), safe)});
+               }
                checkRecordCounter(recordInfo);
             }
 
             @Override
             public void onReadUpdateRecord(final RecordInfo recordInfo) throws Exception {
-               recordsPrintStream.println("operation@Update;" + describeRecord(recordInfo, safe));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@Update;" + describeRecord(recordInfo, safe));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Update", String.valueOf(recordInfo.id), describeRecordType(recordInfo.userRecordType), "", String.valueOf(recordInfo.compactCount), DescribeJournal.toString(newObjectEncoding(recordInfo), safe)});
+               }
                checkRecordCounter(recordInfo);
             }
 
             @Override
             public void onReadRollbackRecord(final long transactionID) throws Exception {
-               recordsPrintStream.println("operation@Rollback;txID=" + transactionID);
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@Rollback;txID=" + transactionID);
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Rollback", "", "", String.valueOf(transactionID), "", ""});
+               }
             }
 
             @Override
             public void onReadPrepareRecord(final long transactionID,
                                             final byte[] extraData,
                                             final int numberOfRecords) throws Exception {
-               recordsPrintStream.println("operation@Prepare,txID=" + transactionID + ",numberOfRecords=" + numberOfRecords +
-                              ",extraData=" + encode(extraData) + ", xid=" + toXid(extraData));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@Prepare,txID=" + transactionID + ",numberOfRecords=" + numberOfRecords +
+                                 ",extraData=" + encode(extraData) + ", xid=" + toXid(extraData));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Prepare", "", "", String.valueOf(transactionID), "", "records=" + numberOfRecords + ", xid=" + toXid(extraData)});
+               }
             }
 
             @Override
             public void onReadDeleteRecordTX(final long transactionID, final RecordInfo recordInfo) throws Exception {
-               recordsPrintStream.println("operation@DeleteRecordTX;txID=" + transactionID + "," + describeRecord(recordInfo, safe));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@DeleteRecordTX;txID=" + transactionID + "," + describeRecord(recordInfo, safe));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"DeleteTX", String.valueOf(recordInfo.id), describeRecordType(recordInfo.userRecordType), String.valueOf(transactionID), String.valueOf(recordInfo.compactCount), DescribeJournal.toString(newObjectEncoding(recordInfo), safe)});
+               }
             }
 
             @Override
             public void onReadDeleteRecord(final long recordID) throws Exception {
-               recordsPrintStream.println("operation@DeleteRecord;recordID=" + recordID);
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@DeleteRecord;recordID=" + recordID);
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Delete", String.valueOf(recordID), "", "", "", ""});
+               }
             }
 
             @Override
             public void onReadCommitRecord(final long transactionID, final int numberOfRecords) throws Exception {
-               recordsPrintStream.println("operation@Commit;txID=" + transactionID + ",numberOfRecords=" + numberOfRecords);
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@Commit;txID=" + transactionID + ",numberOfRecords=" + numberOfRecords);
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Commit", "", "", String.valueOf(transactionID), "", "records=" + numberOfRecords});
+               }
             }
 
             @Override
             public void onReadAddRecordTX(final long transactionID, final RecordInfo recordInfo) throws Exception {
-               recordsPrintStream.println("operation@AddRecordTX;txID=" + transactionID + "," + describeRecord(recordInfo, safe));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@AddRecordTX;txID=" + transactionID + "," + describeRecord(recordInfo, safe));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"AddTX", String.valueOf(recordInfo.id), describeRecordType(recordInfo.userRecordType), String.valueOf(transactionID), String.valueOf(recordInfo.compactCount), DescribeJournal.toString(newObjectEncoding(recordInfo), safe)});
+               }
             }
 
             @Override
             public void onReadAddRecord(final RecordInfo recordInfo) throws Exception {
-               recordsPrintStream.println("operation@AddRecord;" + describeRecord(recordInfo, safe));
+               if (legacyOutput) {
+                  recordsPrintStream.println("operation@AddRecord;" + describeRecord(recordInfo, safe));
+               } else {
+                  journalTable.print(recordsPrintStream, new String[]{"Add", String.valueOf(recordInfo.id), describeRecordType(recordInfo.userRecordType), "", String.valueOf(recordInfo.compactCount), DescribeJournal.toString(newObjectEncoding(recordInfo), safe)});
+               }
             }
 
             @Override
@@ -336,15 +394,22 @@ public final class DescribeJournal {
 
       if (counters.size() != 0) {
          recordsPrintStream.println("#Counters during initial load:");
-         printCounters(recordsPrintStream, counters);
+         printCounters(recordsPrintStream, counters, legacyOutput);
       }
 
-      return printSurvivingRecords(journal, survivingPrintStrea, safe);
+      return printSurvivingRecords(journal, survivingPrintStrea, safe, legacyOutput);
    }
 
    public static DescribeJournal printSurvivingRecords(Journal journal,
                                                        PrintStream out,
                                                        boolean safe) throws Exception {
+      return printSurvivingRecords(journal, out, safe, false);
+   }
+
+   public static DescribeJournal printSurvivingRecords(Journal journal,
+                                                       PrintStream out,
+                                                       boolean safe,
+                                                       boolean legacyOutput) throws Exception {
 
       final Map<Long, PageSubscriptionCounterImpl> counters = new HashMap<>();
       out.println("### Surviving Records Summary ###");
@@ -405,6 +470,14 @@ public final class DescribeJournal {
 
       }, false);
 
+      final int[] survivingColumnSizes = {10, 8, 30, 7, 120};
+      final TableOut survivingTable = legacyOutput ? null : new TableOut("|", 2, survivingColumnSizes);
+      if (survivingTable != null) {
+         survivingTable.printSeparator(out);
+         survivingTable.print(out, new String[]{"Operation", "ID", "Record Type", "Compact", "Decoded"});
+         survivingTable.printSeparator(out);
+      }
+
       for (RecordInfo info : records) {
          PageSubscriptionCounterImpl subsCounter = null;
          long queueIDForCounter = 0;
@@ -456,7 +529,11 @@ public final class DescribeJournal {
 
          }
 
-         out.println(describeRecord(info, o, safe));
+         if (legacyOutput) {
+            out.println(describeRecord(info, o, safe));
+         } else {
+            survivingTable.print(out, new String[]{info.isUpdate ? "Update" : "Add", String.valueOf(info.id), describeRecordType(info.userRecordType), String.valueOf(info.compactCount), toString(o, safe)});
+         }
 
          if (subsCounter != null) {
             out.println("##SubsCounter for queue=" + queueIDForCounter + ", value=" + subsCounter.getValue());
@@ -466,7 +543,7 @@ public final class DescribeJournal {
 
       if (!counters.isEmpty()) {
          out.println("### Page Counters");
-         printCounters(out, counters);
+         printCounters(out, counters, legacyOutput);
       }
 
       out.println();
@@ -474,9 +551,20 @@ public final class DescribeJournal {
 
       for (PreparedTransactionInfo tx : preparedTransactions) {
          out.println(tx.getId());
+
+         TableOut preparedTable = null;
+         if (!legacyOutput) {
+            preparedTable = new TableOut("|", 2, survivingColumnSizes);
+            preparedTable.print(out, new String[]{"Operation", "ID", "Record Type", "Compact", "Decoded"});
+         }
+
          for (RecordInfo info : tx.getRecords()) {
             Object o = newObjectEncoding(info);
-            out.println("- " + describeRecord(info, o, safe));
+            if (legacyOutput) {
+               out.println("- " + describeRecord(info, o, safe));
+            } else {
+               preparedTable.print(out, new String[]{info.isUpdate ? "Update" : "Add", String.valueOf(info.id), describeRecordType(info.userRecordType), String.valueOf(info.compactCount), toString(o, safe)});
+            }
             final byte userRecordType = info.getUserRecordType();
             if (userRecordType == ADD_MESSAGE || userRecordType == ADD_MESSAGE_PROTOCOL) {
                preparedMessageCount++;
@@ -494,7 +582,11 @@ public final class DescribeJournal {
          }
 
          for (RecordInfo info : tx.getRecordsToDelete()) {
-            out.println("- " + describeRecord(info, safe) + " <marked to delete>");
+            if (legacyOutput) {
+               out.println("- " + describeRecord(info, safe) + " <marked to delete>");
+            } else {
+               preparedTable.print(out, new String[]{info.isUpdate ? "Update" : "Add", String.valueOf(info.id), describeRecordType(info.userRecordType), String.valueOf(info.compactCount), toString(newObjectEncoding(info), safe) + " <DELETE>"});
+            }
          }
       }
 
@@ -507,19 +599,52 @@ public final class DescribeJournal {
 
       out.println(bufferFailingTransactions.toString());
 
-      out.println("### Message Counts ###");
-      out.println("message count=" + messageCount);
-      out.println("large message count=" + largeMessageCount);
-      out.println("message reference count");
-      messageRefCounts.forEach((queueId, count) -> {
-         out.println("queue id " + queueId + ",count=" + count);
-      });
-      out.println("prepared message count=" + preparedMessageCount);
-      out.println("prepared large message count=" + preparedLargeMessageCount);
-      out.println("prepared message reference count");
-      preparedMessageRefCount.forEach((queueId, count) -> {
-         out.println("queue id " + queueId + ",count=" + count);
-      });
+      if (legacyOutput) {
+         out.println("### Message Counts ###");
+         out.println("message count=" + messageCount);
+         out.println("large message count=" + largeMessageCount);
+         out.println("message reference count");
+         messageRefCounts.forEach((queueId, count) -> {
+            out.println("queue id " + queueId + ",count=" + count);
+         });
+         out.println("prepared message count=" + preparedMessageCount);
+         out.println("prepared large message count=" + preparedLargeMessageCount);
+         out.println("prepared message reference count");
+         preparedMessageRefCount.forEach((queueId, count) -> {
+            out.println("queue id " + queueId + ",count=" + count);
+         });
+      } else {
+         out.println("### Message Counts ###");
+         int[] countColumnSizes = {25, 12};
+         TableOut countTable = new TableOut("|", 2, countColumnSizes);
+         countTable.print(out, new String[]{"Metric", "Count"});
+         countTable.print(out, new String[]{"Messages", String.valueOf(messageCount)});
+         countTable.print(out, new String[]{"Large Messages", String.valueOf(largeMessageCount)});
+         countTable.print(out, new String[]{"Prepared Messages", String.valueOf(preparedMessageCount)});
+         countTable.print(out, new String[]{"Prepared Large Messages", String.valueOf(preparedLargeMessageCount)});
+
+         if (!messageRefCounts.isEmpty()) {
+            out.println();
+            out.println("### Message References ###");
+            int[] refColumnSizes = {12, 12};
+            TableOut refTable = new TableOut("|", 2, refColumnSizes);
+            refTable.print(out, new String[]{"Queue", "Count"});
+            messageRefCounts.forEach((queueId, count) -> {
+               refTable.print(out, new String[]{String.valueOf(queueId), String.valueOf(count)});
+            });
+         }
+
+         if (!preparedMessageRefCount.isEmpty()) {
+            out.println();
+            out.println("### Prepared Message References ###");
+            int[] prepRefColumnSizes = {12, 12};
+            TableOut prepRefTable = new TableOut("|", 2, prepRefColumnSizes);
+            prepRefTable.print(out, new String[]{"Queue", "Count"});
+            preparedMessageRefCount.forEach((queueId, count) -> {
+               prepRefTable.print(out, new String[]{String.valueOf(queueId), String.valueOf(count)});
+            });
+         }
+      }
 
       journal.stop();
 
@@ -527,8 +652,21 @@ public final class DescribeJournal {
    }
 
    protected static void printCounters(final PrintStream out, final Map<Long, PageSubscriptionCounterImpl> counters) {
-      for (Map.Entry<Long, PageSubscriptionCounterImpl> entry : counters.entrySet()) {
-         out.println("Queue " + entry.getKey() + " value=" + entry.getValue().getValue());
+      printCounters(out, counters, true);
+   }
+
+   protected static void printCounters(final PrintStream out, final Map<Long, PageSubscriptionCounterImpl> counters, boolean legacyOutput) {
+      if (legacyOutput) {
+         for (Map.Entry<Long, PageSubscriptionCounterImpl> entry : counters.entrySet()) {
+            out.println("Queue " + entry.getKey() + " value=" + entry.getValue().getValue());
+         }
+      } else {
+         int[] columnSizes = {12, 15};
+         TableOut table = new TableOut("|", 2, columnSizes);
+         table.print(out, new String[]{"Queue", "Value"});
+         for (Map.Entry<Long, PageSubscriptionCounterImpl> entry : counters.entrySet()) {
+            table.print(out, new String[]{String.valueOf(entry.getKey()), String.valueOf(entry.getValue().getValue())});
+         }
       }
    }
 
@@ -766,6 +904,55 @@ public final class DescribeJournal {
       }
    }
 
+   static String describeRecordType(byte recordType) {
+      if (recordType == (byte)0) {
+         return "";
+      } else {
+         return recordType + " (" + recordTypeName(recordType) + ")";
+      }
+   }
+
+   private static String recordTypeName(byte recordType) {
+
+      switch (recordType) {
+         case JournalRecordIds.GROUP_RECORD: return "GROUP";
+         case JournalRecordIds.QUEUE_BINDING_RECORD: return "QUEUE_BINDING";
+         case JournalRecordIds.QUEUE_STATUS_RECORD: return "QUEUE_STATUS";
+         case JournalRecordIds.ID_COUNTER_RECORD: return "ID_COUNTER";
+         case JournalRecordIds.ADDRESS_SETTING_RECORD: return "ADDRESS_SETTING";
+         case JournalRecordIds.SECURITY_SETTING_RECORD: return "SECURITY_SETTING";
+         case JournalRecordIds.DIVERT_RECORD: return "DIVERT";
+         case JournalRecordIds.BRIDGE_RECORD: return "BRIDGE";
+         case JournalRecordIds.ADD_LARGE_MESSAGE_PENDING: return "ADD_LARGE_MESSAGE_PENDING";
+         case JournalRecordIds.ADD_LARGE_MESSAGE: return "ADD_LARGE_MESSAGE";
+         case JournalRecordIds.ADD_MESSAGE: return "ADD_MESSAGE";
+         case JournalRecordIds.ADD_REF: return "ADD_REF";
+         case JournalRecordIds.ACKNOWLEDGE_REF: return "ACKNOWLEDGE_REF";
+         case JournalRecordIds.UPDATE_DELIVERY_COUNT: return "UPDATE_DELIVERY_COUNT";
+         case JournalRecordIds.PAGE_TRANSACTION: return "PAGE_TRANSACTION";
+         case JournalRecordIds.SET_SCHEDULED_DELIVERY_TIME: return "SET_SCHEDULED_DELIVERY_TIME";
+         case JournalRecordIds.DUPLICATE_ID: return "DUPLICATE_ID";
+         case JournalRecordIds.HEURISTIC_COMPLETION: return "HEURISTIC_COMPLETION";
+         case JournalRecordIds.ACKNOWLEDGE_CURSOR: return "ACKNOWLEDGE_CURSOR";
+         case JournalRecordIds.PAGE_CURSOR_COUNTER_VALUE: return "PAGE_CURSOR_COUNTER_VALUE";
+         case JournalRecordIds.PAGE_CURSOR_COUNTER_INC: return "PAGE_CURSOR_COUNTER_INC";
+         case JournalRecordIds.PAGE_CURSOR_COMPLETE: return "PAGE_CURSOR_COMPLETE";
+         case JournalRecordIds.PAGE_CURSOR_PENDING_COUNTER: return "PAGE_CURSOR_PENDING_COUNTER";
+         case JournalRecordIds.ADDRESS_BINDING_RECORD: return "ADDRESS_BINDING";
+         case JournalRecordIds.ADD_MESSAGE_PROTOCOL: return "ADD_MESSAGE_PROTOCOL";
+         case JournalRecordIds.ADDRESS_STATUS_RECORD: return "ADDRESS_STATUS";
+         case JournalRecordIds.USER_RECORD: return "USER";
+         case JournalRecordIds.ROLE_RECORD: return "ROLE";
+         case JournalRecordIds.ADD_MESSAGE_BODY: return "ADD_MESSAGE_BODY";
+         case JournalRecordIds.KEY_VALUE_PAIR_RECORD: return "KEY_VALUE_PAIR";
+         case JournalRecordIds.CONNECTOR_RECORD: return "CONNECTOR";
+         case JournalRecordIds.ADDRESS_SETTING_RECORD_JSON: return "ADDRESS_SETTING_JSON";
+         case JournalRecordIds.ACK_RETRY: return "ACK_RETRY";
+         case JournalRecordIds.MQTT_PACKET_ID_CORRELATION: return "MQTT_PACKET_ID_CORRELATION";
+         default: return "UNKNOWN";
+      }
+   }
+
    private static final class PageCompleteCursorAckRecordEncoding extends CursorAckRecordEncoding {
 
       @Override
@@ -812,7 +999,7 @@ public final class DescribeJournal {
 
       @Override
       public String toString() {
-         return "AddRef;" + refEncoding;
+         return String.valueOf(refEncoding);
       }
 
       @Override

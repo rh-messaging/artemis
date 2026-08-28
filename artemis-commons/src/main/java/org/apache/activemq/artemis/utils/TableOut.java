@@ -37,6 +37,14 @@ public class TableOut {
       indentationString = " ".repeat(indentation);
    }
 
+   public void printSeparator(PrintStream stream) {
+      int totalWidth = separator.length() * (columnSizes.length + 1);
+      for (int columnSize : columnSizes) {
+         totalWidth += columnSize;
+      }
+      stream.println("-".repeat(totalWidth));
+   }
+
    public void print(PrintStream stream, String[] columns) {
       print(stream, columns, null);
    }

@@ -65,7 +65,7 @@ public class AMQPPrintDataTest extends ActiveMQTestBase {
          ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
          PrintStream printStream = new PrintStream(byteArrayOutputStream, true, StandardCharsets.UTF_8.name());
          PrintData.printData(server.getConfiguration().getBindingsLocation().getAbsoluteFile(), server.getConfiguration().getJournalLocation().getAbsoluteFile(), server.getConfiguration().getPagingLocation().getAbsoluteFile(),
-                             printStream, false, false);
+                             printStream, false, false, false, false, -1, true);
 
          assertTrue(byteArrayOutputStream.toString().contains(random));
 
