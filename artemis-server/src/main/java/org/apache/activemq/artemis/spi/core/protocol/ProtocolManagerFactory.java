@@ -19,6 +19,7 @@ package org.apache.activemq.artemis.spi.core.protocol;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.BaseInterceptor;
 import org.apache.activemq.artemis.api.core.Message;
 import org.apache.activemq.artemis.core.persistence.Persister;
@@ -62,5 +63,14 @@ public interface ProtocolManagerFactory<P extends BaseInterceptor> {
     *                   configuration updates.
     */
    void updateProtocolServices(ActiveMQServer server, List<ActiveMQComponent> services) throws Exception;
+
+   /**
+    * Return an object that describes a protocol-specific journal record.
+    * This is used by {@code ./artemis data print} to decode record types that the core journal does not recognize.
+    * Implementations must not read from the buffer if they do not recognize the recordType.
+    */
+   default Object describeJournalRecord(byte recordType, ActiveMQBuffer buffer) {
+      return null;
+   }
 
 }

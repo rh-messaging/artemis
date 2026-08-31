@@ -18,4 +18,4 @@
 
 source ./container-define.sh
 
-$CONTAINER_COMMAND exec -it mssql-artemis-test /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P ActiveMQ*Artemis
+$CONTAINER_COMMAND exec -it mssql-artemis-test /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ActiveMQ*Artemis -C

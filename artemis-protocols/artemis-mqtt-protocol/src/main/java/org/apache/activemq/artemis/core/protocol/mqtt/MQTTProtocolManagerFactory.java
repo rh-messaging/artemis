@@ -21,7 +21,9 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.activemq.artemis.api.core.ActiveMQBuffer;
 import org.apache.activemq.artemis.api.core.BaseInterceptor;
+import org.apache.activemq.artemis.core.persistence.impl.journal.JournalRecordIds;
 import org.apache.activemq.artemis.core.server.ActiveMQComponent;
 import org.apache.activemq.artemis.core.server.ActiveMQScheduledComponent;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
@@ -69,6 +71,16 @@ public class MQTTProtocolManagerFactory extends AbstractProtocolManagerFactory<M
    public void loadProtocolServices(ActiveMQServer server, List<ActiveMQComponent> services) throws Exception {
       server.registerRecordsLoader(MQTTStateManager.getInstance(server)::reload);
       services.add(new MQTTPeriodicTasks(server, server.getScheduledPool()));
+   }
+
+   @Override
+   public Object describeJournalRecord(byte recordType, ActiveMQBuffer buffer) {
+      switch (recordType) {
+         case JournalRecordIds.MQTT_PACKET_ID_CORRELATION:
+            return PacketIdCorrelationKey.getPersister().decode(buffer, null, null);
+         default:
+            return null;
+      }
    }
 
    public class MQTTPeriodicTasks extends ActiveMQScheduledComponent {

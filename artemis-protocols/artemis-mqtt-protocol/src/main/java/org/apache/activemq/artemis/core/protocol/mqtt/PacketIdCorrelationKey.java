@@ -83,7 +83,7 @@ public class PacketIdCorrelationKey {
       return "PacketIdCorrelation[" + "coreMessageId=" + coreMessageId + ", address=" + address + "]";
    }
 
-   private static class Persister extends AbstractHashMapPersister<String, PacketIdCorrelationKey, Integer> {
+   public static class Persister extends AbstractHashMapPersister<String, PacketIdCorrelationKey, Integer> {
       @Override
       protected int getCollectionIdSize(String collectionID) {
          return BufferHelper.sizeOfString(collectionID);

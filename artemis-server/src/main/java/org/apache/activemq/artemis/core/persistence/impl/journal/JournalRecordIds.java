@@ -107,4 +107,46 @@ public final class JournalRecordIds {
    public static final byte ACK_RETRY = 53;
 
    public static final byte MQTT_PACKET_ID_CORRELATION = 54;
+
+   public static String recordTypeName(byte recordType) {
+
+      switch (recordType) {
+         case JournalRecordIds.GROUP_RECORD: return "GROUP";
+         case JournalRecordIds.QUEUE_BINDING_RECORD: return "QUEUE_BINDING";
+         case JournalRecordIds.QUEUE_STATUS_RECORD: return "QUEUE_STATUS";
+         case JournalRecordIds.ID_COUNTER_RECORD: return "ID_COUNTER";
+         case JournalRecordIds.ADDRESS_SETTING_RECORD: return "ADDRESS_SETTING";
+         case JournalRecordIds.SECURITY_SETTING_RECORD: return "SECURITY_SETTING";
+         case JournalRecordIds.DIVERT_RECORD: return "DIVERT";
+         case JournalRecordIds.BRIDGE_RECORD: return "BRIDGE";
+         case JournalRecordIds.ADD_LARGE_MESSAGE_PENDING: return "ADD_LARGE_MESSAGE_PENDING";
+         case JournalRecordIds.ADD_LARGE_MESSAGE: return "ADD_LARGE_MESSAGE";
+         case JournalRecordIds.ADD_MESSAGE: return "ADD_MESSAGE";
+         case JournalRecordIds.ADD_REF: return "ADD_REF";
+         case JournalRecordIds.ACKNOWLEDGE_REF: return "ACKNOWLEDGE_REF";
+         case JournalRecordIds.UPDATE_DELIVERY_COUNT: return "UPDATE_DELIVERY_COUNT";
+         case JournalRecordIds.PAGE_TRANSACTION: return "PAGE_TRANSACTION";
+         case JournalRecordIds.SET_SCHEDULED_DELIVERY_TIME: return "SET_SCHEDULED_DELIVERY_TIME";
+         case JournalRecordIds.DUPLICATE_ID: return "DUPLICATE_ID";
+         case JournalRecordIds.HEURISTIC_COMPLETION: return "HEURISTIC_COMPLETION";
+         case JournalRecordIds.ACKNOWLEDGE_CURSOR: return "ACKNOWLEDGE_CURSOR";
+         case JournalRecordIds.PAGE_CURSOR_COUNTER_VALUE: return "PAGE_CURSOR_COUNTER_VALUE";
+         case JournalRecordIds.PAGE_CURSOR_COUNTER_INC: return "PAGE_CURSOR_COUNTER_INC";
+         case JournalRecordIds.PAGE_CURSOR_COMPLETE: return "PAGE_CURSOR_COMPLETE";
+         case JournalRecordIds.PAGE_CURSOR_PENDING_COUNTER: return "PAGE_CURSOR_PENDING_COUNTER";
+         case JournalRecordIds.ADDRESS_BINDING_RECORD: return "ADDRESS_BINDING";
+         case JournalRecordIds.ADD_MESSAGE_PROTOCOL: return "ADD_MESSAGE_PROTOCOL";
+         case JournalRecordIds.ADDRESS_STATUS_RECORD: return "ADDRESS_STATUS";
+         case JournalRecordIds.USER_RECORD: return "USER";
+         case JournalRecordIds.ROLE_RECORD: return "ROLE";
+         case JournalRecordIds.ADD_MESSAGE_BODY: return "ADD_MESSAGE_BODY";
+         case JournalRecordIds.KEY_VALUE_PAIR_RECORD: return "KEY_VALUE_PAIR";
+         case JournalRecordIds.CONNECTOR_RECORD: return "CONNECTOR";
+         case JournalRecordIds.ADDRESS_SETTING_RECORD_JSON: return "ADDRESS_SETTING_JSON";
+         case JournalRecordIds.ACK_RETRY: return "ACK_RETRY";
+         case JournalRecordIds.MQTT_PACKET_ID_CORRELATION: return "MQTT_CORRELATION";
+         default: return "UNKNOWN";
+      }
+   }
+
 }
