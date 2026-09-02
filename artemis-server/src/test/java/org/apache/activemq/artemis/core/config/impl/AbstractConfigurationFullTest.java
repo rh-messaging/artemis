@@ -42,6 +42,8 @@ import org.apache.activemq.artemis.core.config.HAPolicyConfiguration;
 import org.apache.activemq.artemis.core.config.JaasAppConfiguration;
 import org.apache.activemq.artemis.core.config.JaasAppConfigurationEntry;
 import org.apache.activemq.artemis.core.config.MetricsConfiguration;
+import org.apache.activemq.artemis.core.config.StoreConfiguration;
+import org.apache.activemq.artemis.core.config.storage.DatabaseStorageConfiguration;
 import org.apache.activemq.artemis.core.config.WildcardConfiguration;
 import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPBrokerConnectConfiguration;
 import org.apache.activemq.artemis.core.config.amqpBrokerConnectivity.AMQPMirrorBrokerConnectionElement;
@@ -453,9 +455,10 @@ public abstract class AbstractConfigurationFullTest {
 
    @Test
    public void testAMQPConnections() {
-      assertEquals(1, configuration.getAMQPConnections().size());
-      AMQPBrokerConnectConfiguration amqp = configuration.getAMQPConnections().get(0);
-      assertEquals("mirror-target", amqp.getName());
+      assertEquals(2, configuration.getAMQPConnections().size());
+      AMQPBrokerConnectConfiguration amqp = configuration.getAMQPConnections().stream()
+         .filter(c -> "mirror-target".equals(c.getName())).findFirst().orElse(null);
+      assertNotNull(amqp);
       assertEquals("tcp://mirror-host:5672", amqp.getUri());
       assertEquals(5000, amqp.getRetryInterval());
       assertEquals(-1, amqp.getReconnectAttempts());
@@ -473,6 +476,27 @@ public abstract class AbstractConfigurationFullTest {
       assertEquals("orders", mirror.getAddressFilter());
       assertTrue(mirror.isSync());
       assertEquals("mirrorVal1", mirror.getProperties().get("mirrorProp1"));
+
+      AMQPBrokerConnectConfiguration reversed = configuration.getAMQPConnections().stream()
+         .filter(c -> "reversed-order-target".equals(c.getName())).findFirst().orElse(null);
+      assertNotNull(reversed, "reversed-order-target AMQP connection must load even with objects before scalars in JSON/YAML");
+      assertEquals("tcp://reversed-host:5672", reversed.getUri());
+      assertEquals(10000, reversed.getRetryInterval());
+      assertEquals(5, reversed.getReconnectAttempts());
+      assertEquals("reversed-user", reversed.getUser());
+      assertEquals("reversed-password", reversed.getPassword());
+      assertTrue(reversed.isAutostart());
+
+      assertEquals(1, reversed.getConnectionElements().size());
+      assertTrue(reversed.getConnectionElements().get(0) instanceof AMQPMirrorBrokerConnectionElement);
+      AMQPMirrorBrokerConnectionElement mirrorReversed = (AMQPMirrorBrokerConnectionElement) reversed.getConnectionElements().get(0);
+      assertEquals("mirror-reversed", mirrorReversed.getName());
+      assertFalse(mirrorReversed.isMessageAcknowledgements());
+      assertTrue(mirrorReversed.isQueueCreation());
+      assertTrue(mirrorReversed.isQueueRemoval());
+      assertEquals("events", mirrorReversed.getAddressFilter());
+      assertFalse(mirrorReversed.isSync());
+      assertEquals("reversedVal1", mirrorReversed.getProperties().get("reversedProp1"));
    }
 
    @Test
@@ -480,6 +504,24 @@ public abstract class AbstractConfigurationFullTest {
       HAPolicyConfiguration haPolicy = configuration.getHAPolicyConfiguration();
       assertNotNull(haPolicy);
       assertTrue(haPolicy instanceof LiveOnlyPolicyConfiguration);
+   }
+
+   @Test
+   public void testStoreConfiguration() {
+      StoreConfiguration store = configuration.getStoreConfiguration();
+      assertNotNull(store, "storeConfiguration via _class discriminator must be populated");
+      assertTrue(store instanceof DatabaseStorageConfiguration);
+      DatabaseStorageConfiguration dbStore = (DatabaseStorageConfiguration) store;
+      assertEquals("FULL_MESSAGES", dbStore.getMessageTableName());
+      assertEquals("FULL_BINDINGS", dbStore.getBindingsTableName());
+      assertEquals("FULL_LARGE_MESSAGES", dbStore.getLargeMessageTableName());
+      assertEquals("FULL_PAGE_STORE", dbStore.getPageStoreTableName());
+      assertEquals("FULL_NODE_MANAGER", dbStore.getNodeManagerStoreTableName());
+      assertEquals("jdbc:derby:target/full-test-store;create=true", dbStore.getJdbcConnectionUrl());
+      assertEquals("org.apache.derby.jdbc.EmbeddedDriver", dbStore.getJdbcDriverClassName());
+      assertEquals(30000, dbStore.getJdbcNetworkTimeout());
+      assertEquals(3000, dbStore.getJdbcLockRenewPeriodMillis());
+      assertEquals(20000, dbStore.getJdbcLockExpirationMillis());
    }
 
    @Test
@@ -690,6 +732,8 @@ public abstract class AbstractConfigurationFullTest {
       assertEquals(configuration.getAMQPConnections().size(), reloaded.getAMQPConnections().size());
       assertNotNull(reloaded.getHAPolicyConfiguration());
       assertEquals(configuration.getHAPolicyConfiguration().getType(), reloaded.getHAPolicyConfiguration().getType());
+      assertNotNull(reloaded.getStoreConfiguration());
+      assertEquals(configuration.getStoreConfiguration().getStoreType(), reloaded.getStoreConfiguration().getStoreType());
       assertEquals(configuration.getResourceLimitSettings().size(), reloaded.getResourceLimitSettings().size());
       assertEquals(configuration.getJaasConfigs().size(), reloaded.getJaasConfigs().size());
       assertEquals(configuration.getFederationDownstreamAuthorization(), reloaded.getFederationDownstreamAuthorization());

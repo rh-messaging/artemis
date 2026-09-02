@@ -343,10 +343,45 @@
           }
         }
       }
+    },
+    "reversed-order-target": {
+      "mirrors": {
+        "mirror-reversed": {
+          "properties": {
+            "reversedProp1": "reversedVal1"
+          },
+          "type": "MIRROR",
+          "messageAcknowledgements": false,
+          "queueCreation": true,
+          "queueRemoval": true,
+          "addressFilter": "events",
+          "sync": false
+        }
+      },
+      "uri": "tcp://reversed-host:5672",
+      "retryInterval": 10000,
+      "reconnectAttempts": 5,
+      "user": "reversed-user",
+      "password": "reversed-password",
+      "autostart": true
     }
   },
 
   "HAPolicyConfiguration": "PRIMARY_ONLY",
+
+  "storeConfiguration": {
+    "_class": "DATABASE",
+    "messageTableName": "FULL_MESSAGES",
+    "bindingsTableName": "FULL_BINDINGS",
+    "largeMessageTableName": "FULL_LARGE_MESSAGES",
+    "pageStoreTableName": "FULL_PAGE_STORE",
+    "nodeManagerStoreTableName": "FULL_NODE_MANAGER",
+    "jdbcConnectionUrl": "jdbc:derby:target/full-test-store;create=true",
+    "jdbcDriverClassName": "org.apache.derby.jdbc.EmbeddedDriver",
+    "jdbcNetworkTimeout": 30000,
+    "jdbcLockRenewPeriodMillis": 3000,
+    "jdbcLockExpirationMillis": 20000
+  },
 
   "resourceLimitSettings": {
     "user1": {

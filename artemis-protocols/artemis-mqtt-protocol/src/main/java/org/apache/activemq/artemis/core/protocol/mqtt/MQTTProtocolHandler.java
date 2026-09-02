@@ -341,8 +341,16 @@ public class MQTTProtocolHandler extends ChannelInboundHandlerAdapter {
       }
 
       if (message.fixedHeader().qosLevel().value() == 2 && session.getState().getPublishCache().contains(message.variableHeader().packetId())) {
-         MQTTLogger.LOGGER.ignoringQoS2Publish(message.variableHeader().packetId(), session.getState().getClientId());
-         sendPubRec(message.variableHeader().packetId(), MQTTReasonCodes.SUCCESS);
+         byte reasonCode = MQTTReasonCodes.SUCCESS;
+         if (message.fixedHeader().isDup()) {
+            MQTTLogger.LOGGER.ignoringExpectedDuplicatePacketId(message.variableHeader().packetId(), session.getState().getClientId());
+         } else {
+            MQTTLogger.LOGGER.ignoringUnexpectedDuplicatePacketId(message.variableHeader().packetId(), session.getState().getClientId());
+            if (session.getVersion() == MQTTVersion.MQTT_5 && session.getProtocolManager().isRejectUnexpectedDuplicatePacketId()) {
+               reasonCode = MQTTReasonCodes.PACKET_IDENTIFIER_IN_USE;
+            }
+         }
+         sendPubRec(message.variableHeader().packetId(), reasonCode);
          return;
       }
 
