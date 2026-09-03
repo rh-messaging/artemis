@@ -74,7 +74,10 @@ public class ArtemisMBeanServerGuard implements GuardInvocationHandler {
    }
 
    private void handleGetAttribute(MBeanServer proxy, ObjectName objectName, String attributeName) throws JMException, IOException {
-      MBeanInfo info = proxy.getMBeanInfo(objectName);
+      handleGetAttribute(proxy.getMBeanInfo(objectName), objectName, attributeName);
+   }
+
+   private void handleGetAttribute(MBeanInfo info, ObjectName objectName, String attributeName) throws JMException, IOException {
       String prefix = null;
       for (MBeanAttributeInfo attr : info.getAttributes()) {
          if (attr.getName().equals(attributeName)) {
@@ -93,14 +96,18 @@ public class ArtemisMBeanServerGuard implements GuardInvocationHandler {
    }
 
    private void handleGetAttributes(MBeanServer proxy, ObjectName objectName, String[] attributeNames) throws JMException, IOException {
+      MBeanInfo info = proxy.getMBeanInfo(objectName);
       for (String attr : attributeNames) {
-         handleGetAttribute(proxy, objectName, attr);
+         handleGetAttribute(info, objectName, attr);
       }
    }
 
    private void handleSetAttribute(MBeanServer proxy, ObjectName objectName, Attribute attribute) throws JMException, IOException {
+      handleSetAttribute(proxy.getMBeanInfo(objectName), objectName, attribute);
+   }
+
+   private void handleSetAttribute(MBeanInfo info, ObjectName objectName, Attribute attribute) throws JMException, IOException {
       String dataType = null;
-      MBeanInfo info = proxy.getMBeanInfo(objectName);
       for (MBeanAttributeInfo attr : info.getAttributes()) {
          if (attr.getName().equals(attribute.getName())) {
             dataType = attr.getType();
@@ -116,8 +123,9 @@ public class ArtemisMBeanServerGuard implements GuardInvocationHandler {
    }
 
    private void handleSetAttributes(MBeanServer proxy, ObjectName objectName, AttributeList attributes) throws JMException, IOException {
+      MBeanInfo info = proxy.getMBeanInfo(objectName);
       for (Attribute attr : attributes.asList()) {
-         handleSetAttribute(proxy, objectName, attr);
+         handleSetAttribute(info, objectName, attr);
       }
    }
 
