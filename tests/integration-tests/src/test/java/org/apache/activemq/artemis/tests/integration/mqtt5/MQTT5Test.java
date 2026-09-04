@@ -1161,14 +1161,14 @@ public class MQTT5Test extends MQTT5TestSupport {
 
    /**
     * Companion to {@link #testDuplicateQoS2PublishWithReusedPacketIdLogsWarning()}. With the
-    * {@code rejectQoS2PublishWithReusedPacketId} setting enabled the broker must respond to the DUP=0 reused-packet-ID
+    * {@code rejectUnexpectedDuplicatePacketId} setting enabled the broker must respond to the DUP=0 reused-packet-ID
     * case with a {@code PUBREC} reason code of {@code 0x91} (i.e. "Packet Identifier in use") instead of {@code 0x00}
     * (i.e. "Success").
     */
    @Test
    @Timeout(DEFAULT_TIMEOUT_SEC)
    public void testDuplicateQoS2PublishWithReusedPacketIdRejected() throws Exception {
-      setAcceptorProperty("rejectQoS2PublishWithReusedPacketId=true");
+      setAcceptorProperty("rejectUnexpectedDuplicatePacketId=true");
 
       final String TOPIC = RandomUtil.randomUUIDString();
       final String CLIENT_ID = "publisher";
