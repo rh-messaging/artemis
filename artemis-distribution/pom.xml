@@ -104,11 +104,6 @@
          <artifactId>log4j-slf4j2-impl</artifactId>
          <scope>runtime</scope>
       </dependency>
-      <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-layout-template-json</artifactId>
-         <scope>runtime</scope>
-      </dependency>
 
       <!-- dependencies -->
       <dependency>
@@ -136,62 +131,6 @@
       <dependency>
          <groupId>jakarta.security.auth.message</groupId>
          <artifactId>jakarta.security.auth.message-api</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>com.redhat.amq-broker</groupId>
-         <artifactId>artemis-prometheus-metrics-plugin</artifactId>
-         <version>${artemis.prometheus.metrics.plugin.version}</version>
-      </dependency>
-      <dependency>
-         <groupId>com.redhat.amq-broker</groupId>
-         <artifactId>artemis-prometheus-metrics-plugin-servlet</artifactId>
-         <version>${artemis.prometheus.metrics.plugin.version}</version>
-         <type>war</type>
-      </dependency>
-
-      <!-- keycloak -->
-      <dependency>
-         <groupId>org.keycloak</groupId>
-         <artifactId>keycloak-adapter-core</artifactId>
-         <version>${keycloak.version}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.keycloak</groupId>
-         <artifactId>keycloak-core</artifactId>
-         <version>${keycloak.version}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.bouncycastle</groupId>
-         <artifactId>bcprov-jdk18on</artifactId>
-         <version>${bc-java-version}</version>
-         <scope>runtime</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.logging</groupId>
-         <artifactId>jboss-logging</artifactId>
-         <version>${jboss.logging.version}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpclient</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-transport-native-epoll-aarch</artifactId>
-         <version>${netty.transport.native.epoll.aarch.version}</version>
-         <classifier>linux-aarch_64</classifier>
-      </dependency>
-      <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-transport-native-epoll-ppcle</artifactId>
-         <version>${netty.transport.native.epoll.ppcle.version}</version>
-         <classifier>linux-ppcle_64</classifier>
-      </dependency>
-      <dependency>
-         <groupId>io.netty</groupId>
-         <artifactId>netty-transport-native-epoll-s390x</artifactId>
-         <version>${netty.transport.native.epoll.s390x.version}</version>
-         <classifier>linux-s390_64</classifier>
       </dependency>
    </dependencies>
 
