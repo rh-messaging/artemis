@@ -713,4 +713,9 @@ public class DestinationProxy implements Destination {
    public void setAdvancedMessageStatisticsEnabled(boolean advancedMessageStatisticsEnabled) {
       throw new UnsupportedOperationException("Not implemented yet");
    }
+
+   @Override
+   public boolean isGcWithOnlyWildcardConsumers() {
+      return false;
+   }
 }
