@@ -1551,12 +1551,12 @@ public interface ActiveMQServerLogger {
    @LogMessage(id = 224164, value = "Failed to recover stored configuration for divert named '{}': {}. To repair this record create a new divert with the same name via the management API.", level = LogMessage.Level.WARN)
    void failedToRecoverStoredDivertConfiguration(String divertName, String divert);
 
-   @LogMessage(id = 224165, value = "Server is stopping. Unable to process redelivery during rollback; ref: {}; transaction: {}; exception message: {}", level = LogMessage.Level.WARN)
+   @LogMessage(id = 224170, value = "Server is stopping. Unable to process redelivery during rollback; ref: {}; transaction: {}; exception message: {}", level = LogMessage.Level.WARN)
    void unableToProcessRedeliveryDuringRollback(String messageRef, String transaction, String exceptionMessage);
 
-   @LogMessage(id = 224166, value = "Server is stopping. Unable to delete unreferenced message with id={}.", level = LogMessage.Level.WARN)
+   @LogMessage(id = 224171, value = "Server is stopping. Unable to delete unreferenced message with id={}.", level = LogMessage.Level.WARN)
    void unableToDeleteMessageDuringShutdown(long messageId);
 
-   @LogMessage(id = 224167, value = "Failed to remove binding {} from address {} during wildcard address cleanup", level = LogMessage.Level.WARN)
+   @LogMessage(id = 224172, value = "Failed to remove binding {} from address {} during wildcard address cleanup", level = LogMessage.Level.WARN)
    void failedToRemoveBindingDuringWildcardCleanup(String binding, String address, Exception e);
 }
