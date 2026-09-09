@@ -2,6 +2,5 @@
    <web path="web" rootRedirectLocation="console">
        <binding name="artemis" uri="${web.protocol}://${http.host}:${http.port}"${extra.web.attributes}>
            <app name="console" url="console" war="console.war"/>
-           <app name="metrics" url="metrics" war="metrics.war"/>
        </binding>
    </web>
