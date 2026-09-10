@@ -19,14 +19,16 @@
 # Setting the script to fail if anything goes wrong
 set -e
 
-export PRG_PATH=`dirname $0`
-. $PRG_PATH/downstream-env.profile
-
 # this script is a helper that will checkout the PR Branch
 
-git fetch $REDHAT_USER
-git fetch $REDHAT_DOWNSTREAM
+ARTEMIS_USER_REMOTE_NAME=${ARTEMIS_USER_REMOTE_NAME:-origin}
+ARTEMIS_APACHE_REMOTE_NAME=${ARTEMIS_APACHE_REMOTE_NAME:-apache}
+ARTEMIS_GITHUB_REMOTE_NAME=${ARTEMIS_GITHUB_REMOTE_NAME:-upstream}
 
-git checkout $REDHAT_DOWNSTREAM/pr/$1 -B $1
+git fetch $ARTEMIS_USER_REMOTE_NAME
+git fetch $ARTEMIS_APACHE_REMOTE_NAME
+git fetch $ARTEMIS_GITHUB_REMOTE_NAME
 
-echo "\ndo your own rebase by typing: git pull --rebase $REDHAT_DOWNSTREAM $DOWNSTREAM_BRANCH"
+git checkout $ARTEMIS_GITHUB_REMOTE_NAME/pr/$1 -B $1
+
+echo "\ndo your own rebase by typing: git pull --rebase $ARTEMIS_APACHE_REMOTE_NAME main"
