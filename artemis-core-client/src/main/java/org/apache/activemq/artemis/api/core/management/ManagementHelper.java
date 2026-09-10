@@ -106,7 +106,7 @@ public final class ManagementHelper {
    }
 
    public static void doManagement(ServerLocator locator, String user, String password, MessageAcceptor setup, MessageAcceptor ok, MessageAcceptor failed) throws Exception {
-      try (ClientSessionFactory sessionFactory = locator.createSessionFactory();
+      try (ClientSessionFactory sessionFactory = locator.createSessionFactory(user, password);
            ClientSession session = sessionFactory.createSession(user, password, false, true, true, false, ActiveMQClient.DEFAULT_ACK_BATCH_SIZE)) {
          doManagement(session, setup, ok, failed);
       }
@@ -207,7 +207,8 @@ public final class ManagementHelper {
       if (jsonString != null) {
          JsonArray jsonArray = JsonUtil.readJsonArray(jsonString);
 
-         return JsonUtil.fromJsonArray(jsonArray);
+         // this is used on client 2 server communication and serialization is never needed at this point
+         return JsonUtil.fromJsonArray(jsonArray, false);
       } else {
          return null;
       }

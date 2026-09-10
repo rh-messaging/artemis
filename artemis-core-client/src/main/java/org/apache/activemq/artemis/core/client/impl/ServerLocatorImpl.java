@@ -45,6 +45,7 @@ import org.apache.activemq.artemis.api.core.ActiveMQExceptionType;
 import org.apache.activemq.artemis.api.core.ActiveMQIllegalStateException;
 import org.apache.activemq.artemis.api.core.ActiveMQInternalErrorException;
 import org.apache.activemq.artemis.api.core.ActiveMQInterruptedException;
+import org.apache.activemq.artemis.api.core.ActiveMQSecurityException;
 import org.apache.activemq.artemis.api.core.DiscoveryGroupConfiguration;
 import org.apache.activemq.artemis.api.core.Interceptor;
 import org.apache.activemq.artemis.api.core.Pair;
@@ -326,6 +327,14 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
       return this.passwordCodec;
    }
 
+   @Override
+   public ServerLocatorImpl setConnectionCredentials(final String connectionUser, final String connectionPassword) {
+      checkWrite();
+      config.connectionUser = connectionUser;
+      config.connectionPassword = connectionPassword;
+      return this;
+   }
+
    private static DiscoveryGroup createDiscoveryGroup(String nodeID,
                                                       DiscoveryGroupConfiguration config) throws Exception {
       return new DiscoveryGroup(nodeID, config.getName(), config.getRefreshTimeout(), config.getStoppingTimeout(), config.getBroadcastEndpointFactory(), null);
@@ -335,6 +344,10 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
                              final boolean useHA,
                              final DiscoveryGroupConfiguration discoveryGroupConfiguration,
                              final TransportConfiguration[] transportConfigs) {
+      if (discoveryGroupConfiguration != null) {
+         ensureDiscoveryEnabled();
+      }
+
       this.topology = Objects.requireNonNullElseGet(topology, () -> new Topology(this));
 
       this.ha = useHA;
@@ -429,6 +442,10 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
    }
 
    private ServerLocatorImpl(ServerLocatorImpl locator) {
+      if (locator.discoveryGroupConfiguration != null) {
+         ensureDiscoveryEnabled();
+      }
+
       ha = locator.ha;
       clusterConnection = locator.clusterConnection;
       initialConnectors = locator.initialConnectors;
@@ -443,6 +460,12 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
       nodeID = locator.nodeID;
       clusterTransportConfiguration = locator.clusterTransportConfiguration;
       discoveryListener = locator.discoveryListener;
+   }
+
+   private static void ensureDiscoveryEnabled() {
+      if (!ServerLocatorConfig.isDiscoveryEnabled()) {
+         throw ActiveMQClientMessageBundle.BUNDLE.serverDiscoveryDisabled();
+      }
    }
 
    private boolean useInitConnector() {
@@ -671,6 +694,11 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
 
    @Override
    public ClientSessionFactory createSessionFactory() throws ActiveMQException {
+      return createSessionFactory(config.connectionUser, config.connectionPassword);
+   }
+
+   @Override
+   public ClientSessionFactory createSessionFactory(String connectionUser, String connectionPassword) throws ActiveMQException {
       assertOpen();
 
       initialize();
@@ -707,7 +735,9 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
             // try each factory in the list until we find one which works
 
             try {
-               factory = new ClientSessionFactoryImpl(this, tc, config, config.reconnectAttempts, threadPool, scheduledThreadPool, flowControlThreadPool, incomingInterceptors, outgoingInterceptors, initialConnectors);
+               factory = new ClientSessionFactoryImpl(this, tc, config, config.reconnectAttempts, threadPool,
+                  scheduledThreadPool, flowControlThreadPool, incomingInterceptors, outgoingInterceptors, initialConnectors,
+                  connectionUser, connectionPassword);
                try {
                   addToConnecting(factory);
                   // We always try to connect here with only one attempt,
@@ -1824,6 +1854,8 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
             }
             logger.trace("Rejected execution", e);
             throw e;
+         } catch (ActiveMQSecurityException e) {
+            throw e;
          } catch (Exception e) {
             if (isClosed() || skipWarnings) {
                return null;
@@ -1894,6 +1926,8 @@ public final class ServerLocatorImpl implements ServerLocatorInternal, Discovery
                   }
                }
                return factoryToUse;
+            } catch (ActiveMQSecurityException e) {
+               throw e;
             } catch (ActiveMQException e) {
                logger.trace("{}::Exception on establish connector initial connection", this, e);
                return null;

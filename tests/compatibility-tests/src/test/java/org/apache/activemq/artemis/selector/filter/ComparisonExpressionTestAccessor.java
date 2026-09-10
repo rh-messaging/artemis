@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.activemq.artemis.tests.integration.cluster.reattach;
+package org.apache.activemq.artemis.selector.filter;
 
-public class MultiThreadRandomReattachTest extends MultiThreadRandomReattachTestBase {
+public class ComparisonExpressionTestAccessor {
 
-   @Override
-   protected int getNumIterations() {
-      return 2;
+   public static void setMaxWildcards(int maxWildcards) {
+      ComparisonExpression.setMaxWildcards(maxWildcards);
    }
 }

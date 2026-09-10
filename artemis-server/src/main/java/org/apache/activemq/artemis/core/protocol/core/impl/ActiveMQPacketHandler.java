@@ -23,7 +23,6 @@ import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.ActiveMQExceptionType;
 import org.apache.activemq.artemis.api.core.ActiveMQInternalErrorException;
 import org.apache.activemq.artemis.api.core.ActiveMQSecurityException;
-import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.api.core.SimpleString;
 import org.apache.activemq.artemis.core.persistence.OperationContext;
@@ -33,13 +32,11 @@ import org.apache.activemq.artemis.core.protocol.core.CoreRemotingConnection;
 import org.apache.activemq.artemis.core.protocol.core.Packet;
 import org.apache.activemq.artemis.core.protocol.core.ServerSessionPacketHandler;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ActiveMQExceptionMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CheckFailoverMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CheckFailoverReplyMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateQueueMessage;
+import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ConnectMessage;
+import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ConnectResponseMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateSessionMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateSessionMessage_V2;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.CreateSessionResponseMessage;
-import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ReattachSessionMessage;
 import org.apache.activemq.artemis.core.protocol.core.impl.wireformat.ReattachSessionResponseMessage;
 import org.apache.activemq.artemis.core.security.ActiveMQPrincipal;
 import org.apache.activemq.artemis.core.server.ActiveMQMessageBundle;
@@ -69,6 +66,8 @@ public class ActiveMQPacketHandler implements ChannelHandler {
    private final CoreProtocolManager protocolManager;
 
    private final Actor<Packet> packetActor;
+
+   private boolean connectReceived;
 
    public ActiveMQPacketHandler(final CoreProtocolManager protocolManager,
                                 final ActiveMQServer server,
@@ -107,27 +106,16 @@ public class ActiveMQPacketHandler implements ChannelHandler {
 
             break;
          }
-         case PacketImpl.CHECK_FOR_FAILOVER: {
-            CheckFailoverMessage request = (CheckFailoverMessage) packet;
+         case PacketImpl.CONNECT: {
+            ConnectMessage request = (ConnectMessage) packet;
 
-            handleCheckForFailover(request);
+            handleConnect(request);
 
             break;
          }
          case PacketImpl.REATTACH_SESSION: {
-            ReattachSessionMessage request = (ReattachSessionMessage) packet;
-
-            handleReattachSession(request);
-
-            break;
-         }
-         case PacketImpl.CREATE_QUEUE: {
-            // Create queue can also be fielded here in the case of a replicated store and forward queue creation
-
-            CreateQueueMessage request = (CreateQueueMessage) packet;
-
-            handleCreateQueue(request);
-
+            // We no longer use reattachment
+            channel1.send(new ReattachSessionResponseMessage(-1, false));
             break;
          }
          default: {
@@ -136,10 +124,42 @@ public class ActiveMQPacketHandler implements ChannelHandler {
       }
    }
 
-   private void handleCheckForFailover(CheckFailoverMessage failoverMessage) {
-      String nodeID = failoverMessage.getNodeID();
+   private void handleConnect(ConnectMessage connectMessage) {
+      if (connectReceived) {
+         ActiveMQServerLogger.LOGGER.invalidPacket(connectMessage);
+         connection.close();
+         return;
+      }
+      connectReceived = true;
+
+      connection.setChannelVersion(connectMessage.getClientVersion());
+
+      // Legacy clients omit authMechanism; skip connection auth and rely on session creation.
+      if (server.getSecurityStore().isSecurityEnabled() &&
+         protocolManager.isCoreConnectionSecurityEnabled() &&
+         connectMessage.getAuthMechanism() != null) {
+
+         try {
+            if (ConnectMessage.MECHANISM_PLAIN.equals(connectMessage.getAuthMechanism())) {
+               String[] credentials = connectMessage.decodePlainAuthData();
+               server.validateUser(credentials[0], credentials[1], connection, protocolManager.getSecurityDomain());
+            } else {
+               throw ActiveMQMessageBundle.BUNDLE.authenticationMechanismNotSupported(connectMessage.getAuthMechanism());
+            }
+         } catch (Exception e) {
+            // Flush before close so the exception is on the wire ahead of TCP FIN.
+            // ChannelImpl.returnBlocking preserves an already-delivered EXCEPTION to avoid AMQ219016.
+            ActiveMQException messageException = e instanceof ActiveMQException ? (ActiveMQException) e
+               : new ActiveMQInternalErrorException("Connection authentication failed", e);
+            channel1.sendAndFlush(new ActiveMQExceptionMessage(messageException));
+            connection.close();
+            return;
+         }
+      }
+
+      String nodeID = connectMessage.getNodeID();
       boolean okToFailover = nodeID == null || server.getNodeID().toString().equals(nodeID) || !(server.getHAPolicy().canScaleDown() && !server.hasScaledDown(SimpleString.of(nodeID)));
-      channel1.send(new CheckFailoverReplyMessage(okToFailover));
+      channel1.send(new ConnectResponseMessage(okToFailover, server.getVersion().getIncrementingVersion()));
    }
 
    private void handleCreateSession(final CreateSessionMessage request) {
@@ -229,58 +249,4 @@ public class ActiveMQPacketHandler implements ChannelHandler {
       }
    }
 
-   private void handleReattachSession(final ReattachSessionMessage request) {
-      Packet response = null;
-
-      try {
-
-         if (!server.isStarted()) {
-            response = new ReattachSessionResponseMessage(-1, false);
-         }
-
-         logger.debug("Reattaching request from {}", connection.getRemoteAddress());
-
-         ServerSessionPacketHandler sessionHandler = protocolManager.getSessionHandler(request.getName());
-
-         if (/*!server.checkActivate() || */ sessionHandler == null) {
-            response = new ReattachSessionResponseMessage(-1, false);
-         } else {
-            if (sessionHandler.getChannel().getConfirmationWindowSize() == -1) {
-               // Even though session exists, we can't reattach since confi window size == -1,
-               // i.e. we don't have a resend cache for commands, so we just close the old session
-               // and let the client recreate
-
-               ActiveMQServerLogger.LOGGER.reattachRequestFailed(connection.getRemoteAddress());
-
-               sessionHandler.closeListeners();
-               sessionHandler.close();
-
-               response = new ReattachSessionResponseMessage(-1, false);
-            } else {
-               // Reconnect the channel to the new connection
-               int serverLastConfirmedCommandID = sessionHandler.transferConnection(connection, request.getLastConfirmedCommandID());
-
-               response = new ReattachSessionResponseMessage(serverLastConfirmedCommandID, true);
-            }
-         }
-      } catch (Exception e) {
-         ActiveMQServerLogger.LOGGER.failedToReattachSession(e);
-
-         response = new ActiveMQExceptionMessage(new ActiveMQInternalErrorException());
-      }
-
-      channel1.send(response);
-   }
-
-   private void handleCreateQueue(final CreateQueueMessage request) {
-      try {
-         server.createQueue(QueueConfiguration.of(request.getQueueName())
-                               .setAddress(request.getAddress())
-                               .setFilterString(request.getFilterString())
-                               .setDurable(request.isDurable())
-                               .setTemporary(request.isTemporary()));
-      } catch (Exception e) {
-         ActiveMQServerLogger.LOGGER.failedToHandleCreateQueue(e);
-      }
-   }
 }

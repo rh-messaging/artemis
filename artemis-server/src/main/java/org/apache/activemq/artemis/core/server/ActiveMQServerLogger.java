@@ -50,7 +50,7 @@ import org.apache.activemq.artemis.spi.core.remoting.Connection;
 /**
  * Logger Codes 220000 - 228999
  */
-@LogBundle(projectCode = "AMQ", regexID = "22[0-8][0-9]{3}", retiredIDs = {221026, 221052, 222003, 222012, 222015, 222020, 222021, 222022, 222024, 222027, 222028, 222029, 222048, 222052, 222058, 222064, 222071, 222078, 222079, 222083, 222084, 222088, 222090, 222102, 222105, 222110, 222113, 222128, 222134, 222135, 222152, 222159, 222163, 222167, 222170, 222171, 222182, 222190, 222192, 222193, 222204, 222249, 222252, 222255, 222257, 222259, 222260, 222276, 222277, 222288, 224001, 224002, 224003, 224005, 224013, 224031, 224035, 224070, 224100, 224121})
+@LogBundle(projectCode = "AMQ", regexID = "22[0-8][0-9]{3}", retiredIDs = {221026, 221052, 222003, 222012, 222015, 222020, 222021, 222022, 222024, 222027, 222028, 222029, 222048, 222052, 222058, 222064, 222066, 222071, 222078, 222079, 222083, 222084, 222088, 222090, 222102, 222105, 222110, 222113, 222128, 222134, 222135, 222152, 222159, 222163, 222167, 222170, 222171, 222182, 222190, 222192, 222193, 222204, 222249, 222252, 222255, 222257, 222259, 222260, 222276, 222277, 222288, 224001, 224002, 224003, 224005, 224013, 224019, 224031, 224035, 224070, 224100, 224121})
 public interface ActiveMQServerLogger {
 
    // Note: logger ID 224127 uses "org.apache.activemq.artemis.core.server.Queue" for its logger category, rather than ActiveMQServerLogger.class.getPackage().getName()
@@ -478,9 +478,6 @@ public interface ActiveMQServerLogger {
 
    @LogMessage(id = 222065, value = "Client is not being consistent on the request versioning. It just sent a version id={} while it informed {} previously", level = LogMessage.Level.DEBUG)
    void incompatibleVersionAfterConnect(int version, int clientVersion);
-
-   @LogMessage(id = 222066, value = "Reattach request from {} failed as there is no confirmationWindowSize configured, which may be ok for your system", level = LogMessage.Level.WARN)
-   void reattachRequestFailed(String remoteAddress);
 
    @LogMessage(id = 222067, value = "Connection failure has been detected: {} [code={}]", level = LogMessage.Level.WARN)
    void connectionFailureDetected(String message, ActiveMQExceptionType type);
@@ -1133,9 +1130,6 @@ public interface ActiveMQServerLogger {
    @LogMessage(id = 224018, value = "Failed to create session", level = LogMessage.Level.ERROR)
    void failedToCreateSession(Exception e);
 
-   @LogMessage(id = 224019, value = "Failed to reattach session", level = LogMessage.Level.ERROR)
-   void failedToReattachSession(Exception e);
-
    @LogMessage(id = 224020, value = "Failed to handle create queue", level = LogMessage.Level.ERROR)
    void failedToHandleCreateQueue(Exception e);
 
@@ -1550,6 +1544,15 @@ public interface ActiveMQServerLogger {
 
    @LogMessage(id = 224164, value = "Failed to recover stored configuration for divert named '{}': {}. To repair this record create a new divert with the same name via the management API.", level = LogMessage.Level.WARN)
    void failedToRecoverStoredDivertConfiguration(String divertName, String divert);
+
+   @LogMessage(id = 224165, value = "Unauthenticated cluster topology subscription request. Update the remote broker to authenticate the cluster connection from {}.", level = LogMessage.Level.WARN)
+   void unauthenticatedClusterTopologySubscriptionRequest(String remoteAddress);
+
+   @LogMessage(id = 224166, value = "Multiple topology subscriptions to connection from {}. Closing connection.", level = LogMessage.Level.WARN)
+   void multipleTopologySubscriptions(String remoteAddress);
+
+   @LogMessage(id = 224169, value = "Queue {} has an invalid filter expression persisted in the journal: {}. The server cannot load this journal unless this filter is allowed. To allow it, increase the wildcard limit using the system property 'org.apache.activemq.artemis.selector.maxWildcards' or environment variable 'ARTEMIS_SELECTOR_MAX_WILDCARDS'.", level = LogMessage.Level.WARN)
+   void invalidFilterExpressionOnJournalReload(String queueName, String filterString);
 
    @LogMessage(id = 224170, value = "Server is stopping. Unable to process redelivery during rollback; ref: {}; transaction: {}; exception message: {}", level = LogMessage.Level.WARN)
    void unableToProcessRedeliveryDuringRollback(String messageRef, String transaction, String exceptionMessage);

@@ -17,8 +17,32 @@
 package org.apache.activemq.artemis.api.config;
 
 import org.apache.activemq.artemis.api.core.client.ActiveMQClient;
+import org.apache.activemq.artemis.utils.SystemPropertyHelper;
 
 public class ServerLocatorConfig {
+
+   public static final String DISCOVERY_ENABLED_PROPERTY = "artemis.discovery.enabled";
+
+   public static final String DISCOVERY_ENABLED_ENV_VAR = "ARTEMIS_DISCOVERY_ENABLED";
+
+   private static volatile Boolean discoveryEnabled;
+
+   public static boolean isDiscoveryEnabled() {
+      Boolean enabled = discoveryEnabled;
+      if (enabled == null) {
+         enabled = Boolean.parseBoolean(SystemPropertyHelper.getProperty(DISCOVERY_ENABLED_PROPERTY, DISCOVERY_ENABLED_ENV_VAR, "false"));
+         discoveryEnabled = enabled;
+      }
+      return enabled;
+   }
+
+   /**
+    * Overrides the cached discovery-enabled flag. Intended for tests only.
+    */
+   static void setDiscoveryEnabled(Boolean enabled) {
+      discoveryEnabled = enabled;
+   }
+
    public long clientFailureCheckPeriod = ActiveMQClient.DEFAULT_CLIENT_FAILURE_CHECK_PERIOD;
    public long connectionTTL = ActiveMQClient.DEFAULT_CONNECTION_TTL;
    public long callTimeout = ActiveMQClient.DEFAULT_CALL_TIMEOUT;
@@ -52,6 +76,10 @@ public class ServerLocatorConfig {
    public int compressionLevel = ActiveMQClient.DEFAULT_COMPRESSION_LEVEL;
    public boolean compressLargeMessage = ActiveMQClient.DEFAULT_COMPRESS_LARGE_MESSAGES;
    public boolean useTopologyForLoadBalancing = ActiveMQClient.DEFAULT_USE_TOPOLOGY_FOR_LOADBALANCING;
+
+   public String connectionUser;
+
+   public String connectionPassword;
 
    public ServerLocatorConfig() {
    }
@@ -89,5 +117,7 @@ public class ServerLocatorConfig {
       initialMessagePacketSize = locator.initialMessagePacketSize;
       useTopologyForLoadBalancing = locator.useTopologyForLoadBalancing;
       compressionLevel = locator.compressionLevel;
+      connectionUser = locator.connectionUser;
+      connectionPassword = locator.connectionPassword;
    }
 }
