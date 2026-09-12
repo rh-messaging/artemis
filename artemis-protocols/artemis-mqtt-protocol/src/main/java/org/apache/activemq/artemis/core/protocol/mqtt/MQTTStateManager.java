@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
@@ -33,6 +34,7 @@ import org.apache.activemq.artemis.api.core.QueueConfiguration;
 import org.apache.activemq.artemis.api.core.RoutingType;
 import org.apache.activemq.artemis.core.filter.impl.FilterImpl;
 import org.apache.activemq.artemis.core.journal.RecordInfo;
+import org.apache.activemq.artemis.core.journal.collections.JournalHashMap;
 import org.apache.activemq.artemis.core.journal.collections.JournalHashMapProvider;
 import org.apache.activemq.artemis.core.message.impl.CoreMessage;
 import org.apache.activemq.artemis.core.persistence.StorageManager;
@@ -55,6 +57,55 @@ public class MQTTStateManager {
    private final Map<String, MQTTConnection> connectedClients = new ConcurrentHashMap<>();
    private final boolean subscriptionPersistenceEnabled;
    private final JournalHashMapProvider<String, PacketIdCorrelationKey, Integer, Object> journalHashMapProvider;
+   private final PacketIdCorrelationIndex packetIdCorrelationIndex;
+
+   /**
+    * {@link JournalHashMap#containsValue} is used to check whether a given packet ID is currently correlated. However,
+    * since it's keyed by {@link PacketIdCorrelationKey} rather than by packet ID the check is O(n). Therefore, this
+    * class maintains a plain O(1) reverse index of packet IDs.
+    */
+   private static final class PacketIdCorrelationIndex {
+
+      private final Map<String, Set<Integer>> packetIdsByClientId = new ConcurrentHashMap<>();
+
+      private final JournalHashMapProvider<String, PacketIdCorrelationKey, Integer, Object> provider;
+
+      PacketIdCorrelationIndex(JournalHashMapProvider<String, PacketIdCorrelationKey, Integer, Object> provider) {
+         this.provider = provider;
+      }
+
+      private Set<Integer> computeIfAbsent(String clientId) {
+         return packetIdsByClientId.computeIfAbsent(clientId, id -> {
+            Set<Integer> packetIds = ConcurrentHashMap.newKeySet();
+            if (provider.containsMap(id)) {
+               packetIds.addAll(provider.getMap(id).valuesCopy());
+            }
+            return packetIds;
+         });
+      }
+
+      void add(String clientId, Integer packetId) {
+         computeIfAbsent(clientId).add(packetId);
+      }
+
+      void remove(String clientId, Integer packetId) {
+         if (packetId == null) {
+            return;
+         }
+         Set<Integer> packetIds = packetIdsByClientId.get(clientId);
+         if (packetIds != null) {
+            packetIds.remove(packetId);
+         }
+      }
+
+      boolean contains(String clientId, int packetId) {
+         return computeIfAbsent(clientId).contains(packetId);
+      }
+
+      void clear(String clientId) {
+         packetIdsByClientId.remove(clientId);
+      }
+   }
 
    /*
     * Even though there may be multiple instances of MQTTProtocolManager (e.g. for MQTT on different ports) we only want
@@ -79,6 +130,7 @@ public class MQTTStateManager {
       this.server = server;
       this.subscriptionPersistenceEnabled = server.getConfiguration().isMqttSubscriptionPersistenceEnabled();
       this.journalHashMapProvider = new JournalHashMapProvider<>(server.getStorageManager()::generateID, server.getStorageManager(), PacketIdCorrelationKey.getPersister(), JournalRecordIds.MQTT_PACKET_ID_CORRELATION, OperationContextImpl::getContext, null, server.getIoCriticalErrorListener());
+      this.packetIdCorrelationIndex = new PacketIdCorrelationIndex(journalHashMapProvider);
    }
 
    public void scanSessions() {
@@ -227,6 +279,7 @@ public class MQTTStateManager {
 
    public void putPacketIdCorrelation(String clientId, PacketIdCorrelationKey key, Integer packetId) {
       journalHashMapProvider.getMap(clientId).put(key, packetId);
+      packetIdCorrelationIndex.add(clientId, packetId);
    }
 
    public Integer getPacketIdCorrelation(String clientId, PacketIdCorrelationKey key) {
@@ -234,15 +287,18 @@ public class MQTTStateManager {
    }
 
    public Integer removePacketIdCorrelation(String clientId, PacketIdCorrelationKey key, long transactionId) {
-      return journalHashMapProvider.getMap(clientId).remove(key, transactionId);
+      Integer removed = journalHashMapProvider.getMap(clientId).remove(key, transactionId);
+      packetIdCorrelationIndex.remove(clientId, removed);
+      return removed;
    }
 
    public void clearPacketIdCorrelation(String clientId) {
       journalHashMapProvider.getMap(clientId).clear();
+      packetIdCorrelationIndex.clear(clientId);
    }
 
    public boolean packetIdCorrelationExists(String clientId, int packetId) {
-      return journalHashMapProvider.getMap(clientId).containsValue(packetId);
+      return packetIdCorrelationIndex.contains(clientId, packetId);
    }
 
    public boolean packetIdCorrelationExistsForClient(String clientId) {

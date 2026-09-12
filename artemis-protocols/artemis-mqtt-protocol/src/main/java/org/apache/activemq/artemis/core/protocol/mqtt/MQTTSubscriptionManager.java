@@ -363,6 +363,9 @@ public class MQTTSubscriptionManager {
          topics.add(item.getSubscription().topicFilter());
       }
       removeSubscriptions(topics, enforceSecurity);
-      stateManager.clearPacketIdCorrelation(session.getState().getClientId());
+      String clientId = session.getState().getClientId();
+      if (clientId != null) {
+         stateManager.clearPacketIdCorrelation(clientId);
+      }
    }
 }
