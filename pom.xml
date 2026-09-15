@@ -125,7 +125,7 @@
       <netty.version>4.1.138.Final</netty.version>
       <hdrhistogram.version>2.2.2</hdrhistogram.version>
       <curator.version>5.9.0</curator.version>
-      <zookeeper.version>3.9.5</zookeeper.version>
+      <zookeeper.version>3.9.6</zookeeper.version>
       <woodstox.version>4.4.1</woodstox.version>
       <pem-keystore.version>3.0.0</pem-keystore.version>
       <nimbus.jwt.version>10.9.1</nimbus.jwt.version>
@@ -178,13 +178,13 @@
       <postgresql.version>42.7.13</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
       <selenium.version>4.49.0</selenium.version>
-      <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
+      <exec-maven-plugin.version>3.6.4</exec-maven-plugin.version>
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
       <shrinkwrap-api.version>1.2.6</shrinkwrap-api.version>
 
       <!-- for JakartaEE -->
-      <version.batavia>1.0.15.Final</version.batavia>
+      <version.batavia>1.0.16.Final</version.batavia>
       <jakarta.jms-api.version.alt>3.1.0</jakarta.jms-api.version.alt>
       <jakarta.transaction-api.version.alt>2.0.1</jakarta.transaction-api.version.alt>
       <jakarta.resource-api.version.alt>2.1.0</jakarta.resource-api.version.alt>
@@ -275,7 +275,7 @@
 
       <directory-version>2.0.0.AM25</directory-version>
       <directory-jdbm2-version>2.0.0-M3</directory-jdbm2-version>
-      <bc-java-version>1.85</bc-java-version>
+      <bc-java-version>1.86</bc-java-version>
 
       <netty-transport-native-epoll-classifier>linux-x86_64</netty-transport-native-epoll-classifier>
       <netty-transport-native-kqueue-classifier>osx-x86_64</netty-transport-native-kqueue-classifier>
@@ -800,7 +800,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>javacc-maven-plugin</artifactId>
-               <version>3.2.0</version>
+               <version>3.2.1</version>
                <executions>
                   <execution>
                      <id>javacc</id>
@@ -858,7 +858,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>build-helper-maven-plugin</artifactId>
-               <version>3.6.1</version>
+               <version>3.6.2</version>
             </plugin>
             <!-- Many examples use it -->
             <plugin>

@@ -506,7 +506,6 @@ public class MQTTSessionState {
        * Checks to see if the packet ID is in use already for either QoS 1 or QoS 2
        */
       private boolean packetIdInUse(int packetId) {
-         // coreDeliveryInfoExists is redundant but is an O(1) short-circuit for the O(n) containsValue in packetIdCorrelationExists
          return coreDeliveryInfoExists(packetId) ||
             (session != null &&
                session.getStateManager() != null &&
