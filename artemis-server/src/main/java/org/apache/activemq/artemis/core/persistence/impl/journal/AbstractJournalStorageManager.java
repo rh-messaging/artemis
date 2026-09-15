@@ -119,6 +119,7 @@ import org.apache.activemq.artemis.core.transaction.TransactionPropertyIndexes;
 import org.apache.activemq.artemis.core.transaction.impl.TransactionImpl;
 import org.apache.activemq.artemis.spi.core.protocol.MessagePersister;
 import org.apache.activemq.artemis.utils.ArtemisCloseable;
+import org.apache.activemq.artemis.utils.ByteUtil;
 import org.apache.activemq.artemis.utils.ExecutorFactory;
 import org.apache.activemq.artemis.utils.IDGenerator;
 import org.apache.activemq.artemis.utils.collections.ConcurrentLongHashMap;
@@ -154,6 +155,7 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
 
 
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+   private static final Logger diagnosticLogger = LoggerFactory.getLogger("ENTMQBR-10819");
 
    public enum JournalContent {
       BINDINGS((byte) 0), MESSAGES((byte) 1);
@@ -571,6 +573,7 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
    @Override
    public void deleteDuplicateID(final long recordID) throws Exception {
       try (ArtemisCloseable lock = closeableReadLock()) {
+         diagnosticLogger.info("Deleting duplicate ID; recordID: {}; syncNonTransactional: {}", recordID, syncNonTransactional);
          messageJournal.tryAppendDeleteRecord(recordID, syncNonTransactional, this::recordNotFoundCallback, getContext(syncNonTransactional));
       }
    }
@@ -1236,6 +1239,7 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
                         duplicateIDMap.put(encoding.address, ids);
                      }
 
+                     diagnosticLogger.info("Reloading duplicate cache: {}; duplicate ID: {} ({}); record ID: {}", encoding.address, encoding.duplID, ByteUtil.bytesToInt(encoding.duplID), record.id);
                      ids.add(new Pair<>(encoding.duplID, record.id));
 
                      break;
