@@ -84,6 +84,27 @@ public class LockCoordinator extends ActiveMQScheduledComponent {
       return lockManager;
    }
 
+   public String getName() {
+      return name;
+   }
+
+   // Returns a string representation of the current status of this Lock Coordinator.
+   public String getStatus() {
+      if (!isStarted()) {
+         return "Stopped";
+      } else {
+         if (isLocked()) {
+            return "Locked";
+         } else {
+            return "Unlocked";
+         }
+      }
+   }
+
+   public String getLockId() {
+      return lockID;
+   }
+
    /**
     * Registers a callback to be executed when lock is acquired.
     * If the lock is already held when this method is called, the callback

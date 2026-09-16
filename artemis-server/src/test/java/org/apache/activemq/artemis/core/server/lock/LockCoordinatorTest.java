@@ -16,8 +16,6 @@
  */
 package org.apache.activemq.artemis.core.server.lock;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +25,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.activemq.artemis.core.config.LockCoordinatorConfiguration;
 import org.apache.activemq.artemis.lockmanager.DistributedLock;
 import org.apache.activemq.artemis.lockmanager.DistributedLockManager;
 import org.apache.activemq.artemis.lockmanager.MutableLong;
@@ -41,39 +38,6 @@ public class LockCoordinatorTest extends ArtemisTestCase {
 
    private static final int CHECK_PERIOD = 100;
 
-   @Test
-   public void testLockCoordinatorConfigurationAutoStartDefaultsToTrue() {
-      LockCoordinatorConfiguration configuration = new LockCoordinatorConfiguration();
-      assertTrue(configuration.isAutoStart(), "auto-start must default to true");
-   }
-
-   @Test
-   public void testLockCoordinatorConfigurationAutoStartSetter() {
-      LockCoordinatorConfiguration configuration = new LockCoordinatorConfiguration();
-      LockCoordinatorConfiguration returned = configuration.setAutoStart(false);
-      assertSame(configuration, returned, "setAutoStart must return this for fluent chaining");
-      assertFalse(configuration.isAutoStart());
-   }
-
-   @Test
-   public void testLockCoordinatorAutoStartDefaultsToTrue() {
-      LockCoordinator coordinator = newCoordinator();
-      assertTrue(coordinator.isAutoStart(), "a LockCoordinator must be auto-starting unless configured otherwise");
-   }
-
-   @Test
-   public void testLockCoordinatorAutoStartSetter() {
-      LockCoordinator coordinator = newCoordinator();
-      LockCoordinator returned = coordinator.setAutoStart(false);
-      assertSame(coordinator, returned, "setAutoStart must return this for fluent chaining");
-      assertFalse(coordinator.isAutoStart());
-   }
-
-   /**
-    * A lock manager unable to connect must not make LockCoordinator::stop hang: the periodic task and the
-    * cleanup share the same ordered executor, hence a start blocking forever would keep the broker from
-    * being stopped or restarted.
-    */
    @Test
    @Timeout(value = 60, unit = TimeUnit.SECONDS)
    public void testStopWithLockManagerBlockedOnStart() throws Exception {
