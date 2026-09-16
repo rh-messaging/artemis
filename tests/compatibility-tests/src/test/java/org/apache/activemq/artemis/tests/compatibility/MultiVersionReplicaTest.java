@@ -30,21 +30,28 @@ import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
+import org.apache.activemq.artemis.spi.core.protocol.EmbedMessageUtil;
 import org.apache.activemq.artemis.tests.compatibility.base.ClasspathBase;
 import org.apache.activemq.artemis.tests.extensions.parameterized.ParameterizedTestExtension;
 import org.apache.activemq.artemis.tests.extensions.parameterized.Parameters;
+import org.apache.activemq.artemis.utils.FileUtil;
 import org.apache.qpid.jms.JmsConnectionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ExtendWith(ParameterizedTestExtension.class)
 public class MultiVersionReplicaTest extends ClasspathBase {
+
+   private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
    private static final String QUEUE_NAME = "MultiVersionReplicaTestQueue";
 
@@ -57,6 +64,18 @@ public class MultiVersionReplicaTest extends ClasspathBase {
    private boolean security;
 
 
+   public void downgradeEmbedWireVersion() {
+      System.setProperty("org.apache.artemis.amqp.embed.wire.version", "1");
+      EmbedMessageUtil.setDefaultWireVersion(EmbedMessageUtil.EMBED_WIRE_VERSION_1);
+   }
+
+   // Cleanup wire version downgrade in case it was applied
+   @AfterEach
+   public void cleanupDowngradeEmbedWireVersion() {
+      System.clearProperty("org.apache.artemis.amqp.embed.wire.version");
+      EmbedMessageUtil.setDefaultWireVersion(EmbedMessageUtil.EMBED_WIRE_VERSION_2);
+   }
+
 
    @Parameters(name = "main={0}, backup={1}, security={2}")
    public static Collection getParameters() {
@@ -65,18 +84,17 @@ public class MultiVersionReplicaTest extends ClasspathBase {
       if (getJavaVersion() <= 22) {
          // Old 2.x servers fail on JDK23+ without workarounds.
          combinations.add(new Object[]{ARTEMIS_2_22_0, SNAPSHOT, true});
-         combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_22_0, true});
          combinations.add(new Object[]{ARTEMIS_2_17_0, SNAPSHOT, true});
-         combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_17_0, true});
          combinations.add(new Object[]{ARTEMIS_2_22_0, SNAPSHOT, false});
-         combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_22_0, false});
          combinations.add(new Object[]{ARTEMIS_2_17_0, SNAPSHOT, false});
-         combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_17_0, false});
       }
 
       combinations.add(new Object[]{ARTEMIS_2_44_0, SNAPSHOT, true});
-      combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_44_0, true});
       combinations.add(new Object[]{ARTEMIS_2_44_0, SNAPSHOT, false});
+
+      // Retro-compatibility is best-effort only. These lines currently work,
+      // but can be removed if they become problematic.
+      combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_44_0, true});
       combinations.add(new Object[]{SNAPSHOT, ARTEMIS_2_44_0, false});
 
       // The SNAPSHOT/SNAPSHOT is here as a test validation only, like in other cases where SNAPSHOT/SNAPSHOT is used.
@@ -109,6 +127,13 @@ public class MultiVersionReplicaTest extends ClasspathBase {
 
    @TestTemplate
    public void testReplica() throws Throwable {
+      if (main.equals(SNAPSHOT) && !main.equals(backup)) {
+         // Downgrading wire version for retro-compatibility between snapshot and older versions
+         // as a best effort to allow compatibility during an upgrade
+         downgradeEmbedWireVersion();
+      }
+
+      FileUtil.deleteDirectory(serverFolder.getAbsoluteFile());
       System.out.println("Starting live");
       // To ensure backward compatibility, core connection security must be disabled on newer live brokers so legacy backup brokers can connect.
       boolean coreConnectionSecurity = security && (!SNAPSHOT.equals(main) || SNAPSHOT.equals(backup));
