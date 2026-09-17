@@ -760,6 +760,7 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
       DuplicateIDEncoding encoding = new DuplicateIDEncoding(address, duplID);
 
       try (ArtemisCloseable lock = closeableReadLock()) {
+         diagnosticLogger.info("Storing duplicate ID; txID: {}; name: {}; duplID: {} ({}); recordID: {}", txID, address, duplID, ByteUtil.bytesToInt(duplID), recordID);
          messageJournal.appendAddRecordTransactional(txID, recordID, JournalRecordIds.DUPLICATE_ID, encoding);
       }
    }
@@ -779,6 +780,7 @@ public abstract class AbstractJournalStorageManager extends CriticalComponentImp
    @Override
    public void deleteDuplicateIDTransactional(final long txID, final long recordID) throws Exception {
       try (ArtemisCloseable lock = closeableReadLock()) {
+         diagnosticLogger.info("Deleting duplicate ID; txID: {}; recordID: {}", txID, recordID);
          messageJournal.appendDeleteRecordTransactional(txID, recordID);
       }
    }
