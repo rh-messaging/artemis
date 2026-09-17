@@ -157,11 +157,15 @@ public class MQTTUtil {
 
       if (isSharedSubscription(topicFilter)) {
          Pair<String, String> decomposed = decomposeSharedSubscriptionTopicFilter(topicFilter);
-         return new StringBuilder().append(decomposed.getA()).append(".").append(getCoreAddressFromMqttTopic(decomposed.getB(), wildcardConfiguration)).toString();
+         return new StringBuilder().append(escapeDots(decomposed.getA())).append(".").append(getCoreAddressFromMqttTopic(decomposed.getB(), wildcardConfiguration)).toString();
       } else {
          Objects.requireNonNull(clientId, "MQTT client ID must not be null");
-         return new StringBuilder().append(clientId).append(".").append(getCoreAddressFromMqttTopic(topicFilter, wildcardConfiguration)).toString();
+         return new StringBuilder().append(escapeDots(clientId)).append(".").append(getCoreAddressFromMqttTopic(topicFilter, wildcardConfiguration)).toString();
       }
+   }
+
+   private static String escapeDots(String input) {
+      return input.replace("\\", "\\\\").replace(".", "\\.");
    }
 
    /**
@@ -598,7 +602,7 @@ public class MQTTUtil {
          tx = new TransactionImpl(storageManager);
          tx.setAsync(true);
       }
-      RoutingContext context = new RoutingContextImpl(tx);
+      RoutingContext context = new RoutingContextImpl(tx).setMirrorOption(RoutingContext.MirrorOption.disabled);
       queue.route(message, context);
       postOffice.processRoute(message, context, false);
       if (incomingTx == null) {

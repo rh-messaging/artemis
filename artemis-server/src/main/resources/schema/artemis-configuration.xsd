@@ -2456,6 +2456,10 @@
             </xsd:element>
          </xsd:choice>
       </xsd:sequence>
+      <xsd:attribute name="auto-create" type="xsd:boolean" use="optional" />
+      <xsd:attribute name="auto-delete" type="xsd:boolean" use="optional" />
+      <xsd:attribute name="auto-delete-delay" type="xsd:long" use="optional" />
+      <xsd:attribute name="auto-delete-message-count" type="xsd:long" use="optional" />
       <xsd:attribute name="priority-adjustment" type="xsd:int" use="optional" />
       <xsd:attribute name="include-federated" type="xsd:boolean" use="optional" />
       <xsd:attribute name="name" type="xsd:ID" use="required" />
@@ -2490,6 +2494,7 @@
             </xsd:element>
          </xsd:choice>
       </xsd:sequence>
+      <xsd:attribute name="auto-create" type="xsd:boolean" use="optional" />
       <xsd:attribute name="auto-delete" type="xsd:boolean" use="optional" />
       <xsd:attribute name="auto-delete-delay" type="xsd:long" use="optional" />
       <xsd:attribute name="auto-delete-message-count" type="xsd:long" use="optional" />
