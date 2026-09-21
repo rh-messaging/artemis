@@ -124,7 +124,7 @@ import org.apache.activemq.artemis.utils.collections.PriorityLinkedList;
 import org.apache.activemq.artemis.utils.collections.PriorityLinkedListImpl;
 import org.apache.activemq.artemis.utils.collections.TypedProperties;
 import org.apache.activemq.artemis.utils.critical.CriticalComponentImpl;
-import org.jctools.queues.MpscUnboundedArrayQueue;
+import org.jctools.queues.varhandle.MpscUnboundedVarHandleArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -202,7 +202,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    // Messages will first enter intermediateMessageReferences before they are added to messageReferences. This is to
    // avoid locking the queue on the producer
-   private final MpscUnboundedArrayQueue<MessageReference> intermediateMessageReferences;
+   private final MpscUnboundedVarHandleArrayQueue<MessageReference> intermediateMessageReferences;
 
    // This is where messages are stored
    protected final PriorityLinkedList<MessageReference> messageReferences = new PriorityLinkedListImpl<>(QueueImpl.NUM_PRIORITIES, MessageReferenceImpl.getSequenceComparator());
@@ -457,7 +457,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       this.initialQueueBufferSize = this.cachedAddressSettings.getInitialQueueBufferSize() == null
          ? ActiveMQDefaultConfiguration.INITIAL_QUEUE_BUFFER_SIZE
          : this.cachedAddressSettings.getInitialQueueBufferSize();
-      this.intermediateMessageReferences = new MpscUnboundedArrayQueue<>(initialQueueBufferSize);
+      this.intermediateMessageReferences = new MpscUnboundedVarHandleArrayQueue<>(initialQueueBufferSize);
 
       verifyDisabledConfiguration();
    }
@@ -1798,15 +1798,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
    private RefsOperation getRefsOperation(final Transaction tx, AckReason ackReason, boolean ignoreRedlieveryCheck, boolean delivering) {
       synchronized (tx) {
-         RefsOperation oper = (RefsOperation) tx.getProperty(TransactionPropertyIndexes.REFS_OPERATION);
-
-         if (oper == null) {
-            oper = tx.createRefsOperation(this, ackReason);
-
-            tx.putProperty(TransactionPropertyIndexes.REFS_OPERATION, oper);
-
-            tx.addOperation(oper);
-         }
+         RefsOperation oper = tx.getOrCreateOperation(TransactionPropertyIndexes.REFS_OPERATION, () -> tx.createRefsOperation(QueueImpl.this, ackReason));
 
          if (ignoreRedlieveryCheck) {
             oper.setIgnoreRedeliveryCheck();
@@ -1904,14 +1896,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
          if (tx == null) {
             server.callBrokerMessagePlugins(plugin -> plugin.messageExpired(ref, settingsToUse.getExpiryAddress(), consumer));
          } else {
-            ExpiryLogger expiryLogger = (ExpiryLogger) tx.getProperty(TransactionPropertyIndexes.EXPIRY_LOGGER);
-            if (expiryLogger == null) {
-               expiryLogger = new ExpiryLogger();
-               tx.putProperty(TransactionPropertyIndexes.EXPIRY_LOGGER, expiryLogger);
-               tx.addOperation(expiryLogger);
-            }
-
-            expiryLogger.addExpiry(queueConfiguration.getAddress(), ref);
+            ExpiryLoggerOperation expiryLoggerOperation = tx.getOrCreateOperation(TransactionPropertyIndexes.EXPIRY_LOGGER, ExpiryLoggerOperation::new);
+            expiryLoggerOperation.addExpiry(queueConfiguration.getAddress(), ref);
 
             // potentially auto-delete this queue if this expired the last message
             tx.addOperation(new TransactionOperationAbstract() {
@@ -3682,7 +3668,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       return LargeServerMessageImpl.checkLargeMessage(copy, storageManager);
    }
 
-   private class ExpiryLogger extends TransactionOperationAbstract {
+   private class ExpiryLoggerOperation extends TransactionOperationAbstract {
 
       List<Pair<SimpleString, MessageReference>> expiries = new LinkedList<>();
 
