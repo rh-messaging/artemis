@@ -105,6 +105,7 @@ import static org.apache.activemq.artemis.core.journal.impl.Reclaimer.scan;
  */
 public class JournalImpl extends JournalBase implements TestableJournal, JournalRecordProvider {
    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+   private static final Logger diagnosticLogger = LoggerFactory.getLogger("ENTMQBR-10819");
 
    /**
     * this is a factor where when you have more than UPDATE_FACTOR updates for every ADD.
@@ -1642,7 +1643,14 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
                                                    final TransactionFailureCallback failureCallback,
                                                    final boolean fixBadTX) throws Exception {
       final LongHashSet recordsToDelete = new LongHashSet(1024);
-      final Predicate<RecordInfo> toDeleteFilter = recordInfo -> recordsToDelete.contains(recordInfo.id);
+      final Predicate<RecordInfo> toDeleteFilter = recordInfo -> {
+         if (recordsToDelete.contains(recordInfo.id)) {
+            return true;
+         } else {
+            diagnosticLogger.info("Record {} not found", recordInfo.id);
+            return false;
+         }
+      };
 
       final int DELETE_FLUSH = 20000;
 
@@ -1660,6 +1668,9 @@ public class JournalImpl extends JournalBase implements TestableJournal, Journal
                final long removed = committedRecords.remove(toDeleteFilter);
                if (logger.isDebugEnabled()) {
                   logger.debug("Removed records during loading = {}", removed);
+               }
+               if (removed < recordsToDelete.size()) {
+                  diagnosticLogger.info("Discarding {} pending delete(s) during load flush with no matching record added yet; ids={}", recordsToDelete.size() - removed, recordsToDelete);
                }
                recordsToDelete.clear();
 
