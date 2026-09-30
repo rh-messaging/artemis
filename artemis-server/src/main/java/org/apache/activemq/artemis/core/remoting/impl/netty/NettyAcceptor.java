@@ -765,22 +765,8 @@ public class NettyAcceptor extends AbstractAcceptor {
          }
 
          // serverChannelGroup has been unbound in pause()
-         if (serverChannelGroup != null) {
-            serverChannelGroup.close().awaitUninterruptibly();
-         }
-
-         if (channelGroup != null) {
-            ChannelGroupFuture future = channelGroup.close().awaitUninterruptibly();
-
-            if (!future.isSuccess()) {
-               ActiveMQServerLogger.LOGGER.nettyChannelGroupError();
-               for (Channel channel : future.group()) {
-                  if (channel.isActive()) {
-                     ActiveMQServerLogger.LOGGER.nettyChannelStillOpen(channel, channel.remoteAddress());
-                  }
-               }
-            }
-         }
+         closeChannelGroup(serverChannelGroup);
+         closeChannelGroup(channelGroup);
 
          channelClazz = null;
 
@@ -799,6 +785,21 @@ public class NettyAcceptor extends AbstractAcceptor {
             // 3000ms elapsed.
             eventLoopGroup.shutdownGracefully(quietPeriod, shutdownTimeout, TimeUnit.MILLISECONDS).addListener(f -> callback.run());
             eventLoopGroup = null;
+         }
+      }
+   }
+
+   private void closeChannelGroup(ChannelGroup channelGroup) {
+      if (channelGroup != null) {
+         if (shutdownTimeout > 0 && !channelGroup.close().awaitUninterruptibly(shutdownTimeout, TimeUnit.MILLISECONDS)) {
+            ActiveMQServerLogger.LOGGER.nettyChannelGroupError(getName(), shutdownTimeout);
+            for (Channel channel : channelGroup) {
+               if (channel.isActive()) {
+                  ActiveMQServerLogger.LOGGER.nettyChannelStillOpen(channel, channel.remoteAddress(), getName());
+               }
+            }
+         } else {
+            channelGroup.close();
          }
       }
    }
@@ -836,14 +837,15 @@ public class NettyAcceptor extends AbstractAcceptor {
 
       // We *pause* the acceptor so no new connections are made
       if (serverChannelGroup != null) {
-         ChannelGroupFuture future = serverChannelGroup.close().awaitUninterruptibly();
-         if (!future.isSuccess()) {
-            ActiveMQServerLogger.LOGGER.nettyChannelGroupBindError();
-            for (Channel channel : future.group()) {
+         if (shutdownTimeout > 0 && !serverChannelGroup.close().awaitUninterruptibly(shutdownTimeout, TimeUnit.MILLISECONDS)) {
+            ActiveMQServerLogger.LOGGER.nettyChannelGroupBindErrorOnPause(getName(), shutdownTimeout);
+            for (Channel channel : serverChannelGroup) {
                if (channel.isActive()) {
-                  ActiveMQServerLogger.LOGGER.nettyChannelStillBound(channel, channel.remoteAddress());
+                  ActiveMQServerLogger.LOGGER.nettyChannelStillBoundOnPause(channel, channel.remoteAddress(), getName());
                }
             }
+         } else {
+            serverChannelGroup.close();
          }
       }
       paused = true;

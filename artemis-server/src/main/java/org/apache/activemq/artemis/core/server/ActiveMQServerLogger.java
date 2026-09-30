@@ -490,17 +490,17 @@ public interface ActiveMQServerLogger {
    @LogMessage(id = 222072, value = "Timed out flushing channel on InVMConnection", level = LogMessage.Level.WARN)
    void timedOutFlushingInvmChannel();
 
-   @LogMessage(id = 222074, value = "channel group did not completely close", level = LogMessage.Level.WARN)
-   void nettyChannelGroupError();
+   @LogMessage(id = 222074, value = "Netty ChannelGroup for acceptor '{}' did not completely close within {}ms timeout", level = LogMessage.Level.WARN)
+   void nettyChannelGroupError(String acceptor, int timeout);
 
-   @LogMessage(id = 222075, value = "{} is still connected to {}", level = LogMessage.Level.WARN)
-   void nettyChannelStillOpen(Channel channel, SocketAddress remoteAddress);
+   @LogMessage(id = 222075, value = "{} is still connected to {} for acceptor '{}'", level = LogMessage.Level.WARN)
+   void nettyChannelStillOpen(Channel channel, SocketAddress remoteAddress, String acceptor);
 
-   @LogMessage(id = 222076, value = "channel group did not completely unbind", level = LogMessage.Level.WARN)
-   void nettyChannelGroupBindError();
+   @LogMessage(id = 222076, value = "Netty ChannelGroup did not completely unbind  within {}ms timeout when pausing acceptor '{}'", level = LogMessage.Level.WARN)
+   void nettyChannelGroupBindErrorOnPause(String acceptor, int timeout);
 
-   @LogMessage(id = 222077, value = "{} is still bound to {}", level = LogMessage.Level.WARN)
-   void nettyChannelStillBound(Channel channel, SocketAddress remoteAddress);
+   @LogMessage(id = 222077, value = "{} is still bound to {} when pausing acceptor '{}'", level = LogMessage.Level.WARN)
+   void nettyChannelStillBoundOnPause(Channel channel, SocketAddress remoteAddress, String acceptor);
 
    @LogMessage(id = 222080, value = "Error creating acceptor: {}", level = LogMessage.Level.WARN)
    void errorCreatingAcceptor(String name, Exception e);
