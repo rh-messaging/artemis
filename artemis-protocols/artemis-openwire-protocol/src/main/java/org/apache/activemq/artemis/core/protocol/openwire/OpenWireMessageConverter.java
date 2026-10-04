@@ -230,7 +230,9 @@ public final class OpenWireMessageConverter {
                                      final ActiveMQBuffer body) throws IOException {
       InputStream tis = new ByteArrayInputStream(contents);
       if (messageCompressed) {
-         tis = MarshallingSupport.createInflaterInputStream(Integer.MAX_VALUE, tis);
+         // There is no createInflaterInputStream in activemq-client-5.11.
+         //tis = MarshallingSupport.createInflaterInputStream(Integer.MAX_VALUE, tis);
+         tis = new InflaterInputStream(tis);
       }
       DataInputStream tdataIn = new DataInputStream(tis);
       String text = MarshallingSupport.readUTF8(tdataIn);
@@ -243,7 +245,9 @@ public final class OpenWireMessageConverter {
                                     final ActiveMQBuffer body) throws IOException {
       InputStream mis = new ByteArrayInputStream(contents);
       if (messageCompressed) {
-         mis = MarshallingSupport.createInflaterInputStream(Integer.MAX_VALUE, mis);
+         // There is no createInflaterInputStream in activemq-client-5.11.
+         //mis = MarshallingSupport.createInflaterInputStream(Integer.MAX_VALUE, mis);
+         mis = new InflaterInputStream(mis);
       }
       DataInputStream mdataIn = new DataInputStream(mis);
       Map<String, Object> map = MarshallingSupport.unmarshalPrimitiveMap(mdataIn);
@@ -282,7 +286,9 @@ public final class OpenWireMessageConverter {
                                        final ActiveMQBuffer body) throws IOException {
       InputStream sis = new ByteArrayInputStream(contents);
       if (messageCompressed) {
-         sis = MarshallingSupport.createInflaterInputStream(Integer.MAX_VALUE, sis);
+         // There is no createInflaterInputStream in activemq-client-5.11.
+         //sis = MarshallingSupport.createInflaterInputStream(Integer.MAX_VALUE, sis);
+         sis = new InflaterInputStream(sis);
       }
       DataInputStream sdis = new DataInputStream(sis);
       int stype = sdis.read();
