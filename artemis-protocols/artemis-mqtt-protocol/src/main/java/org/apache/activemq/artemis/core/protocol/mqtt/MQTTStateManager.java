@@ -180,6 +180,10 @@ public class MQTTStateManager {
       return Collections.unmodifiableMap(sessionStates);
    }
 
+   public boolean sessionPresent(String clientId) {
+      return sessionStates.containsKey(clientId);
+   }
+
    @Override
    public String toString() {
       return "MQTTSessionStateManager@" + Integer.toHexString(System.identityHashCode(this));
