@@ -96,7 +96,7 @@
       <commons.config.version>2.15.1</commons.config.version>
       <commons.lang.version>3.21.0</commons.lang.version>
       <activemq5-version>5.19.11</activemq5-version>
-      <apache.derby.version>10.15.2.0</apache.derby.version>
+      <hsqldb.version>2.7.4</hsqldb.version>
       <commons.beanutils.version>1.11.0</commons.beanutils.version>
       <commons.logging.version>1.4.0</commons.logging.version>
       <commons.dbcp2.version>2.14.0</commons.dbcp2.version>
@@ -108,7 +108,7 @@
       <commons.compress.version>1.28.0</commons.compress.version>
       <fuse.mqtt.client.version>1.16</fuse.mqtt.client.version>
       <caffeine.version>3.3.0</caffeine.version>
-      <guava.version>33.7.1-jre</guava.version>
+      <guava.version>33.7.2-jre</guava.version>
       <jsr305.version>3.0.2</jsr305.version>
       <jetty.version>12.1.13</jetty.version>
       <jetty-servlet-api.version>5.0.2</jetty-servlet-api.version>
@@ -177,7 +177,7 @@
       <hive.client.mqtt.version>1.4.0</hive.client.mqtt.version>
       <postgresql.version>42.7.13</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
-      <selenium.version>4.49.0</selenium.version>
+      <selenium.version>4.50.0</selenium.version>
       <exec-maven-plugin.version>3.6.4</exec-maven-plugin.version>
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
@@ -198,7 +198,7 @@
 
       <!-- used on tests -->
       <elementary.version>3.0.0</elementary.version>
-      <groovy.version>5.1.2</groovy.version>
+      <groovy.version>6.0.0</groovy.version>
       <hadoop.minikdc.version>3.5.0</hadoop.minikdc.version>
       <mockserver.version>8.0.0</mockserver.version>
 
