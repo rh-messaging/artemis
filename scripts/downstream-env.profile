@@ -17,16 +17,8 @@
 # under the License.
 
 # Setting the script to fail if anything goes wrong
-set -e
 
-export PRG_PATH=`dirname $0`
-. $PRG_PATH/downstream-env.profile
+export DOWNSTREAM_BRANCH=amq-broker-main
 
-# this script is a helper that will checkout the PR Branch
-
-git fetch $REDHAT_USER
-git fetch $REDHAT_DOWNSTREAM
-
-git checkout $REDHAT_DOWNSTREAM/pr/$1 -B $1
-
-echo "\ndo your own rebase by typing: git pull --rebase $REDHAT_DOWNSTREAM $DOWNSTREAM_BRANCH"
+export REDHAT_USER=${REDHAT_USER:-origin-rh}
+export REDHAT_DOWNSTREAM=${REDHAT_DOWNSTREAM:-downstream}
