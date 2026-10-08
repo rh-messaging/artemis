@@ -2081,7 +2081,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
          synchronized (this) {
             // ensure all messages are moved from intermediateMessageReferences so that they can be seen by the iterator
-            doInternalPoll();
+            flushIntermediateReferences();
 
             try (LinkedListIterator<MessageReference> iter = iterator()) {
 
@@ -2880,7 +2880,8 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
       }
    }
 
-   synchronized void doInternalPoll() {
+   @Override
+   public synchronized void flushIntermediateReferences() {
 
       int added = 0;
       MessageReference ref;
@@ -2946,7 +2947,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
 
       scheduledRunners.decrementAndGet();
 
-      doInternalPoll();
+      flushIntermediateReferences();
 
       // Either the iterator is empty or the consumer is busy
       int noDelivery = 0;
@@ -3346,7 +3347,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    @Override
    public synchronized MessageReference removeWithSuppliedID(String serverID, long id, NodeStoreFactory<MessageReference> nodeStore) {
       checkIDSupplier(nodeStore);
-      doInternalPoll(); // we need to flush intermediate references first
+      flushIntermediateReferences(); // we need to flush intermediate references first
       MessageReference reference = messageReferences.removeWithID(serverID, id);
       if (reference != null) {
          refRemoved(reference);
