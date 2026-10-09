@@ -123,7 +123,7 @@ public class AuditLoggerResourceTest extends AuditLoggerTestBase {
       ConnectionFactory factory = CFUtil.createConnectionFactory(protocol, url);
       Connection connection = factory.createConnection();
       Session s = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-      assertTrue(findLogRecord(getAuditLog(), "AMQ601767: " + protocol + " connection"));
+      Wait.assertTrue(() -> findLogRecord(getAuditLog(), "AMQ601767: " + protocol + " connection"), 5000, 100);
       s.close();
       connection.close();
       Wait.assertTrue(() -> findLogRecord(getAuditLog(), "AMQ601768: " + protocol + " connection"), 5000, 100);
@@ -141,8 +141,8 @@ public class AuditLoggerResourceTest extends AuditLoggerTestBase {
       final BlockingConnection connection = mqtt.blockingConnection();
       connection.connect();
       connection.disconnect();
-      assertTrue(findLogRecord(getAuditLog(), "AMQ601767: MQTT connection"));
-      assertTrue(findLogRecord(getAuditLog(), "AMQ601768: MQTT connection"));
+      Wait.assertTrue(() -> findLogRecord(getAuditLog(), "AMQ601767: MQTT connection"), 5000, 100);
+      Wait.assertTrue(() -> findLogRecord(getAuditLog(), "AMQ601768: MQTT connection"), 5000, 100);
    }
 
    @Test
@@ -150,7 +150,7 @@ public class AuditLoggerResourceTest extends AuditLoggerTestBase {
       StompClientConnection connection = StompClientConnectionFactory.createClientConnection(new URI("tcp://localhost:61613"));
       connection.connect();
       connection.disconnect();
-      assertTrue(findLogRecord(getAuditLog(), "AMQ601767: STOMP connection"));
-      assertTrue(findLogRecord(getAuditLog(), "AMQ601768: STOMP connection"));
+      Wait.assertTrue(() -> findLogRecord(getAuditLog(), "AMQ601767: STOMP connection"), 5000, 100);
+      Wait.assertTrue(() -> findLogRecord(getAuditLog(), "AMQ601768: STOMP connection"), 5000, 100);
    }
 }
