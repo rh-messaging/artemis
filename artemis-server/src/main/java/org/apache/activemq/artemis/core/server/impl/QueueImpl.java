@@ -834,6 +834,7 @@ public class QueueImpl extends CriticalComponentImpl implements Queue {
    @Override
    public void setFilter(Filter filter) {
       filterUpdater.set(this, filter);
+      queueConfiguration.setFilterString(filter == null ? null : filter.getFilterString());
    }
 
    @Override
