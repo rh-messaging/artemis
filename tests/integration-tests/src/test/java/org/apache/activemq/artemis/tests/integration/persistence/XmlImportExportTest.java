@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 import org.apache.activemq.artemis.api.core.Message;
