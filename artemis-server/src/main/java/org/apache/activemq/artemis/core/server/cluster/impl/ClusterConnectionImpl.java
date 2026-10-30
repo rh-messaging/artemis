@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.activemq.artemis.api.core.ActiveMQAddressDoesNotExistException;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
 import org.apache.activemq.artemis.api.core.DiscoveryGroupConfiguration;
 import org.apache.activemq.artemis.api.core.Pair;
@@ -70,6 +72,7 @@ import org.apache.activemq.artemis.core.server.cluster.Bridge;
 import org.apache.activemq.artemis.core.server.cluster.ClusterConnection;
 import org.apache.activemq.artemis.core.server.cluster.ClusterControl;
 import org.apache.activemq.artemis.core.server.cluster.ClusterManager;
+import org.apache.activemq.artemis.core.server.impl.QueueImpl;
 import org.apache.activemq.artemis.core.server.cluster.ClusterManager.IncomingInterceptorLookingForExceptionMessage;
 import org.apache.activemq.artemis.core.server.cluster.MessageFlowRecord;
 import org.apache.activemq.artemis.core.server.cluster.RemoteQueueBinding;
@@ -197,6 +200,8 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
 
    private final TopologyScanner topologyScanner;
 
+   private ScaleDownReaper scaleDownReaper;
+
    /**
     * For tests only
     */
@@ -237,7 +242,10 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
                                 final long clusterNotificationInterval,
                                 final int clusterNotificationAttempts,
                                 final String clientId,
-                                final int topologyScannerAttempts) throws Exception {
+                                final int topologyScannerAttempts,
+                                final long scaleDownReaperPeriod,
+                                final int scaleDownReaperGraceTicks,
+                                final int scaleDownReaperMaxAttempts) throws Exception {
       this.nodeManager = nodeManager;
 
       this.connector = connector;
@@ -327,6 +335,10 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
 
       this.topologyScanner = topologyScannerAttempts == 0 ? null : new TopologyScanner(
           scheduledExecutor, executor, topologyScannerAttempts);
+
+      this.scaleDownReaper = scaleDownReaperPeriod == 0 ? null : new ScaleDownReaper(
+         scheduledExecutor, executor, scaleDownReaperPeriod,
+         scaleDownReaperGraceTicks, scaleDownReaperMaxAttempts);
    }
 
    public ClusterConnectionImpl(final ClusterManager manager,
@@ -361,7 +373,10 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
                                 final long clusterNotificationInterval,
                                 final int clusterNotificationAttempts,
                                 final String clientId,
-                                final int topologyScannerAttempts) throws Exception {
+                                final int topologyScannerAttempts,
+                                final long scaleDownReaperPeriod,
+                                final int scaleDownReaperGraceTicks,
+                                final int scaleDownReaperMaxAttempts) throws Exception {
       this.nodeManager = nodeManager;
 
       this.connector = connector;
@@ -436,6 +451,10 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
 
       this.topologyScanner = topologyScannerAttempts == 0 ? null : new TopologyScanner(
           scheduledExecutor, executor, topologyScannerAttempts);
+
+      this.scaleDownReaper = scaleDownReaperPeriod == 0 ? null : new ScaleDownReaper(
+         scheduledExecutor, executor, scaleDownReaperPeriod,
+         scaleDownReaperGraceTicks, scaleDownReaperMaxAttempts);
    }
 
    @Override
@@ -477,6 +496,10 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
 
       if (topologyScanner != null) {
          topologyScanner.stop();
+      }
+
+      if (scaleDownReaper != null) {
+         scaleDownReaper.stop();
       }
 
       if (logger.isDebugEnabled()) {
@@ -1111,6 +1134,8 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
 
       record.setBridge(bridge);
 
+      scaleDownReaper.remove(targetNodeID);
+
       records.put(targetNodeID, record);
 
       if (start) {
@@ -1435,6 +1460,14 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
       }
 
       @Override
+      public synchronized void disableBindings() {
+         logger.debug("{} disable bindings", ClusterConnectionImpl.this);
+         for (RemoteQueueBinding binding : new HashSet<>(bindings.values())) {
+            binding.setEnabled(false);
+         }
+      }
+
+      @Override
       public synchronized void disconnectBindings() throws Exception {
          logger.debug("{} disconnect bindings", ClusterConnectionImpl.this);
          reset = false;
@@ -1497,6 +1530,10 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
 
          if (existingBinding != null) {
             if (queueID.equals(existingBinding.getRemoteQueueID())) {
+               // A binding can be disabled while its node is drained during scale-down (see disableBindings). Re-enable
+               // a reused binding here, above the isConnected() check, so both the reconnecting case and the still
+               // connected "already bound" case below recover; otherwise the binding would stay stuck disabled.
+               existingBinding.setEnabled(true);
                if (!existingBinding.isConnected()) {
                   existingBinding.connect();
                   return;
@@ -1818,6 +1855,17 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
    }
 
    @Override
+   public void disableRecord(String targetNodeID) {
+      synchronized (recordsGuard) {
+         logger.debug("Disabling record for: {}", targetNodeID);
+         MessageFlowRecord record = records.get(targetNodeID);
+         if (record != null) {
+            record.disableBindings();
+         }
+      }
+   }
+
+   @Override
    public void disconnectRecord(String targetNodeID) {
       synchronized (recordsGuard) {
          logger.debug("Disconnecting record for: {}", targetNodeID);
@@ -1828,6 +1876,17 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
             }
          } catch (Exception e) {
             ActiveMQServerLogger.LOGGER.failedToDisconnectBindings(e);
+         }
+      }
+   }
+
+   @Override
+   public void scaleDownRecord(String targetNodeID, String scaleDownTargetNodeID) {
+      synchronized (recordsGuard) {
+         if (scaleDownReaper != null && !stopping) {
+            scaleDownReaper.add(targetNodeID, scaleDownTargetNodeID);
+            scaleDownReaper.start();
+            scaleDownReaper.delay();
          }
       }
    }
@@ -1859,6 +1918,119 @@ public final class ClusterConnectionImpl implements ClusterConnection, AfterConn
          if (!stopping && started) {
             topology.resendNode(manager.getNodeId());
          }
+      }
+   }
+
+   /**
+    * Periodic task that reaps retained, scale-down SnF queues.
+    */
+   private final class ScaleDownReaper extends ActiveMQScheduledComponent {
+
+      private final int graceTicks;
+
+      private final int maxAttempts;
+
+      private final Map<String, ScaleDownReapState> reapStates = new ConcurrentHashMap<>();
+
+      ScaleDownReaper(ScheduledExecutorService scheduledExecutorService, Executor executor, long period, int graceTicks, int maxAttempts) {
+         super(scheduledExecutorService, executor, period, TimeUnit.MILLISECONDS, true);
+         this.graceTicks = graceTicks;
+         this.maxAttempts = maxAttempts;
+      }
+
+      public void add(String targetNodeID, String scaleDownTargetNodeID) {
+         reapStates.computeIfAbsent(targetNodeID, k -> new ScaleDownReapState()).scaleDownTarget = scaleDownTargetNodeID;
+      }
+
+      public void remove(String targetNodeID) {
+         reapStates.remove(targetNodeID);
+      }
+
+      @Override
+      public void run() {
+         final List<String> candidates = new ArrayList<>(reapStates.keySet());
+
+         for (String candidateNodeId : candidates) {
+            if (stopping || !started) {
+               return;
+            }
+            try {
+               reapCandidate(candidateNodeId);
+            } catch (Throwable t) {
+               logger.debug("SnF reaper failed reaping {}", candidateNodeId, t);
+            }
+
+            synchronized (recordsGuard) {
+               if (!reapStates.isEmpty() && !stopping) {
+                  delay();
+               }
+            }
+         }
+      }
+
+      private void reapCandidate(String candidateNodeId) throws Exception {
+         synchronized (recordsGuard) {
+            ScaleDownReapState snfReapState = reapStates.get(candidateNodeId);
+            if (snfReapState == null) {
+               return;
+            }
+
+            snfReapState.attempts++;
+
+            // Give up reaping if max attempts exceeded: the queue is retained (not deleted) and no longer
+            // checked, so a stuck queue doesn't waste cycles
+            if (maxAttempts > 0 && snfReapState.attempts > maxAttempts) {
+               logger.warn("Giving up reaping SnF queue toward departed node {} after {} attempts. The queue is retained, not deleted, and will not be checked again until the broker restarts.", candidateNodeId, maxAttempts);
+               reapStates.remove(candidateNodeId);
+               return;
+            }
+
+            // Cancel reaping if the node reconnected and re-created its record
+            MessageFlowRecord record = records.get(candidateNodeId);
+            if (record != null) {
+               reapStates.remove(candidateNodeId);
+               return;
+            }
+
+            // Locate the SnF queue; stop tracking if already deleted
+            final SimpleString queueName = getSfQueueName(candidateNodeId);
+            Binding queueBinding = postOffice.getBinding(queueName);
+            QueueImpl snfQueue = queueBinding == null ? null : (QueueImpl) queueBinding.getBindable();
+            if (snfQueue == null) {
+               reapStates.remove(candidateNodeId);
+               return;
+            }
+
+            // Relocate residual messages to scale-down target and reset idle tick counter
+            if (snfQueue.getMessageCount() > 0) {
+               snfReapState.idleTicks = 0;
+               logger.debug("Relocating {} residual SnF references from {} to scale-down target {}",
+                  snfQueue.getMessageCount(), snfQueue.getName(), snfReapState.scaleDownTarget);
+               snfQueue.moveReferencesBetweenSnFQueues(snfReapState.scaleDownTarget);
+               return;
+            }
+
+            snfReapState.idleTicks++;
+
+            // Reclaim queue once it has stayed idle for the required consecutive idle ticks
+            if (snfReapState.idleTicks > graceTicks) {
+               try {
+                  logger.debug("Reaping idle SnF queue {} for departed node {}", snfQueue.getName(), candidateNodeId);
+                  snfQueue.deleteQueue(true);
+                  snfQueue.removeAddress();
+               } catch (ActiveMQAddressDoesNotExistException e) {
+                  logger.debug("Address already removed while reaping SnF queue {}", snfQueue.getName());
+               }
+
+               reapStates.remove(candidateNodeId);
+            }
+         }
+      }
+
+      private static final class ScaleDownReapState {
+         int attempts;
+         int idleTicks;
+         String scaleDownTarget;
       }
    }
 }
