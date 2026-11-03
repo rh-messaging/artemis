@@ -302,7 +302,7 @@ public class MQTTPublishManager {
             initQos2Resources();
             MQTTUtil.sendMessageDirectlyToQueue(session.getServer().getStorageManager(), session.getServer().getPostOffice(), createPubRelMessage(session, messageId), qos2ManagementQueue, null);
             session.getServerSession().individualAcknowledge(ref.getB(), ref.getA());
-            releaseFlowControl(ref.getB());
+            releaseFlowControl();
          } else {
             session.getProtocolHandler().sendPubRel(messageId);
          }
@@ -340,9 +340,8 @@ public class MQTTPublishManager {
    /**
     * Once we get an acknowledgement for a QoS 1 or 2 message we allow messages to flow
     */
-   private void releaseFlowControl(Long consumerId) {
-      ServerConsumer consumer = session.getServerSession().locateConsumer(consumerId);
-      if (consumer != null) {
+   private void releaseFlowControl() {
+      for (ServerConsumer consumer : session.getServerSession().getServerConsumers()) {
          consumer.promptDelivery();
       }
    }
@@ -381,7 +380,7 @@ public class MQTTPublishManager {
          Pair<Long, Long> ref = outboundStore.publishAckd(messageId);
          if (ref != null) {
             session.getServerSession().individualAcknowledge(ref.getB(), ref.getA());
-            releaseFlowControl(ref.getB());
+            releaseFlowControl();
          }
       } catch (ActiveMQIllegalStateException e) {
          logger.warn("MQTT Client({}) attempted to Ack already Ack'd message", session.getState().getClientId());
