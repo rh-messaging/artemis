@@ -79,7 +79,7 @@
    <url>https://activemq.apache.org/components/artemis/</url>
 
    <properties>
-      <amq.broker.version>7.13.6</amq.broker.version>
+      <amq.broker.version>7.13.7</amq.broker.version>
       <artemis.prometheus.metrics.plugin.version>3.2.0.redhat-00001</artemis.prometheus.metrics.plugin.version>
       <maven.compiler.source>17</maven.compiler.source>
       <maven.compiler.target>17</maven.compiler.target>
