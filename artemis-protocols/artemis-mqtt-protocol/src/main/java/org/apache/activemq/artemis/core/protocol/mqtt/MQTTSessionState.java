@@ -437,16 +437,23 @@ public class MQTTSessionState {
          return;
       }
       int removed = 0;
+      int originalSendQuota = -1;
       Iterator<CoreDeliveryInfo> iterator = coreDeliveryInfos.values().iterator();
       while (iterator.hasNext()) {
          if (queueName.equals(iterator.next().getQueueName())) {
             iterator.remove();
-            decrementSendQuota();
+            int currentSendQuota = getAndDecrementSendQuota();
+            if (removed == 0) {
+               originalSendQuota = currentSendQuota;
+            }
             removed++;
          }
       }
       if (removed > 0) {
          logger.debug("Discarded {} in-delivery info(s) for client {} on queue {}", removed, clientId, queueName);
+         if (session != null) {
+            session.promptDelivery(originalSendQuota);
+         }
       }
    }
 
@@ -498,12 +505,26 @@ public class MQTTSessionState {
       return sendQuota;
    }
 
-   public void incrementSendQuota() {
-      SEND_QUOTA_UPDATER.incrementAndGet(this);
+   /**
+    * Reserves one unit of send quota if, and only if, doing so would not exceed {@code max}. Done atomically so that
+    * concurrent deliveries across different subscriptions on this session can't race past the limit.
+    *
+    * @return {@code true} if a unit of quota was reserved, {@code false} if {@code max} would have been exceeded
+    */
+   public boolean tryReserveSendQuota(int max) {
+      while (true) {
+         int current = sendQuota;
+         if (current >= max) {
+            return false;
+         }
+         if (SEND_QUOTA_UPDATER.compareAndSet(this, current, current + 1)) {
+            return true;
+         }
+      }
    }
 
-   public void decrementSendQuota() {
-      SEND_QUOTA_UPDATER.decrementAndGet(this);
+   public int getAndDecrementSendQuota() {
+      return SEND_QUOTA_UPDATER.getAndDecrement(this);
    }
 
    public void resetSendQuota() {
