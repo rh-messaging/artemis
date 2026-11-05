@@ -83,7 +83,12 @@
          <!-- deprecated: use openwire-tests -->
          <id>activemq5-unit-tests</id>
          <modules>
-            <module>activemq5-unit-tests</module>
+            <!--
+              Disable activemq5-unit-tests because it has a transitive dependency to
+              org.fusesource.hawtbuf:hawtbuf-proto:jar:1.11.0.redhat-2 that is causing
+              the the Prod Gate GC-M2 failure
+              <module>activemq5-unit-tests</module>
+            -->
          </modules>
          <properties>
             <skipActiveMQ5Tests>false</skipActiveMQ5Tests>
@@ -92,7 +97,12 @@
       <profile>
          <id>openwire-tests</id>
          <modules>
-            <module>activemq5-unit-tests</module>
+            <!--
+              Disable activemq5-unit-tests because it has a transitive dependency to
+              org.fusesource.hawtbuf:hawtbuf-proto:jar:1.11.0.redhat-2 that is causing
+              the the Prod Gate GC-M2 failure
+              <module>activemq5-unit-tests</module>
+            -->
          </modules>
          <properties>
             <skipActiveMQ5Tests>false</skipActiveMQ5Tests>
@@ -101,7 +111,12 @@
       <profile>
          <id>release</id>
          <modules>
-            <module>activemq5-unit-tests</module>
+            <!--
+              Disable activemq5-unit-tests because it has a transitive dependency to
+              org.fusesource.hawtbuf:hawtbuf-proto:jar:1.11.0.redhat-2 that is causing
+              the the Prod Gate GC-M2 failure
+              <module>activemq5-unit-tests</module>
+            -->
             <module>performance-jmh</module>
          </modules>
          <properties>
