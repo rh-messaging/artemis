@@ -241,8 +241,7 @@ public class Upgrade extends InstallAbstract {
          "^(.*)<binding uri=\"http://localhost:8161\"(.*)$", "$1<binding name=\"artemis\" uri=\"http://localhost:8161\"$2",
          "^(.*)<app url=(.*branding.*)$", "$1<app name=\"branding\" url=$2",
          "^(.*)<app url=(.*plugin.*)$", "$1<app name=\"plugin\" url=$2",
-         "^(.*)<app url=\"([^\"]+)\"(.*)$", "$1<app name=\"$2\" url=\"$2\"$3",
-         "^(.*)<app(.*)war=\"hawtio.war\"(.*)$", "$1<app$2war=\"console.war\"$3"); // AMQ Broker 7.13+: just use console.war like upstream, rename back from hawtio.war
+         "^(.*)<app url=\"([^\"]+)\"(.*)$", "$1<app name=\"$2\" url=\"$2\"$3");
 
       //we remove the unwanted wars after updating them above just in case we are upgrading from an older version where the format was different
       removeWars(context, bootstrapXml);
