@@ -110,7 +110,7 @@
       <caffeine.version>3.3.1</caffeine.version>
       <guava.version>33.8.0-jre</guava.version>
       <jsr305.version>3.0.2</jsr305.version>
-      <jetty.version>12.1.14</jetty.version>
+      <jetty.version>12.1.15</jetty.version>
       <jetty-servlet-api.version>5.0.2</jetty-servlet-api.version>
       <jgroups.version>5.3.13.Final</jgroups.version>
       <errorprone.version>2.52.0</errorprone.version>
@@ -178,7 +178,7 @@
       <postgresql.version>42.7.14</postgresql.version>
       <testcontainers.version>1.21.4</testcontainers.version>
       <selenium.version>4.52.0</selenium.version>
-      <exec-maven-plugin.version>3.6.4</exec-maven-plugin.version>
+      <exec-maven-plugin.version>3.7.0</exec-maven-plugin.version>
       <apache.httpcore.version>4.4.16</apache.httpcore.version>
       <apache.httpclient.version>4.5.14</apache.httpclient.version>
       <shrinkwrap-api.version>2.0.0.Final</shrinkwrap-api.version>
@@ -803,7 +803,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>javacc-maven-plugin</artifactId>
-               <version>3.2.1</version>
+               <version>3.3.0</version>
                <executions>
                   <execution>
                      <id>javacc</id>
@@ -861,7 +861,7 @@
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>build-helper-maven-plugin</artifactId>
-               <version>3.7.0</version>
+               <version>3.8.0</version>
             </plugin>
             <!-- Many examples use it -->
             <plugin>
