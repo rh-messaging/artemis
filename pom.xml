@@ -91,7 +91,7 @@
 
       <activemq-artemis-native-version>2.0.0</activemq-artemis-native-version>
       <artemis-console-version>1.8.0</artemis-console-version>
-      <karaf.version>4.4.12</karaf.version>
+      <karaf.version>4.4.13</karaf.version>
       <pax.exam.version>4.14.0</pax.exam.version>
       <commons.config.version>2.15.1</commons.config.version>
       <commons.lang.version>3.22.0</commons.lang.version>
@@ -125,7 +125,7 @@
       <netty.version>4.1.141.Final</netty.version>
       <hdrhistogram.version>2.2.2</hdrhistogram.version>
       <curator.version>5.9.0</curator.version>
-      <zookeeper.version>3.9.7</zookeeper.version>
+      <zookeeper.version>3.10.0</zookeeper.version>
       <woodstox.version>4.4.1</woodstox.version>
       <pem-keystore.version>3.0.0</pem-keystore.version>
       <nimbus.jwt.version>10.10</nimbus.jwt.version>
@@ -200,7 +200,7 @@
       <elementary.version>3.0.0</elementary.version>
       <groovy.version>6.0.0</groovy.version>
       <hadoop.minikdc.version>3.5.0</hadoop.minikdc.version>
-      <mockserver.version>9.3.0</mockserver.version>
+      <mockserver.version>9.4.0</mockserver.version>
 
       <owasp.version>13.0.0</owasp.version>
       <spring.version>5.3.39</spring.version>
